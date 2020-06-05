@@ -1,0 +1,37 @@
+# This image attempts to mirror the currently-active RopeWiki server as closely
+# as practical while installing from canonical sources.
+
+# To build this image:
+#   docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .
+
+FROM ubuntu:14.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+
+# Install nginx
+RUN apt-get install -y --no-install-recommends nginx
+
+# Don't start the php service after installation
+# https://stackoverflow.com/a/48782486/651139
+RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
+
+# Install php
+RUN apt-get install -y --no-install-recommends php5-fpm
+
+# Retrieve MediaWiki installation package
+RUN apt-get install -y --no-install-recommends wget
+RUN wget https://releases.wikimedia.org/mediawiki/1.24/mediawiki-core-1.24.1.tar.gz
+
+# Follow installation instructions:
+# https://phabricator.wikimedia.org/source/mediawiki/browse/REL1_25/INSTALL
+RUN tar xvzf mediawiki-core-1.24.1.tar.gz
+RUN mv mediawiki-1.24.1 /rw
+
+# TODO: finish installation and configuration to match current deployed configuration
+
+# To explore the system to see how things have been set up, following building:
+#   docker container run -it ropewiki/legacy_webserver
+
+# TODO: set up appropriate services to start and then run something that keeps the container active
