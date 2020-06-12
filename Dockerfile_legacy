@@ -22,7 +22,7 @@ RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
 RUN apt-get install -y --no-install-recommends php5-fpm php5-cli
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git
+RUN apt-get install -y --no-install-recommends wget unzip git nano
 
 # Install composer
 COPY ./composer /root
@@ -45,17 +45,15 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 
 # === Customize site (including custom extensions) ===
 
-# Copy in our nginx customizations
-COPY ./nginx /etc/nginx
-
 # Copy in our MediaWiki customizations
 COPY ./html /usr/share/nginx/html
+
+# Copy in our nginx customizations
+COPY ./nginx /etc/nginx
 
 # === Install composer-specified extensions ===
 
 RUN cd /rw && composer install
-
-# TODO: Figure out what is wrong with Semantic Forms
 
 # Install SemanticMediaWiki 2.1
 # https://web.archive.org/web/20150314234734/http://semantic-mediawiki.org/wiki/Help:Installation
@@ -63,7 +61,25 @@ RUN cd /rw && composer install
 
 # === Install extensions via git ===
 
-# TODO: Clone all the git-based extensions at their current commits
+RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticCompoundQueries.git && cd SemanticCompoundQueries && git checkout f5eed72
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout a569de7
+RUN cd /rw/extensions && git clone https://git.wikimedia.org/git/mediawiki/extensions/SemanticFormsInputs.git && cd SemanticFormsInputs && git checkout 9343704
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/SemanticRating && cd SemanticRating && git checkout 3af01d6
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/CategoryTree && cd CategoryTree && git checkout 52c3eb7
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/CheckUser && cd CheckUser && git checkout 99f4a22
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/ContributionScores && cd ContributionScores && git checkout 7e02f8a
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/Nuke && cd Nuke && git checkout 0d4bfb5
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/UserMerge && cd UserMerge && git checkout 22c450d
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/Arrays && cd Arrays && git checkout f28592b
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/CategoryTree && cd CategoryTree && git checkout 52c3eb7
+RUN cd /rw/extensions && git clone https://gitlab.com/HydraWiki/extensions/embedvideo.git && cd embedvideo && git checkout 52c3eb7
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/MagicNoCache && cd MagicNoCache && git checkout a6aac2c
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/MyVariables && cd MyVariables && git checkout 70cf94b
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/Scribunto && cd Scribunto && git checkout 10abeb5
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/UrlGetParameters && cd UrlGetParameters && git checkout 68afd03
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/Variables && cd Variables && git checkout 6f4bbd0
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/PdfHandler && cd PdfHandler && git checkout 5e29202
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/g/mediawiki/extensions/googleAnalytics && cd googleAnalytics && git checkout ce5ef02
 
 # TODO: finish installation and configuration to match current deployed configuration
 
