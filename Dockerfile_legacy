@@ -1,10 +1,12 @@
 # This image attempts to mirror the currently-active RopeWiki server as closely
 # as practical while installing from canonical sources.
 
-# To build this image:
+# To build this image, run this in this folder:
 #   docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .
 
 FROM ubuntu:14.04
+
+# === Install services and tools ===
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -13,12 +15,21 @@ RUN apt-get update
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
+# Install php
 # Don't start the php service after installation
 # https://stackoverflow.com/a/48782486/651139
 RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
+RUN apt-get install -y --no-install-recommends php5-fpm php5-cli
 
-# Install php
-RUN apt-get install -y --no-install-recommends php5-fpm
+# Install various tools
+RUN apt-get install -y --no-install-recommends wget unzip git
+
+# Install composer
+COPY ./composer /root
+RUN /root/install_composer.sh
+RUN mv composer.phar /usr/local/bin/composer
+
+# === Install MediaWiki ===
 
 # Retrieve MediaWiki installation package
 RUN apt-get install -y --no-install-recommends wget
@@ -27,7 +38,32 @@ RUN wget https://releases.wikimedia.org/mediawiki/1.24/mediawiki-core-1.24.1.tar
 # Follow installation instructions:
 # https://phabricator.wikimedia.org/source/mediawiki/browse/REL1_25/INSTALL
 RUN tar xvzf mediawiki-core-1.24.1.tar.gz
-RUN mv mediawiki-1.24.1 /rw
+RUN mv mediawiki-1.24.1 /usr/share/nginx/html/ropewiki
+
+# Configure quick symlink
+RUN ln -s /usr/share/nginx/html/ropewiki /rw
+
+# === Customize site (including custom extensions) ===
+
+# Copy in our nginx customizations
+COPY ./nginx /etc/nginx
+
+# Copy in our MediaWiki customizations
+COPY ./html /usr/share/nginx/html
+
+# === Install composer-specified extensions ===
+
+RUN cd /rw && composer install
+
+# TODO: Figure out what is wrong with Semantic Forms
+
+# Install SemanticMediaWiki 2.1
+# https://web.archive.org/web/20150314234734/http://semantic-mediawiki.org/wiki/Help:Installation
+# TODO: Finish installation process
+
+# === Install extensions via git ===
+
+# TODO: Clone all the git-based extensions at their current commits
 
 # TODO: finish installation and configuration to match current deployed configuration
 
@@ -35,3 +71,5 @@ RUN mv mediawiki-1.24.1 /rw
 #   docker container run -it ropewiki/legacy_webserver
 
 # TODO: set up appropriate services to start and then run something that keeps the container active
+
+# /etc/php5/fpm/php-fmp.conf

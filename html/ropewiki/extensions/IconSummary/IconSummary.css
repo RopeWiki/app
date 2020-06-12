@@ -1,0 +1,30 @@
+.ContextDetails {
+  display:inline-block;
+  position:relative;
+}
+.ContextDetails div {
+  display: none;
+}
+.ContextDetailsHover {
+  display:inline-block;
+  position:relative;
+}
+.ContextDetailsHover div {
+  display:block;
+  position:absolute;
+  width: 15em;
+  top:1.3em;
+  *top:20px;
+  left:20px;
+  z-index:1000;
+  background-color: #DDD;
+  padding: 5px;
+  border-radius: 4px;
+}
+.RatingIcon {
+	width:48px;
+	height:48px;
+}
+.Trip {
+  margin:0 0 30px;
+}

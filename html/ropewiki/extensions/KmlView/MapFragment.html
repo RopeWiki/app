@@ -1,0 +1,20 @@
+<div id="map-canvas" style="width://PARAM_WIDTH//;height://PARAM_HEIGHT//"></div>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyDbS4GbGtaYhnTBxFVxD3J2jfjc_66g2Bk&sensor=false"></script>
+<script type="text/javascript">
+function initializeKmlViewMap() {
+  var mapOptions = {
+    zoom: 11,
+    center: new google.maps.LatLng(34.17,-118.05),
+    mapTypeId: google.maps.MapTypeId.//PARAM_MAPTYPE//
+  }
+
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  var ctaLayer = new google.maps.KmlLayer({
+    url: '//PARAM_KMLURL//'
+  });
+  ctaLayer.setMap(map);
+}
+
+google.maps.event.addDomListener(window, 'load', initializeKmlViewMap);
+</script>

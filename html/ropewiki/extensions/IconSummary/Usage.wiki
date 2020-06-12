@@ -1,0 +1,15 @@
+
+<pre>
+Usage:
+{{#iconsummary:
+time|1|Time description|
+drive|2|Drive description|
+hike|0|Physical activity description|
+tech|3|Technical description|
+water|1|Water description|
+cold|2|Cold description|
+hot|1|Hot description|
+gear|3|Gear description|
+cost|3|Cost description
+}}
+</pre>

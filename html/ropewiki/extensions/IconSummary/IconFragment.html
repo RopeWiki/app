@@ -1,0 +1,60 @@
+<div class="Trip">
+	<span class="ContextDetails">
+		<img src="img/time//TIME_RATING//.png" class="RatingIcon">
+		<div><b>Time</b><br>//TIME_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/drive//DRIVE_RATING//.png" class="RatingIcon">
+		<div><b>Drive</b><br>//DRIVE_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/hike//HIKE_RATING//.png" class="RatingIcon">
+		<div><b>Level of physical activity</b><br>//HIKE_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/tech//TECH_RATING//.png" class="RatingIcon">
+		<div><b>Technical difficulty</b><br>//TECH_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/water//WATER_RATING//.png" class="RatingIcon">
+		<div><b>Water</b><br>//WATER_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/cold//COLD_RATING//.png" class="RatingIcon">
+		<div><b>Cold</b><br>//COLD_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/hot//HOT_RATING//.png" class="RatingIcon">
+		<div><b>Heat</b><br>//HOT_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/gear//GEAR_RATING//.png" class="RatingIcon">
+		<div><b>Special gear</b><br>//GEAR_DESCRIPTION//</div>
+	</span>
+	<span class="ContextDetails">
+		<img src="img/cost//COST_RATING//.png" class="RatingIcon">
+		<div><b>Cost</b><br>//COST_DESCRIPTION//</div>
+	</span>
+</div>
+
+
+<div id="map-canvas" style="width://PARAM_WIDTH//;height://PARAM_HEIGHT//"></div>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyDbS4GbGtaYhnTBxFVxD3J2jfjc_66g2Bk&sensor=false"></script>
+<script type="text/javascript">
+function initializeKmlViewMap() {
+  var mapOptions = {
+    zoom: 11,
+    center: new google.maps.LatLng(34.17,-118.05),
+    mapTypeId: google.maps.MapTypeId.//PARAM_MAPTYPE//
+  }
+
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  var ctaLayer = new google.maps.KmlLayer({
+    url: '//PARAM_KMLURL//'
+  });
+  ctaLayer.setMap(map);
+}
+
+google.maps.event.addDomListener(window, 'load', initializeKmlViewMap);
+</script>
