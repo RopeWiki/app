@@ -21,8 +21,7 @@
 		"mediawiki/semantic-media-wiki": "2.1",
 		"mediawiki/header-footer": "2.1.0",
 		"mediawiki/semantic-maps": "3.1.3",
-		"mediawiki/semantic-result-formats": "2.1.2",
-		"mediawiki/page-forms": "3.2"
+		"mediawiki/semantic-result-formats": "2.1.2"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "*"
