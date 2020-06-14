@@ -27,9 +27,9 @@ services:
       - "8080:80"
     environment: 
       - WG_DB_SERVER=ropewiki_legacy_db
-      - WG_DB_USER=root
+      - WG_DB_USER=ropewiki
       - WG_DB_PASSWORD=ropewikilegacydatabasepassword
-      - WG_DB_HOSTNAME=localhost
+      - WG_DB_HOSTNAME=localhost:8080
     depends_on:
       - ropewiki_legacy_db
     #restart: always

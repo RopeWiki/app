@@ -14,6 +14,7 @@ The docker-compose_legacy.yaml docker-compose file describes a full legacy syste
   * `docker container run -it ropewiki/legacy_webserver /bin/bash`
 * Place a database *.sql backup file in ./mysql/backup
 * **TODO**: document how to mount images folder
+* Set the password to use for the ropewiki user in the restored database by editing docker-compose_legacy.yaml and changing WG_DB_PASSWORD to the appropriate password
 * Bring up the system with docker-compose
   * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy up`
 * [Optional] Explore the database with adminer

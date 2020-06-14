@@ -16,10 +16,8 @@ $wgDBname           = "ropewiki";
 $wgDBuser           = "{{WG_DB_USER}}";
 $wgDBpassword       = "{{WG_DB_PASSWORD}}";
 
-# Note: this is not the value for the real site
 $wgSecretKey = "{{WG_SECRET_KEY}}";
 
 # Site upgrade key. Must be set to a string (default provided) to turn on the
 # web installer while LocalSettings.php is in place
-# Note: this is not the value for the real site
 $wgUpgradeKey = "{{WG_UPGRADE_KEY}}";
