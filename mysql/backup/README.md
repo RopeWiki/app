@@ -1,0 +1,1 @@
+Put a *.sql backup here to restore into a legacy database.  See the legacy system section in the root README for more information.

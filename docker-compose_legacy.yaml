@@ -1,11 +1,9 @@
 # This docker-compose file will bring up a legacy system with this command:
-#   docker-compose -f docker-compose_legacy.yaml -p datanode up
+#   docker-compose -f docker-compose_legacy.yaml -p rwlegacy up
 
 # Before the command above is executed, the ropewiki/webserver_legacy image
-# must be built using Dockerfile_legacy.
-
-# NOTE: This file has NOT been tested; it is only a sketch for when the
-# webserver image is ready to test.
+# must be built using Dockerfile_legacy.  Follow the instructions in README.md
+# for more detailed instructions.
 
 version: '3.6'
 
@@ -13,30 +11,37 @@ services:
 
   # MySQL database; see https://hub.docker.com/_/mysql
   ropewiki_legacy_db:
-    image: mysql:5.6  # TODO: MySQL version running on site is 5.5.62
-        command: --default-authentication-plugin=mysql_native_password
+    image: mysql:5.5
+    # command: --default-authentication-plugin=mysql_native_password
     environment:
       - MYSQL_ROOT_PASSWORD=ropewikilegacydatabasepassword
+    volumes:
+      - ropewiki_legacy_storage:/var/lib/mysql
+      - ./mysql/backup:/root/backup
     restart: always
 
   # The main RopeWiki server; see Dockerfile_legacy to build the image
   ropewiki_legacy_webserver:
-    image: ropewiki/webserver_legacy
+    image: ropewiki/legacy_webserver
     ports:
       - "8080:80"
-    environment:
-          # This environment variable or something like it should be fed into the
-          # webserver to tell MediaWiki where to look for the database.  To this
-          # container, the address will simply be `db` (like https://db/subpath).
-      - MEDIAWIKI_DATABASE=db
+    environment: 
+      - WG_DB_SERVER=ropewiki_legacy_db
+      - WG_DB_USER=root
+      - WG_DB_PASSWORD=ropewikilegacydatabasepassword
+      - WG_DB_HOSTNAME=localhost
     depends_on:
       - ropewiki_legacy_db
-    restart: always
+    #restart: always
 
   # This container is not part of the system; it just provides a convenient
   # view into the database
   adminer:
     image: adminer
-        restart: always
-        ports:
-          - 8081:8080
+    restart: always
+    ports:
+      - 8081:8080
+
+volumes:
+  ropewiki_legacy_storage:
+    name: ropewiki_legacy_storage

@@ -3,23 +3,23 @@ $wgSitename      = "ropewiki";
 $wgMetaNamespace = "Ropewiki";
 
 ## The protocol and server name to use in fully-qualified URLs
-$wgServer           = "http://ropewiki.com";
+$wgServer           = "{{WG_PROTOCOL}}://{{WG_HOSTNAME}}";
 
-$wgLogo = "http://ropewiki.com/Ropewiki.png";
+$wgLogo = "{{WG_PROTOCOL}}://{{WG_HOSTNAME}}/Ropewiki.png";
 
-$semanticServer = 'ropewiki.com';
+$semanticServer = '{{WG_HOSTNAME}}';
 
 ## Database settings
 $wgDBtype           = "mysql";
-$wgDBserver         = "ropewiki_legacy_db";
+$wgDBserver         = "{{WG_DB_SERVER}}";
 $wgDBname           = "ropewiki";
-$wgDBuser           = "ropewiki";
-$wgDBpassword       = "ropewikilegacydatabasepassword";
+$wgDBuser           = "{{WG_DB_USER}}";
+$wgDBpassword       = "{{WG_DB_PASSWORD}}";
 
 # Note: this is not the value for the real site
-$wgSecretKey = "04f44118ad1899762bc60ed90d778aa72f92e9dc0d298c8f327755e503ceb84a";
+$wgSecretKey = "{{WG_SECRET_KEY}}";
 
 # Site upgrade key. Must be set to a string (default provided) to turn on the
 # web installer while LocalSettings.php is in place
 # Note: this is not the value for the real site
-$wgUpgradeKey = "1ce9e4e2a0a3bf63";
+$wgUpgradeKey = "{{WG_UPGRADE_KEY}}";

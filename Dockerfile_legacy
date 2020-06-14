@@ -18,47 +18,40 @@ RUN apt-get install -y --no-install-recommends nginx
 # Install php
 # Don't start the php service after installation
 # https://stackoverflow.com/a/48782486/651139
-RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
-RUN apt-get install -y --no-install-recommends php5-fpm php5-cli
+RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
+    apt-get install -y --no-install-recommends php5-fpm php5-cli
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl
 
 # Install composer
-COPY ./scripts /root
-RUN /root/install_composer.sh
-RUN mv composer.phar /usr/local/bin/composer
+COPY ./scripts/install_composer.sh /root/install_composer.sh
+RUN /root/install_composer.sh && \
+    mv composer.phar /usr/local/bin/composer
 
 # === Install MediaWiki ===
 
-# Retrieve MediaWiki installation package
-RUN wget https://releases.wikimedia.org/mediawiki/1.24/mediawiki-core-1.24.1.tar.gz
-
-# Follow installation instructions:
+# Retrieve MediaWiki installation package and follow installation instructions:
 # https://phabricator.wikimedia.org/source/mediawiki/browse/REL1_25/INSTALL
-RUN tar xvzf mediawiki-core-1.24.1.tar.gz
-RUN mv mediawiki-1.24.1 /usr/share/nginx/html/ropewiki
+RUN wget https://releases.wikimedia.org/mediawiki/1.24/mediawiki-core-1.24.1.tar.gz && \
+    tar xvzf mediawiki-core-1.24.1.tar.gz && \
+	mv mediawiki-1.24.1 /usr/share/nginx/html/ropewiki && \
+	rm mediawiki-core-1.24.1.tar.gz
 
 # Configure quick symlink
 RUN ln -s /usr/share/nginx/html/ropewiki /rw
 
-# === Customize site (including custom extensions) ===
+# === Install extensions ===
 
-# Copy in our MediaWiki customizations
-COPY ./html /usr/share/nginx/html
+# TODO: Install extensions we use that come with MediaWiki (e.g., ConfirmEdit)
 
-# Copy in our nginx customizations
-COPY ./nginx /etc/nginx
-
-# === Install composer-specified extensions ===
-
+COPY ./html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
 RUN cd /rw && composer install
 
-# Install SemanticMediaWiki 2.1
+# Note: We do not need to follow the rest of the instructions to install
+# SemanticMediaWiki 2.1 because the files we will copy over are already
+# configured.  But for reference:
 # https://web.archive.org/web/20150314234734/http://semantic-mediawiki.org/wiki/Help:Installation
-# TODO: Finish installation process
-
-# === Install extensions via git ===
 
 # Note: we can't use gerrit.wikimedia.org because they apparently use a cipher
 # that isn't supported in Ubuntu 14, and there don't appear to be any gnutls
@@ -84,11 +77,31 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PdfHandler PdfHandler && cd PdfHandler && git checkout 5e29202
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-googleAnalytics googleAnalytics && cd googleAnalytics && git checkout ce5ef02
 
-# TODO: finish installation and configuration to match current deployed configuration
+# === Customize site (including custom extensions) ===
+
+# Copy in our MediaWiki customizations
+COPY ./html /usr/share/nginx/html
+
+# Copy in our nginx customizations
+COPY ./nginx /etc/nginx
+RUN rm /etc/nginx/sites-enabled/default
+
+# === Set up startup behavior ===
+
+COPY ./scripts/system_start.sh ./root/system_start.sh
+
+# Set default parameters (that may be overwritten via environment variables)
+ENV WG_DB_SERVER ropewiki_legacy_db
+ENV WG_DB_USER ropewiki
+ENV WG_DB_PASSWORD ropewikilegacydatabasepassword
+ENV WG_HOSTNAME ropewiki.com
+ENV WG_PROTOCOL http
+ENV WG_SECRET_KEY 04f44118ad1899762bc60ed90d778aa72f92e9dc0d298c8f327755e503ceb84a
+ENV WG_UPGRADE_KEY 1ce9e4e2a0a3bf63
+
+CMD /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
 #   docker container run -it ropewiki/legacy_webserver
-
-# TODO: set up appropriate services to start and then run something that keeps the container active
 
 # /etc/php5/fpm/php-fmp.conf
