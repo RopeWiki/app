@@ -4,7 +4,14 @@
 
 This section describes how to build a legacy system intended to be as similar to the currently-deployed RopeWiki site as practical to facilitate practicing restoring the database and practicing upgrades and migrations.  When complete, this system should be as similar to the server accessible at ropewiki.com as practical.
 
-The docker-compose_legacy.yaml docker-compose file describes a full legacy system consisting primarily of a MySQL database and an nginx-php-MediaWiki webserver.
+### Prerequisites
+
+To complete these instructions, you must have:
+* [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed
+* A backup of the site database in .sql format (1.2+ GB)
+* The `images` folder of the site (18.3+ GB)
+
+Although these instructions should work on any Docker-equipped system, they have only been tested on Ubuntu 18.04.
 
 ### Run a legacy system
 
