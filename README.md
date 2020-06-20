@@ -75,3 +75,8 @@ Although these instructions should work on any Docker-equipped system, they have
     * `cat /var/log/nginx/access.log`
   * Print error log
     * `cat /var/log/nginx/error.log`
+
+## Mirror server
+
+This repository includes scripts for mirroring the production legacy webserver to a local development instance.  `init_mirror_server.sh` creates a new database container and volume intended for use in the development instance (after removing any previous container or volume created by prior runs of the script).  `refresh_mirror_server.sh` retrieves the most recent database backup from the production server and synchronizes any new content in the /images folder, but these operations require public key access to the production servers.  This latter script is intended to be run as a nightly cronjob.
+
