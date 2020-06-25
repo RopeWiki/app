@@ -51,7 +51,7 @@ rsync -arv \
 log "  -> Copied."
 log "Unzipping ${LATEST_BACKUP_ZIP}..."
 gunzip -f ./mysql/backup/prod/${LATEST_BACKUP_ZIP}
-LATEST_BACKUP=$(ls ./mysql/backup/prod/*.sql | head -1)
+LATEST_BACKUP=$(ls -t ./mysql/backup/prod/*.sql | head -1)
 log "  -> Unzipped ${LATEST_BACKUP}."
 
 # Bring down webserver to update database and /images
