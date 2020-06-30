@@ -42,13 +42,17 @@ cd $APP_FOLDER
 log "Finding latest database backup..."
 LATEST_BACKUP_ZIP=$(ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t | head -1")
 log "  -> Found ${LATEST_BACKUP_ZIP}."
-log "Copying latest database backup locally..."
-touch ./mysql/backup/prod_backup.log
-rsync -arv \
-  root@db01.ropewiki.com:/root/backups/${LATEST_BACKUP_ZIP} \
-  ./mysql/backup/prod/${LATEST_BACKUP_ZIP} \
-  2>&1 | tee ./mysql/backup/prod_backup.log
-log "  -> Copied."
+if [ -f "./mysql/backup/prod/${LATEST_BACKUP_ZIP}" ]; then
+  echo "${LATEST_BACKUP_ZIP} is already present locally; skipping download from production server."
+else
+  log "Copying latest database backup locally..."
+  touch ./mysql/backup/prod_backup.log
+  rsync -arv \
+    root@db01.ropewiki.com:/root/backups/${LATEST_BACKUP_ZIP} \
+    ./mysql/backup/prod/${LATEST_BACKUP_ZIP} \
+    2>&1 | tee ./mysql/backup/prod_backup.log
+  log "  -> Copied."
+fi
 log "Unzipping ${LATEST_BACKUP_ZIP}..."
 gunzip -f ./mysql/backup/prod/${LATEST_BACKUP_ZIP}
 LATEST_BACKUP=$(ls -t ./mysql/backup/prod/*.sql | head -1)
