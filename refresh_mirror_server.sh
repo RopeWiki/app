@@ -42,8 +42,11 @@ cd $APP_FOLDER
 log "Finding latest database backup..."
 LATEST_BACKUP_ZIP=$(ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t | head -1")
 log "  -> Found ${LATEST_BACKUP_ZIP}."
-if [ -f "./mysql/backup/prod/${LATEST_BACKUP_ZIP}" ]; then
-  echo "${LATEST_BACKUP_ZIP} is already present locally; skipping download from production server."
+LATEST_BACKUP=${LATEST_BACKUP_ZIP%.gz}
+if [ -f "./mysql/backup/prod/${LATEST_BACKUP}" ]; then
+  log "${LATEST_BACKUP} is already present locally."
+  LATEST_BACKUP=$(ls -t ./mysql/backup/prod/*.sql | head -1)
+  log "  -> Using pre-existing ${LATEST_BACKUP}."
 else
   log "Copying latest database backup locally..."
   touch ./mysql/backup/prod_backup.log
@@ -52,11 +55,11 @@ else
     ./mysql/backup/prod/${LATEST_BACKUP_ZIP} \
     2>&1 | tee ./mysql/backup/prod_backup.log
   log "  -> Copied."
+  log "Unzipping ${LATEST_BACKUP_ZIP}..."
+  gunzip -f ./mysql/backup/prod/${LATEST_BACKUP_ZIP}
+  LATEST_BACKUP=$(ls -t ./mysql/backup/prod/*.sql | head -1)
+  log "  -> Unzipped ${LATEST_BACKUP}."
 fi
-log "Unzipping ${LATEST_BACKUP_ZIP}..."
-gunzip -f ./mysql/backup/prod/${LATEST_BACKUP_ZIP}
-LATEST_BACKUP=$(ls -t ./mysql/backup/prod/*.sql | head -1)
-log "  -> Unzipped ${LATEST_BACKUP}."
 
 # Bring down webserver to update database and /images
 if [ "$(docker ps -q -f name=${WEBSERVER_CONTAINER})" ]; then
