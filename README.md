@@ -30,7 +30,7 @@ Although these instructions should work on any Docker-equipped system, they have
   * Log in with
     * System: MySQL
     * Server: ropewiki_legacy_db
-    * Username: root
+    * Username: root (if that fails, try 'ropewiki')
     * Password: (whatever is set in docker-compose_legacy.yaml)
     * Database: (leave this box blank)
 * Open an interactive shell in the MySQL container
@@ -42,6 +42,7 @@ Although these instructions should work on any Docker-equipped system, they have
     * `mysql -u root -p ropewiki < /root/backup/all-backup-2020-06-12.sql`
       * The password is whatever is set in docker-compose_legacy.yaml for MYSQL_ROOT_PASSWORD
       * Note: replace all-backup-2020-06-12.sql with the name of your backup file
+      * The path '/root/backup' mapping to a directory on the host OS is set in the docker-compose-legacy.yaml file under 'volumes'
       * Note: this operation will take a few minutes with no visual feedback
   * [Optional] View database content in adminer
     * Note: When the above operation is complete, the database list in adminer may not update properly.  To force an update, create a new empty database (and then drop it).
