@@ -17,6 +17,7 @@ Although these instructions should work on any Docker-equipped system, they have
 
 * Build the ropewiki/webserver_legacy image
   * `docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .`
+    * Note: if you have moved the 'images' assets folder into the 'html/ropewiki' subfolder already, move them out before doing the docker image build, because the build daemon sends the entire contents of the folder where the dockerfile is located, and images is >15GB. Similarly if you have a .sql backup file in 'mysql/backup'.
 * [Optional] Open an interactive shell to view files and run test commands in webserver
   * `docker container run -it ropewiki/legacy_webserver /bin/bash`
 * Place a database *.sql backup file in ./mysql/backup
@@ -48,10 +49,11 @@ Although these instructions should work on any Docker-equipped system, they have
     * Note: When the above operation is complete, the database list in adminer may not update properly.  To force an update, create a new empty database (and then drop it).
   * Exit the shell in the MySQL container
     * `exit`
-* [Optional] Shut down the system
-  * CTRL-c / CMD-C
-* [Optional] Restart the system
-  * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy up`
+* [Optional, but likely necessary] Restart the system
+  * Stop the system
+    * CTRL-c / CMD-C
+  * Restart the system
+    * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy up`
 * Your site is now set up; visit http://localhost:8080 to see it!
 * [Optional] Delete the system
   * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy down`
