@@ -1,0 +1,48 @@
+# This docker-compose file will bring up a legacy system with this command:
+#   docker-compose -f docker-compose_legacy.yaml -p rwlegacy up
+
+# Before the command above is executed, the ropewiki/webserver_legacy image
+# must be built using Dockerfile_legacy.  Follow the instructions in README.md
+# for more detailed instructions.
+
+version: '3.6'
+
+services:
+
+  # MySQL database; see https://hub.docker.com/_/mysql
+  ropewiki_legacy_db:
+    image: mysql:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=thispasswordonlyworksuntildbisrestored
+    volumes:
+      - ropewiki_database_storage:/var/lib/mysql
+      - ./mysql/backup:/root/backup
+    restart: always
+
+  # The main RopeWiki server; see Dockerfile_legacy to build the image
+  ropewiki_legacy_webserver:
+    image: ropewiki/legacy_webserver
+    ports:
+      - "8080:80"
+    environment: 
+      - WG_DB_SERVER=ropewiki_legacy_db
+      - WG_DB_USER=ropewiki
+      - WG_DB_PASSWORD=thispasswordonlyworksuntildbisrestored
+      - WG_HOSTNAME=localhost:8080
+    depends_on:
+      - ropewiki_legacy_db
+    volumes:
+      - ./html/ropewiki/images:/usr/share/nginx/html/ropewiki/images
+    #restart: always
+
+  # This container is not part of the system; it just provides a convenient
+  # view into the database.
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+
+volumes:
+  ropewiki_database_storage:
+    name: ropewiki_database_storage
