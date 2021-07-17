@@ -3,6 +3,14 @@
 # This script acquires the latest .sql backup available at db01.ropewiki.com and places it in ./mysql/backup/prod
 # It requires SSH access to db01.ropewiki.com.
 
+if [[ $(pwd) == *app ]]
+then
+  echo "Working from $(pwd)"
+else
+  echo "Script working directory must be /app repo root; if you are running from the production folder, then: cd .."
+  exit 1
+fi
+
 log "Finding latest database backup..."
 LATEST_BACKUP_ZIP=$(ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t | head -1")
 log "  -> Found ${LATEST_BACKUP_ZIP}."
