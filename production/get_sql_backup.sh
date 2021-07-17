@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script acquires the latest .sql backup available at db01.ropewiki.com and places it in ./mysql/backup/prod
+# This script acquires the latest .sql backup available at db01.ropewiki.com and places it in the specified folder
 # It requires SSH access to db01.ropewiki.com.
 
 function log(){
