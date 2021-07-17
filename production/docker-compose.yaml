@@ -1,9 +1,8 @@
-# This docker-compose file will bring up a legacy system with this command:
-#   docker-compose -f docker-compose_legacy.yaml -p rwlegacy up
+# This docker-compose file will bring up a production legacy system with this command:
+#   docker-compose -p rwlegacy up
 
-# Before the command above is executed, the ropewiki/webserver_legacy image
-# must be built using Dockerfile_legacy.  Follow the instructions in README.md
-# for more detailed instructions.
+# Before the command above is executed, the ropewiki/legacy_webserver image
+# must be built according to the instructions in ../README.md.
 
 version: '3.6'
 
@@ -16,10 +15,10 @@ services:
       - MYSQL_ROOT_PASSWORD=thispasswordonlyworksuntildbisrestored
     volumes:
       - ropewiki_database_storage:/var/lib/mysql
-      - ./mysql/backup:/root/backup
+      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/root/backup
     restart: always
 
-  # The main RopeWiki server; see Dockerfile_legacy to build the image
+  # The main RopeWiki server; see instructions in ../README.md to build the image
   ropewiki_legacy_webserver:
     image: ropewiki/legacy_webserver
     ports:
@@ -32,16 +31,8 @@ services:
     depends_on:
       - ropewiki_legacy_db
     volumes:
-      - ./html/ropewiki/images:/usr/share/nginx/html/ropewiki/images
+      - {$IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
     #restart: always
-
-  # This container is not part of the system; it just provides a convenient
-  # view into the database.
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8081:8080
 
 volumes:
   ropewiki_database_storage:

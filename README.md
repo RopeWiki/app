@@ -15,7 +15,7 @@ Although these instructions should work on any Docker-equipped system, they have
 
 ### Run a legacy system
 
-* Build the ropewiki/webserver_legacy image
+* Build the `ropewiki/legacy_webserver` image
   * `docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .`
     * Note: if you have moved the 'images' assets folder into the 'html/ropewiki' subfolder already, move them out before doing the docker image build, because the build daemon sends the entire contents of the folder where the dockerfile is located, and images is >15GB. Similarly if you have a .sql backup file in 'mysql/backup'.
 * [Optional] Open an interactive shell to view files and run test commands in webserver
