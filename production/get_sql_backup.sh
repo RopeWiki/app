@@ -3,11 +3,15 @@
 # This script acquires the latest .sql backup available at db01.ropewiki.com and places it in ./mysql/backup/prod
 # It requires SSH access to db01.ropewiki.com.
 
+function log(){
+  echo "$(date --rfc-3339=seconds) $1"
+}
+
 if [[ $(pwd) == *app ]]
 then
-  echo "Working from $(pwd)"
+  log "Working from $(pwd)"
 else
-  echo "Script working directory must be /app repo root; if you are running from the production folder, then: cd .."
+  log "Script working directory must be /app repo root; if you are running from the production folder, then: cd .."
   exit 1
 fi
 
