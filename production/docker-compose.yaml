@@ -31,7 +31,7 @@ services:
     depends_on:
       - ropewiki_legacy_db
     volumes:
-      - {$IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
+      - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
     #restart: always
 
 volumes:

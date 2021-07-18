@@ -16,6 +16,7 @@ Execute the following steps to produce a server running RopeWiki starting from a
 1. Install necessary tools
     1. Update packages (`sudo apt-get update`)
     1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+    1. [Install docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems)
     1. Install git (`sudo apt-get install git`)
     1. Clone this repository into an appropriate folder (perhaps `/rw`)
 1. Transfer site data
