@@ -1,5 +1,9 @@
 #!/bin/bash
 
+function log(){
+  echo "$(date --rfc-3339=seconds) $1"
+}
+
 BACKUP_FOLDER=$1
 if [[ -z "${BACKUP_FOLDER}" ]]
 then

@@ -17,7 +17,13 @@ then
   exit 1
 fi
 
-LATEST_BACKUP=$(./print_latest_sql_backup.sh)
+LATEST_BACKUP=$(./print_latest_sql_backup.sh ${BACKUP_FOLDER})
+if [[ -z "${BACKUP_FOLDER}" ]]
+then
+  log "Could not find latest backup in ${BACKUP_FOLDER}"
+  exit 1
+fi
+
 log "Restoring backup ${LATEST_BACKUP}..."
 cat ${LATEST_BACKUP} | docker container exec -i ${DB_CONTAINER} mysql --user=ropewiki --password=${WG_DB_PASSWORD} ropewiki
 log "  -> Backup restored."
