@@ -17,6 +17,6 @@ then
   echo Warning: environment variable WG_HOSTNAME not set; default hostname will be used.
 fi
 
-mkdir -p PROXY_CONFIG_FOLDER
+mkdir -p ${PROXY_CONFIG_FOLDER}
 
 docker-compose up -d
