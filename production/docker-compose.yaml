@@ -42,14 +42,14 @@ services:
       driver: json-file
       options:
         max-size: 10m
-        max-file: 10
+#        max-file: 10
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ${PROXY_CONFIG_FOLDER:?PROXY_CONFIG_FOLDER environment variable must be set}:/config
       - ${PROXY_CONFIG_FOLDER}/letsencrypt:/etc/letsencrypt
-    restart: always
+#    restart: always
 
 volumes:
   ropewiki_database_storage:
