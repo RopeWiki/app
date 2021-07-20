@@ -26,7 +26,7 @@ services:
     environment: 
       - WG_DB_SERVER=ropewiki_legacy_db
       - WG_DB_USER=ropewiki
-      - WG_DB_PASSWORD=thispasswordonlyworksuntildbisrestored
+      - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
       - WG_HOSTNAME=localhost:8080
     depends_on:
       - ropewiki_legacy_db
