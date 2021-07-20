@@ -23,11 +23,12 @@ services:
     image: ropewiki/legacy_webserver
     ports:
       - "8080:80"
-    environment: 
+    environment:
+      - WG_PROTOCOL ${WG_PROTOCOL:-http}
+      - WG_HOSTNAME ${WG_HOSTNAME:-localhost:8080}
       - WG_DB_SERVER=ropewiki_legacy_db
       - WG_DB_USER=ropewiki
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
-      - WG_HOSTNAME=localhost:8080
     depends_on:
       - ropewiki_legacy_db
     volumes:

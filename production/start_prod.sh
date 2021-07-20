@@ -11,4 +11,9 @@ then
   echo Warning: environment variable WG_DB_PASSWORD not set; a restored database will probably not work.
 fi
 
+if [[ -z "${WG_HOSTNAME}" ]]
+then
+  echo Warning: environment variable WG_HOSTNAME not set; default hostname will be used.
+fi
+
 docker-compose up -d
