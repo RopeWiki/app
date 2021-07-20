@@ -5,6 +5,7 @@
 
 SQL_BACKUP_FOLDER=/rw/mount/sqlbackup
 IMAGES_FOLDER=/rw/mount/images
+PROXY_CONFIG_FOLDER=/rw/mount/proxy_config
 
 if [[ -z "${WG_DB_PASSWORD}" ]]
 then
@@ -15,5 +16,7 @@ if [[ -z "${WG_HOSTNAME}" ]]
 then
   echo Warning: environment variable WG_HOSTNAME not set; default hostname will be used.
 fi
+
+mkdir -p PROXY_CONFIG_FOLDER
 
 docker-compose up -d

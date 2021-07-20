@@ -24,8 +24,8 @@ services:
     ports:
       - "8080:80"
     environment:
-      - WG_PROTOCOL ${WG_PROTOCOL:-http}
-      - WG_HOSTNAME ${WG_HOSTNAME:-localhost:8080}
+      - WG_PROTOCOL=${WG_PROTOCOL:-http}
+      - WG_HOSTNAME=${WG_HOSTNAME:-localhost:8080}
       - WG_DB_SERVER=ropewiki_legacy_db
       - WG_DB_USER=ropewiki
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
@@ -36,20 +36,20 @@ services:
     #restart: always
 
   # The reverse proxy that directs traffic to the appropriate places
-#  ropewiki_reverse_proxy:
-#    image: ropewiki/reverse_proxy
-#    logging:
-#      driver: json-file
-#      options:
-#        max-size: 10m
-#        max-file: 10
-#    ports:
-#      - "80:80"
-#      - "443:443"
-#    volumes:
-#      - ${PROXY_CONFIG_FOLDER:?PROXY_CONFIG_FOLDER environment variable must be set}:/config
-#      - ${PROXY_CONFIG_FOLDER}/letsencrypt:/etc/letsencrypt
-#    restart: always
+  ropewiki_reverse_proxy:
+    image: ropewiki/reverse_proxy
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 10
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${PROXY_CONFIG_FOLDER:?PROXY_CONFIG_FOLDER environment variable must be set}:/config
+      - ${PROXY_CONFIG_FOLDER}/letsencrypt:/etc/letsencrypt
+    restart: always
 
 volumes:
   ropewiki_database_storage:

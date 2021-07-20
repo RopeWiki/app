@@ -29,6 +29,7 @@ Execute the following steps to produce a server running RopeWiki starting from a
         1. If transferring from an old server, run `get_images.sh <ROPEWIKI MOUNT FOLDER>` (e.g., `get_images.sh /rw/mount`)
 1. Deploy site
     1. Build `ropewiki/legacy_webserver` image according to [the instructions](README.md#Run a legacy server)
+    1. Build `ropewiki/reverse_proxy` image by running the command specified in the [Dockerfile](reverse_proxy/Dockerfile)
     1. Create an empty database using `./create_db.sh`
         1. `SQL_BACKUP_FOLDER` and `IMAGES_FOLDER` must be set appropriately before running this command.
     1. Restore content into database using `./restore_db.sh <SQL BACKUP FOLDER>`
