@@ -34,6 +34,22 @@ services:
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
     #restart: always
 
+  # The reverse proxy that directs traffic to the appropriate places
+#  ropewiki_reverse_proxy:
+#    image: ropewiki/reverse_proxy
+#    logging:
+#      driver: json-file
+#      options:
+#        max-size: 10m
+#        max-file: 10
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - ${PROXY_CONFIG_FOLDER:?PROXY_CONFIG_FOLDER environment variable must be set}:/config
+#      - ${PROXY_CONFIG_FOLDER}/letsencrypt:/etc/letsencrypt
+#    restart: always
+
 volumes:
   ropewiki_database_storage:
     name: ropewiki_database_storage

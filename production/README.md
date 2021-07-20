@@ -30,4 +30,5 @@ Execute the following steps to produce a server running RopeWiki starting from a
 1. Deploy site
     1. Build `ropewiki/legacy_webserver` image according to [the instructions](README.md#Run a legacy server)
     1. Create an empty database using `./create_db.sh`
+        1. `SQL_BACKUP_FOLDER` and `IMAGES_FOLDER` must be set appropriately before running this command.
     1. Restore content into database using `./restore_db.sh <SQL BACKUP FOLDER>`
