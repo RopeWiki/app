@@ -1,26 +1,9 @@
-# You may add here your
-# server {
-#	...
-# }
-# statements for each of your virtual hosts to this file
-
-##
-# You should look at the following URL's in order to grasp a solid understanding
-# of Nginx configuration files in order to fully unleash the power of Nginx.
-# http://wiki.nginx.org/Pitfalls
-# http://wiki.nginx.org/QuickStart
-# http://wiki.nginx.org/Configuration
-#
-# Generally, you will want to move this file somewhere, and start with a clean
-# file but keep this around for reference. Or just disable in sites-enabled.
-#
-# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
-##
+# The content of this file is included within an http block by nginx.conf
 
 server {
 	listen 80 default_server;
 	listen [::]:80 default_server ipv6only=on;
-        add_header Access-Control-Allow-Origin www.ropewiki.com; 
+        #add_header Access-Control-Allow-Origin www.ropewiki.com;
         client_max_body_size 5M;
 	root /usr/share/nginx/html/ropewiki;
 	index index.php index.html index.htm;
@@ -28,30 +11,13 @@ server {
 	# Make site accessible from http://localhost/
 	server_name localhost;
 
-#	location / {
-#		# First attempt to serve request as file, then
-#		# as directory, then fall back to displaying a 404.
-#		try_files $uri $uri/ =404;
-#		# Uncomment to enable naxsi on this location
-#		# include /etc/nginx/naxsi.rules
-#	}
+    location / {
+        try_files $uri $uri/ @rewrite;
+    }
 
-        location / {
-                try_files $uri $uri/ @rewrite;
-#         deny 70.32.68.28;
-#	  deny 37.34.59.165;
-        }
- 
-        location @rewrite {
-                rewrite ^/(.*)$ /index.php?title=$1&$args;
-        }
- 
-
-
-	# Only for nginx-naxsi used with nginx-naxsi-ui : process denied requests
-	#location /RequestDenied {
-	#	proxy_pass http://127.0.0.1:8080;    
-	#}
+    location @rewrite {
+        rewrite ^/(.*)$ /index.php?title=$1&$args;
+    }
 
 	error_page 404 /404.html;
 
@@ -83,49 +49,9 @@ server {
 	#	deny all;
 	#}
 
-        location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {
-            access_log        off;
-            log_not_found     off;
-            expires           360d;
-        }
+    location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {
+        access_log        off;
+        log_not_found     off;
+        expires           360d;
+    }
 }
-
-
-# another virtual host using mix of IP-, name-, and port-based configuration
-#
-#server {
-#	listen 8000;
-#	listen somename:8080;
-#	server_name somename alias another.alias;
-#	root html;
-#	index index.html index.htm;
-#
-#	location / {
-#		try_files $uri $uri/ =404;
-#	}
-#}
-
-
-# HTTPS server
-#
-#server {
-#	listen 443;
-#	server_name localhost;
-#
-#	root html;
-#	index index.html index.htm;
-#
-#	ssl on;
-#	ssl_certificate cert.pem;
-#	ssl_certificate_key cert.key;
-#
-#	ssl_session_timeout 5m;
-#
-#	ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2;
-#	ssl_ciphers "HIGH:!aNULL:!MD5 or HIGH:!aNULL:!MD5:!3DES";
-#	ssl_prefer_server_ciphers on;
-#
-#	location / {
-#		try_files $uri $uri/ =404;
-#	}
-#}
