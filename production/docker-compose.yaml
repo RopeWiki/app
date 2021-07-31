@@ -49,12 +49,11 @@ services:
     depends_on:
       - ropewiki_legacy_webserver
     volumes:
-      - ropewiki_proxy_config:/config
-      - ropewiki_proxy_config/letsencrypt:/etc/letsencrypt
+      - ropewiki_proxy_certs:/etc/letsencrypt
 #    restart: always
 
 volumes:
   ropewiki_database_storage:
     name: ropewiki_database_storage
-  ropewiki_proxy_config:
-    name: ropewiki_proxy_config
+  ropewiki_proxy_certs:
+    name: ropewiki_proxy_certs
