@@ -73,7 +73,7 @@ def log(msg: str):
   print("{} {}".format(datetime.datetime.now().isoformat(), msg))
 
 def run_cmd(cmd: str) -> str:
-  log('RUN {}'.format(cmd))
+  log('  RUN {}'.format(cmd))
   p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
   stdout = p.stdout
   if p.returncode != 0:
@@ -101,7 +101,7 @@ def run_docker_compose(cmd: str, site_config: SiteConfig):
         images_folder=site_config.images_folder,
         proxy_config_folder=site_config.proxy_config_folder) + '\n' +
       docker_compose_command + '\n')
-  log('SCRIPT {}'.format(docker_compose_command))
+  log('  SCRIPT {}'.format(docker_compose_command))
   run_cmd('sh {script} && rm {script}'.format(script=script))
 
 def get_docker_volumes() -> List[str]:
@@ -110,7 +110,7 @@ def get_docker_volumes() -> List[str]:
   return [line[offset:] for line in lines[1:]]
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
-  latest_backup = run_cmd('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder))
+  latest_backup = run_cmd('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder)).strip()
   if not latest_backup:
     sys.exit('Could not find latest backup in {}'.format(site_config.sql_backup_folder))
   return latest_backup
@@ -205,7 +205,7 @@ def create_db(site_config: SiteConfig):
     'docker container exec {}'.format(site_config.db_container) +
     ' bash -c "mysql -u root -p{}'.format(site_config.db_password) +
     ' -e \\"CREATE USER \'ropewiki\'@\'localhost\' IDENTIFIED BY \'{}\';'.format(site_config.db_password) +
-    ' GRANT ALL PRIVILEGES ON * . * TO \'ropewiki\'@\'localhost\';\\"')
+    ' GRANT ALL PRIVILEGES ON * . * TO \'ropewiki\'@\'localhost\';\\""')
   run_cmd(cmd)
 
   log('RopeWiki database initialized successfully.')
@@ -219,8 +219,8 @@ def restore_db(site_config: SiteConfig):
 
   log('Restoring backup ${LATEST_BACKUP}...')
   cmd = ('cat {latest_backup} | ' +
-         'docker container exec -i {db_container} mysql --user=ropewiki --password={db_password} ropewiki'.format(
-           latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password))
+         'docker container exec -i {db_container} mysql --user=ropewiki --password={db_password} ropewiki').format(
+           latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password)
   run_cmd(cmd)
   log('  -> Backup restored.')
 
