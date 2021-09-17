@@ -96,7 +96,8 @@ def run_docker_compose(cmd: str, site_config: SiteConfig):
       sql_backup_folder=site_config.sql_backup_folder,
       images_folder=site_config.images_folder,
       proxy_config_folder=site_config.proxy_config_folder))
-  full_cmd = 'sh {env_vars} && docker-compose {cmd}'.format(env_vars=env_vars, cmd=cmd)
+  full_cmd = 'sh {env_vars} && docker-compose -p {name} {cmd}'.format(
+    env_vars=env_vars, name=site_config.name, cmd=cmd)
   cmd_result(full_cmd)
   cmd_result('rm {}'.format(env_vars))
 
@@ -163,17 +164,14 @@ def create_db(site_config: SiteConfig):
   log('Deleting/cleaning up any existing database...')
 
   # Ensure the database is down
-  run_docker_compose('stop -p {project} {db_service}'.format(
-    project=site_config.name, db_service=site_config.db_service))
+  run_docker_compose('stop {db_service}'.format(db_service=site_config.db_service), site_config)
 
   # Clean up any existing volume
-  run_docker_compose('rm -v -p {project} {db_service}'.format(
-    project=site_config.name, db_service=site_config.db_service))
+  run_docker_compose('rm -v {db_service}'.format(db_service=site_config.db_service), site_config)
   cmd_result('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
   # Bring the database up
-  run_docker_compose('up -d -p {project} {db_service}'.format(
-    db_service=site_config.db_service, project=site_config.name))
+  run_docker_compose('up -d {db_service}'.format(db_service=site_config.db_service), site_config)
 
   # Wait for container to come up
   log('>> Waiting for MySQL database to initialize...')
