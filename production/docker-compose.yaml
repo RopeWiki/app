@@ -1,8 +1,8 @@
-# This docker-compose file will bring up a production legacy system with this command:
-#   docker-compose -p rwlegacy up
+# This docker-compose file will bring up a production system with this command:
+#   docker-compose up
 
-# Before the command above is executed, the ropewiki/legacy_webserver image
-# must be built according to the instructions in ../README.md.
+# Before the command above is executed, the ropewiki/webserver image
+# must be built according to the instructions in README.md.
 
 version: '3.6'
 
@@ -19,7 +19,7 @@ services:
     restart: always
 
   # The main RopeWiki server; see instructions in ../README.md to build the image
-  ropewiki_legacy_webserver:
+  ropewiki_webserver:
     image: ropewiki/legacy_webserver
     ports:
       - "8080:80"
@@ -47,7 +47,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - ropewiki_legacy_webserver
+      - ropewiki_webserver
     volumes:
       - ropewiki_proxy_certs:/etc/letsencrypt
 #    restart: always

@@ -24,35 +24,27 @@ Execute the following steps to produce a server running RopeWiki starting from a
 1. Define site to be deployed
     1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
     1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
+        1. Create a folder that will hold persistent mount (perhaps `/rw/mount`) and define folders relative to that folder
     1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
 1. Transfer site data
-    1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`)
     1. Get latest SQL backup
-        1. Create a subfolder in the persistent mount data folder that will hold SQL backups (perhaps `/rw/mount/sqlbackup`)
-            1. If transferring from an old server, run `get_sql_backup.sh <SQL BACKUP FOLDER>` (e.g., `get_sql_backup.sh /rw/mount/sqlbackup`)
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup`
     1. Get `images` folder
-        1. If transferring from an old server, run `get_images.sh <ROPEWIKI MOUNT FOLDER>` (e.g., `get_images.sh /rw/mount`)
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images`
 1. Deploy site
-    1. Build `ropewiki/webserver` image
-        1. * `docker image build -t ropewiki/webserver .`
+    1. Build `ropewiki/webserver` image from the root of this repo: `docker image build -t ropewiki/webserver .`
     1. Build `ropewiki/reverse_proxy` image by running the command specified in the [Dockerfile](reverse_proxy/Dockerfile)
-    1. Ensure environment variables are all populated correctly; example:
+    1. Ensure environment variable for DB password is populated correctly; example:
        ```shell
-       export WG_DB_PASSWORD=whateveryourpasswordis
-       export WG_HOSTNAME=ropewiki.com
-       export WG_PROTOCOL=https
-       export SQL_BACKUP_FOLDER=/rw/mount/sqlbackup
-       export IMAGES_FOLDER=/rw/mount/images
-       export PROXY_CONFIG_FOLDER=/rw/mount/proxy_config
+       export RW_DB_PASSWORD=whateveryourpasswordis
        ```
-    1. Create an empty database using `./create_db.sh`
-        1. `SQL_BACKUP_FOLDER` and `IMAGES_FOLDER` environment variables must be set appropriately before running this command.
-    1. Restore content into database using `./restore_db.sh ${SQL_BACKUP_FOLDER}`
-    1. Bring site up with `./start_prod.sh`
+    1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
+    1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
+    1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
     1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by visiting `http://<hostname>:8080`
     1. Confirm that the site is working via HTTP by visiting `http://<hostname>`
-    1. Enable TLS with `./enable_tls.sh`
-        1. Note that this should only ever be run once unless the `${PROXY_CONFIG_FOLDER}/letsencrypt` folder is deleted
+    1. Enable TLS with `python3 deploy_tool.py <SITE_NAME> enable_tls`
+        1. Note that this should only ever be run once unless the `${proxy_config_folder}/letsencrypt` folder is deleted
         1. Enable redirection (option 2) when prompted
         1. Verify success by visiting https://<hostname>
     1. Create cronjob to automatically update certificates
