@@ -72,10 +72,33 @@ def log(msg: str):
 
 def cmd_result(cmd: str) -> str:
   log('RUN {}'.format(cmd))
-  p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+  stdout = p.stdout
   if p.returncode != 0:
-    sys.exit(p.stderr.read())
-  return p.stdout.read().decode('utf-8')
+    print(stdout)
+    print('ERROR: Return code {}'.format(p.returncode))
+    sys.exit(p.stderr)
+  return stdout
+
+def run_docker_compose(cmd: str, site_config: SiteConfig):
+  env_vars = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prod_env_vars.sh')
+  with open(env_vars, 'w') as f:
+    f.write('\n'.join([
+      'export WG_DB_PASSWORD={db_password}',
+      'export WG_HOSTNAME={hostname}',
+      'export WG_PROTOCOL={protocol}',
+      'export SQL_BACKUP_FOLDER={sql_backup_folder}',
+      'export IMAGES_FOLDER={images_folder}',
+      'export PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
+      db_password=site_config.db_password,
+      hostname=site_config.hostname,
+      protocol=site_config.protocol,
+      sql_backup_folder=site_config.sql_backup_folder,
+      images_folder=site_config.images_folder,
+      proxy_config_folder=site_config.proxy_config_folder))
+  full_cmd = 'sh {env_vars} && docker-compose {cmd}'.format(env_vars=env_vars, cmd=cmd)
+  cmd_result(full_cmd)
+  cmd_result('rm {}'.format(env_vars))
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
   latest_backup = cmd_result('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder))
@@ -86,7 +109,7 @@ def latest_sql_backup(site_config: SiteConfig) -> str:
 @deploy_command
 def get_sql_backup(site_config: SiteConfig):
     log('Finding latest database backup...')
-    latest_backup_zip = cmd_result('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"')
+    latest_backup_zip = cmd_result('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"').strip('\n')
     log('  -> Found {}.'.format(latest_backup_zip))
     latest_backup = latest_backup_zip[:-3]
     local_target = os.path.join(site_config.sql_backup_folder, latest_backup)
@@ -140,17 +163,16 @@ def create_db(site_config: SiteConfig):
   log('Deleting/cleaning up any existing database...')
 
   # Ensure the database is down
-  cmd_result('docker-compose stop -p{project} {db_service}'.format(
+  run_docker_compose('stop -p {project} {db_service}'.format(
     project=site_config.name, db_service=site_config.db_service))
 
   # Clean up any existing volume
-  cmd_result('docker-compose rm -v -p{project} {db_service}'.format(
+  run_docker_compose('rm -v -p {project} {db_service}'.format(
     project=site_config.name, db_service=site_config.db_service))
-  cmd_result('docker volume rm -p{project} {db_volume}'.format(
-    project=site_config.name, db_volume=site_config.db_volume))
+  cmd_result('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
   # Bring the database up
-  cmd_result('docker-compose up -d -p{project} {db_service}'.format(
+  run_docker_compose('up -d -p {project} {db_service}'.format(
     db_service=site_config.db_service, project=site_config.name))
 
   # Wait for container to come up
@@ -201,13 +223,13 @@ def start_site(site_config: SiteConfig):
 
 @deploy_command
 def enable_tls(site_config: SiteConfig):
-  cmd_result('docker-compose exec -p{project} {reverse_proxy_container} certbot --nginx'.format(
+  cmd_result('docker-compose exec -p {project} {reverse_proxy_container} certbot --nginx'.format(
     project=site_config.name, reverse_proxy_container=site_config.reverse_proxy_service))
 
 @deploy_command
 def renew_certs(site_config: SiteConfig):
   log('Starting cert renewal check...')
-  cmd_result('docker-compose exec -p{project} {reverse_proxy_container} certbot renew'.format(
+  cmd_result('docker-compose exec -p {project} {reverse_proxy_container} certbot renew'.format(
     project=site_config.name, reverse_proxy_container=site_config.reverse_proxy_service))
 
 @deploy_command
