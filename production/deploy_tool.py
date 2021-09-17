@@ -65,6 +65,8 @@ def get_args() -> UserArgs:
     config = json.load(f)
   config['name'] = config_name
   config['db_password'] = os.environ.get('RW_DB_PASSWORD', None)
+  if not config['db_password']:
+    sys.exit('The RW_DB_PASSWORD environment variable must be set')
   return UserArgs(site_config=SiteConfig(**config), command=args.command)
 
 def log(msg: str):
@@ -104,7 +106,7 @@ def run_docker_compose(cmd: str, site_config: SiteConfig):
 
 def get_docker_volumes() -> List[str]:
   lines = run_cmd('docker volume ls').split('\n')
-  offset = lines[0].index('VOLUME_NAME')
+  offset = lines[0].index('VOLUME NAME')
   return [line[offset:] for line in lines[1:]]
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
@@ -173,7 +175,7 @@ def create_db(site_config: SiteConfig):
   run_docker_compose('stop {db_service}'.format(db_service=site_config.db_service), site_config)
 
   # Clean up any existing volumes
-  run_docker_compose('rm -v {db_service}'.format(db_service=site_config.db_service), site_config)
+  run_docker_compose('rm -v -f {db_service}'.format(db_service=site_config.db_service), site_config)
   volumes = get_docker_volumes()
   if site_config.db_volume in volumes:
     run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
@@ -185,10 +187,10 @@ def create_db(site_config: SiteConfig):
   log('>> Waiting for MySQL database to initialize...')
   time.sleep(10)
   while True:
-    db_status = run_cmd('docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container))
+    db_status = run_cmd('docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container)).strip()
     if db_status == 'running':
-      log('  {}'.format(db_status))
       break
+    log('  {}'.format(db_status))
     time.sleep(10)
 
   # Create an empty ropewiki database
@@ -245,6 +247,10 @@ def add_cert_cronjob(site_config: SiteConfig):
   cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
     deploy_tool=deploy_tool, site_name=site_config.name, cert_renewal_log=cert_renewal_log)
   run_cmd('crontab -l | {{ cat; echo "{cmd}"; }} | crontab -'.format(cmd_to_run))
+
+@deploy_command
+def tear_down(site_config: SiteConfig):
+  run_docker_compose('down', site_config)
 
 def main():
   args = get_args()
