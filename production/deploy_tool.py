@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 
 @dataclass
@@ -81,8 +81,9 @@ def run_cmd(cmd: str) -> str:
   return stdout
 
 def run_docker_compose(cmd: str, site_config: SiteConfig):
-  env_vars = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docker_compose_command.sh')
-  with open(env_vars, 'w') as f:
+  script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docker_compose_command.sh')
+  docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
+  with open(script, 'w') as f:
     f.write(
       '\n'.join([
         'export WG_DB_PASSWORD={db_password}',
@@ -97,8 +98,14 @@ def run_docker_compose(cmd: str, site_config: SiteConfig):
         sql_backup_folder=site_config.sql_backup_folder,
         images_folder=site_config.images_folder,
         proxy_config_folder=site_config.proxy_config_folder) + '\n' +
-      'docker-compose -p {name} {cmd}\n'.format(name=site_config.name, cmd=cmd))
-  run_cmd('sh {env_vars} && rm {env_vars}'.format(env_vars=env_vars))
+      docker_compose_command + '\n')
+  log('SCRIPT {}'.format(docker_compose_command))
+  run_cmd('sh {script} && rm {script}'.format(script=script))
+
+def get_docker_volumes() -> List[str]:
+  lines = run_cmd('docker volume ls').split('\n')
+  offset = lines[0].index('VOLUME_NAME')
+  return [line[offset:] for line in lines[1:]]
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
   latest_backup = run_cmd('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder))
@@ -165,9 +172,11 @@ def create_db(site_config: SiteConfig):
   # Ensure the database is down
   run_docker_compose('stop {db_service}'.format(db_service=site_config.db_service), site_config)
 
-  # Clean up any existing volume
+  # Clean up any existing volumes
   run_docker_compose('rm -v {db_service}'.format(db_service=site_config.db_service), site_config)
-  run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
+  volumes = get_docker_volumes()
+  if site_config.db_volume in volumes:
+    run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
   # Bring the database up
   run_docker_compose('up -d {db_service}'.format(db_service=site_config.db_service), site_config)
