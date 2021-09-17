@@ -70,7 +70,7 @@ def get_args() -> UserArgs:
 def log(msg: str):
   print("{} {}".format(datetime.datetime.now().isoformat(), msg))
 
-def cmd_result(cmd: str) -> str:
+def run_cmd(cmd: str) -> str:
   log('RUN {}'.format(cmd))
   p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
   stdout = p.stdout
@@ -81,28 +81,27 @@ def cmd_result(cmd: str) -> str:
   return stdout
 
 def run_docker_compose(cmd: str, site_config: SiteConfig):
-  env_vars = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prod_env_vars.sh')
+  env_vars = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docker_compose_command.sh')
   with open(env_vars, 'w') as f:
-    f.write('\n'.join([
-      'export WG_DB_PASSWORD={db_password}',
-      'export WG_HOSTNAME={hostname}',
-      'export WG_PROTOCOL={protocol}',
-      'export SQL_BACKUP_FOLDER={sql_backup_folder}',
-      'export IMAGES_FOLDER={images_folder}',
-      'export PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
-      db_password=site_config.db_password,
-      hostname=site_config.hostname,
-      protocol=site_config.protocol,
-      sql_backup_folder=site_config.sql_backup_folder,
-      images_folder=site_config.images_folder,
-      proxy_config_folder=site_config.proxy_config_folder))
-  full_cmd = 'sh {env_vars} && docker-compose -p {name} {cmd}'.format(
-    env_vars=env_vars, name=site_config.name, cmd=cmd)
-  cmd_result(full_cmd)
-  cmd_result('rm {}'.format(env_vars))
+    f.write(
+      '\n'.join([
+        'export WG_DB_PASSWORD={db_password}',
+        'export WG_HOSTNAME={hostname}',
+        'export WG_PROTOCOL={protocol}',
+        'export SQL_BACKUP_FOLDER={sql_backup_folder}',
+        'export IMAGES_FOLDER={images_folder}',
+        'export PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
+        db_password=site_config.db_password,
+        hostname=site_config.hostname,
+        protocol=site_config.protocol,
+        sql_backup_folder=site_config.sql_backup_folder,
+        images_folder=site_config.images_folder,
+        proxy_config_folder=site_config.proxy_config_folder) + '\n' +
+      'docker-compose -p {name} {cmd}\n'.format(name=site_config.name, cmd=cmd))
+  run_cmd('sh {env_vars} && rm {env_vars}'.format(env_vars=env_vars))
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
-  latest_backup = cmd_result('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder))
+  latest_backup = run_cmd('ls -t {}/*.sql | head -1'.format(site_config.sql_backup_folder))
   if not latest_backup:
     sys.exit('Could not find latest backup in {}'.format(site_config.sql_backup_folder))
   return latest_backup
@@ -110,7 +109,7 @@ def latest_sql_backup(site_config: SiteConfig) -> str:
 @deploy_command
 def get_sql_backup(site_config: SiteConfig):
     log('Finding latest database backup...')
-    latest_backup_zip = cmd_result('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"').strip('\n')
+    latest_backup_zip = run_cmd('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"').strip('\n')
     log('  -> Found {}.'.format(latest_backup_zip))
     latest_backup = latest_backup_zip[:-3]
     local_target = os.path.join(site_config.sql_backup_folder, latest_backup)
@@ -119,18 +118,18 @@ def get_sql_backup(site_config: SiteConfig):
       log('  -> Using pre-existing {}.'.format(latest_backup))
     else:
       log('Copying latest database backup locally...')
-      cmd_result('mkdir -p {}'.format(site_config.sql_backup_folder))
+      run_cmd('mkdir -p {}'.format(site_config.sql_backup_folder))
       log_file = os.path.join(site_config.logs_folder, 'get_sql.log')
-      cmd_result('touch {}'.format(log_file))
+      run_cmd('touch {}'.format(log_file))
       zip_target = os.path.join(site_config.sql_backup_folder, latest_backup_zip)
       cmd = (
         'rsync -arv' +
         ' root@db01.ropewiki.com:/root/backups/{} {}'.format(latest_backup_zip, zip_target) +
         ' 2>&1 | tee {}'.format(log_file))
-      cmd_result(cmd)
+      run_cmd(cmd)
       log('  -> Copied.')
       log('Unzipping {}...'.format(latest_backup_zip))
-      cmd_result('gunzip -f {}'.format(zip_target))
+      run_cmd('gunzip -f {}'.format(zip_target))
       log('  -> Unzipped {}.'.format(latest_sql_backup(site_config)))
 
 @deploy_command
@@ -147,13 +146,13 @@ def get_images(site_config: SiteConfig):
   # NOTE: this requires public key authentication to the remote server
   log("Copying latest /images content locally...")
   log_file = os.path.join(site_config.logs_folder, 'images_backup.log')
-  cmd_result('touch {}'.format(log_file))
+  run_cmd('touch {}'.format(log_file))
   cmd = (
     'rsync -arv' +
     ' root@ropewiki.com:/usr/share/nginx/html/ropewiki/images/' +
     ' {}'.format(site_config.images_folder) +
     ' 2>&1 > {}'.format(log_file))
-  cmd_result(cmd)
+  run_cmd(cmd)
   log('  -> Latest /images content copied locally.')
 
 @deploy_command
@@ -168,7 +167,7 @@ def create_db(site_config: SiteConfig):
 
   # Clean up any existing volume
   run_docker_compose('rm -v {db_service}'.format(db_service=site_config.db_service), site_config)
-  cmd_result('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
+  run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
   # Bring the database up
   run_docker_compose('up -d {db_service}'.format(db_service=site_config.db_service), site_config)
@@ -177,7 +176,7 @@ def create_db(site_config: SiteConfig):
   log('>> Waiting for MySQL database to initialize...')
   time.sleep(10)
   while True:
-    db_status = cmd_result('docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container))
+    db_status = run_cmd('docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container))
     if db_status == 'running':
       log('  {}'.format(db_status))
       break
@@ -185,7 +184,7 @@ def create_db(site_config: SiteConfig):
 
   # Create an empty ropewiki database
   log('>> Creating empty ropewiki database...')
-  cmd_result(
+  run_cmd(
     'docker container exec {}'.format(site_config.db_container) +
     ' mysqladmin -u root -p{} create ropewiki'.format(site_config.db_password))
 
@@ -196,7 +195,7 @@ def create_db(site_config: SiteConfig):
     ' bash -c "mysql -u root -p{}'.format(site_config.db_password) +
     ' -e \\"CREATE USER \'ropewiki\'@\'localhost\' IDENTIFIED BY \'{}\';'.format(site_config.db_password) +
     ' GRANT ALL PRIVILEGES ON * . * TO \'ropewiki\'@\'localhost\';\\"')
-  cmd_result(cmd)
+  run_cmd(cmd)
 
   log('RopeWiki database initialized successfully.')
 
@@ -211,24 +210,24 @@ def restore_db(site_config: SiteConfig):
   cmd = ('cat {latest_backup} | ' +
          'docker container exec -i {db_container} mysql --user=ropewiki --password={db_password} ropewiki'.format(
            latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password))
-  cmd_result(cmd)
+  run_cmd(cmd)
   log('  -> Backup restored.')
 
 @deploy_command
 def start_site(site_config: SiteConfig):
-  cmd_result('mkdir -p {}'.format(site_config.proxy_config_folder))
-  cmd_result('docker-compose up -d -p{}'.format(site_config.name))
+  run_cmd('mkdir -p {}'.format(site_config.proxy_config_folder))
+  run_docker_compose('up -d', site_config)
 
 @deploy_command
 def enable_tls(site_config: SiteConfig):
-  cmd_result('docker-compose exec -p {project} {reverse_proxy_container} certbot --nginx'.format(
-    project=site_config.name, reverse_proxy_container=site_config.reverse_proxy_service))
+  run_docker_compose('exec {reverse_proxy_container} certbot --nginx'.format(
+    reverse_proxy_container=site_config.reverse_proxy_service), site_config)
 
 @deploy_command
 def renew_certs(site_config: SiteConfig):
   log('Starting cert renewal check...')
-  cmd_result('docker-compose exec -p {project} {reverse_proxy_container} certbot renew'.format(
-    project=site_config.name, reverse_proxy_container=site_config.reverse_proxy_service))
+  run_docker_compose('exec {reverse_proxy_container} certbot renew'.format(
+    reverse_proxy_container=site_config.reverse_proxy_service), site_config)
 
 @deploy_command
 def add_cert_cronjob(site_config: SiteConfig):
@@ -236,7 +235,7 @@ def add_cert_cronjob(site_config: SiteConfig):
   cert_renewal_log = os.path.join(site_config.logs_folder, 'cert_renewals.log')
   cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
     deploy_tool=deploy_tool, site_name=site_config.name, cert_renewal_log=cert_renewal_log)
-  cmd_result('crontab -l | {{ cat; echo "{cmd}"; }} | crontab -'.format(cmd_to_run))
+  run_cmd('crontab -l | {{ cat; echo "{cmd}"; }} | crontab -'.format(cmd_to_run))
 
 def main():
   args = get_args()
