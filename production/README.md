@@ -21,6 +21,10 @@ Execute the following steps to produce a server running RopeWiki starting from a
         1. Fix [this issue](https://github.com/docker/compose/issues/6931) with `sudo apt update && apt install rng-tools`
     1. Install git (`sudo apt-get install git`)
     1. Clone this repository into an appropriate folder (perhaps `/rw`)
+1. Define site to be deployed
+    1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
+    1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
+    1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
 1. Transfer site data
     1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`)
     1. Get latest SQL backup
@@ -29,7 +33,8 @@ Execute the following steps to produce a server running RopeWiki starting from a
     1. Get `images` folder
         1. If transferring from an old server, run `get_images.sh <ROPEWIKI MOUNT FOLDER>` (e.g., `get_images.sh /rw/mount`)
 1. Deploy site
-    1. Build `ropewiki/legacy_webserver` image according to [the instructions](README.md#Run a legacy server)
+    1. Build `ropewiki/webserver` image
+        1. * `docker image build -t ropewiki/webserver .`
     1. Build `ropewiki/reverse_proxy` image by running the command specified in the [Dockerfile](reverse_proxy/Dockerfile)
     1. Ensure environment variables are all populated correctly; example:
        ```shell
