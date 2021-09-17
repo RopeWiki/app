@@ -73,6 +73,8 @@ def log(msg: str):
 def cmd_result(cmd: str) -> str:
   log('RUN {}'.format(cmd))
   p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+  if p.returncode != 0:
+    sys.exit(p.stderr.read())
   return p.stdout.read().decode('utf-8')
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
@@ -97,10 +99,11 @@ def get_sql_backup(site_config: SiteConfig):
       log_file = os.path.join(site_config.logs_folder, 'get_sql.log')
       cmd_result('touch {}'.format(log_file))
       zip_target = os.path.join(site_config.sql_backup_folder, latest_backup_zip)
-      cmd_result(
+      cmd = (
         'rsync -arv' +
-        ' root@db01.ropewiki.com: /root/backups/{} {}'.format(latest_backup_zip, zip_target) +
+        ' root@db01.ropewiki.com:/root/backups/{} {}'.format(latest_backup_zip, zip_target) +
         ' 2>&1 | tee {}'.format(log_file))
+      cmd_result(cmd)
       log('  -> Copied.')
       log('Unzipping {}...'.format(latest_backup_zip))
       cmd_result('gunzip -f {}'.format(zip_target))
