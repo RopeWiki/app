@@ -258,7 +258,7 @@ def add_cert_cronjob(site_config: SiteConfig):
   cert_renewal_log = os.path.join(site_config.logs_folder, 'cert_renewals.log')
   cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
     deploy_tool=deploy_tool, site_name=site_config.name, cert_renewal_log=cert_renewal_log)
-  run_cmd('crontab -l | {{ cat; echo "{cmd}"; }} | crontab -'.format(cmd_to_run))
+  run_cmd('crontab -l | {{ cat; echo "0 */12 * * * {cmd}"; }} | crontab -'.format(cmd=cmd_to_run))
 
 @deploy_command
 def tear_down(site_config: SiteConfig):

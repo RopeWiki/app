@@ -41,14 +41,11 @@ Execute the following steps to produce a server running RopeWiki starting from a
     1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by visiting `http://<hostname>:8080`
     1. Confirm that the site is working via HTTP by visiting `http://<hostname>`
     1. Enable TLS with `python3 deploy_tool.py <SITE_NAME> enable_tls`
-        1. Note that this should only ever be run once unless the `${proxy_config_folder}/letsencrypt` folder is deleted
+        1. Note that the certs should be persisted in `${proxy_config_folder}/letsencrypt`; select option 1 to reinstall the existing cert if prompted
         1. Enable redirection (option 2) when prompted
         1. Verify success by visiting https://<hostname>
     1. Create cronjob to automatically update certificates
-        1. From this working directory, run:
-            ```
-            crontab -l | { cat; echo "0 */12 * * * $PWD/renew_certs.sh >> ${PROXY_CONFIG_FOLDER}/cert_renewals.log 2>&1"; } | crontab -
-            ```
+        1. From this working directory, run `python3 deploy_tool.py <SITE_NAME> add_cert_cronjob`
         1. To edit or delete crontabs, `crontab -e`
 
 ## Site maintenance
