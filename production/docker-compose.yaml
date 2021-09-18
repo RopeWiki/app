@@ -1,0 +1,59 @@
+# This docker-compose file will bring up a production system with this command:
+#   docker-compose up
+
+# Before the command above is executed, the ropewiki/webserver image
+# must be built according to the instructions in README.md.
+
+version: '3.6'
+
+services:
+
+  # MySQL database; see https://hub.docker.com/_/mysql
+  ropewiki_legacy_db:
+    image: mysql:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
+    volumes:
+      - ropewiki_database_storage:/var/lib/mysql
+      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/root/backup
+    restart: always
+
+  # The main RopeWiki server; see instructions in ../README.md to build the image
+  ropewiki_webserver:
+    image: ropewiki/webserver
+    ports:
+      - "8080:80"
+    environment:
+      - WG_PROTOCOL=${WG_PROTOCOL:-http}
+      - WG_HOSTNAME=${WG_HOSTNAME:-localhost:8080}
+      - WG_DB_SERVER=ropewiki_legacy_db
+      - WG_DB_USER=ropewiki
+      - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
+    depends_on:
+      - ropewiki_legacy_db
+    volumes:
+      - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
+    #restart: always
+
+  # The reverse proxy that directs traffic to the appropriate places
+  ropewiki_reverse_proxy:
+    image: ropewiki/reverse_proxy
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+#        max-file: 10
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - ropewiki_webserver
+    volumes:
+      - ropewiki_proxy_certs:/etc/letsencrypt
+#    restart: always
+
+volumes:
+  ropewiki_database_storage:
+    name: ropewiki_database_storage
+  ropewiki_proxy_certs:
+    name: ropewiki_proxy_certs

@@ -1,0 +1,8 @@
+{
+  "hostname": "ropewiki.com",
+  "protocol": "https",
+  "logs_folder": "/rw/mount",
+  "sql_backup_folder": "/rw/mount/sqlbackup",
+  "images_folder": "/rw/mount/images",
+  "proxy_config_folder": "/rw/mount/proxy_config"
+}

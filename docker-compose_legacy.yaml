@@ -1,7 +1,7 @@
 # This docker-compose file will bring up a legacy system with this command:
 #   docker-compose -f docker-compose_legacy.yaml -p rwlegacy up
 
-# Before the command above is executed, the ropewiki/webserver_legacy image
+# Before the command above is executed, the ropewiki/legacy_webserver image
 # must be built using Dockerfile_legacy.  Follow the instructions in README.md
 # for more detailed instructions.
 
