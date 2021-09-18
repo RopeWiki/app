@@ -107,6 +107,10 @@ def run_docker_compose(cmd: str, site_config: SiteConfig):
   log('  SCRIPT {}'.format(docker_compose_command))
   run_cmd('sh {script} && rm {script}'.format(script=script))
 
+def execute_sql(sql_cmd: str, user: str, site_config: SiteConfig):
+  run_cmd('docker container exec {db_container} mysql -u{user} -p{password} "{cmd}"'.format(
+    db_container=site_config.db_container, user=user, password=site_config.db_password, cmd=sql_cmd))
+
 def get_docker_volumes() -> List[str]:
   lines = run_cmd('docker volume ls').split('\n')
   offset = lines[0].index('VOLUME NAME')
@@ -204,12 +208,10 @@ def create_db(site_config: SiteConfig):
 
   # Create the ropewiki user
   log('>> Creating ropewiki user...')
-  cmd = (
-    'docker container exec {}'.format(site_config.db_container) +
-    ' bash -c "mysql -u root -p{}'.format(site_config.db_password) +
-    ' -e \\"CREATE USER \'ropewiki\'@\'localhost\' IDENTIFIED BY \'{}\';'.format(site_config.db_password) +
-    ' GRANT ALL PRIVILEGES ON * . * TO \'ropewiki\'@\'localhost\';\\""')
-  run_cmd(cmd)
+  execute_sql("CREATE USER 'ropewiki'@'localhost' IDENTIFIED BY '{}';".format(
+    site_config.db_password), 'root', site_config)
+  execute_sql("GRANT ALL PRIVILEGES ON * . * TO 'ropewiki'@'localhost';", 'root', site_config)
+  execute_sql("FLUSH PRIVILEGES;", 'root', site_config)
 
   log('RopeWiki database initialized successfully.')
 
@@ -222,7 +224,7 @@ def restore_db(site_config: SiteConfig):
 
   log('Restoring backup ${LATEST_BACKUP}...')
   cmd = ('cat {latest_backup} | ' +
-         'docker container exec -i {db_container} mysql --user=ropewiki --password={db_password} ropewiki').format(
+         'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki').format(
            latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password)
   run_cmd(cmd)
   log('  -> Backup restored.')
