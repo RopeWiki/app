@@ -99,16 +99,16 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
     proxy_config_folder=site_config.proxy_config_folder)
   return variable_declarations, docker_compose_command
 
-def run_docker_compose(cmd: str, site_config: SiteConfig):
+def run_docker_compose(cmd: str, site_config: SiteConfig) -> str:
   script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docker_compose_command.sh')
   variable_declarations, docker_compose_command = make_docker_compose_script(cmd, site_config)
   with open(script, 'w') as f:
     f.write(variable_declarations + '\n' + docker_compose_command + '\n')
   log('  SCRIPT {}'.format(docker_compose_command))
-  run_cmd('sh {script} && rm {script}'.format(script=script))
+  return run_cmd('sh {script} && rm {script}'.format(script=script))
 
 def execute_sql(sql_cmd: str, user: str, site_config: SiteConfig):
-  run_cmd('docker container exec {db_container} mysql -u{user} -p{password} "{cmd}"'.format(
+  run_cmd('docker container exec {db_container} mysql -u{user} -p{password} -e "{cmd}"'.format(
     db_container=site_config.db_container, user=user, password=site_config.db_password, cmd=sql_cmd))
 
 def get_docker_volumes() -> List[str]:
@@ -208,9 +208,9 @@ def create_db(site_config: SiteConfig):
 
   # Create the ropewiki user
   log('>> Creating ropewiki user...')
-  execute_sql("CREATE USER 'ropewiki'@'localhost' IDENTIFIED BY '{}';".format(
+  execute_sql("CREATE USER 'ropewiki'@'%' IDENTIFIED BY '{}';".format(
     site_config.db_password), 'root', site_config)
-  execute_sql("GRANT ALL PRIVILEGES ON * . * TO 'ropewiki'@'localhost';", 'root', site_config)
+  execute_sql("GRANT ALL PRIVILEGES ON * . * TO 'ropewiki'@'%';", 'root', site_config)
   execute_sql("FLUSH PRIVILEGES;", 'root', site_config)
 
   log('RopeWiki database initialized successfully.')
@@ -247,8 +247,10 @@ def enable_tls(site_config: SiteConfig):
 @deploy_command
 def renew_certs(site_config: SiteConfig):
   log('Starting cert renewal check...')
-  run_docker_compose('exec {reverse_proxy_container} certbot renew'.format(
+  response = run_docker_compose('exec {reverse_proxy_container} certbot renew'.format(
     reverse_proxy_container=site_config.reverse_proxy_service), site_config)
+  log('Renewal check complete; results:')
+  print(response)
 
 @deploy_command
 def add_cert_cronjob(site_config: SiteConfig):
