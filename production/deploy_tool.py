@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 
 @dataclass
@@ -49,7 +49,7 @@ def make_argparse() -> argparse.ArgumentParser:
     'command',
     metavar='COMMAND',
     choices=list(deploy_commands),
-    help='Deployment command to execute')
+    help='Deployment command to execute: {{{}}}'.format('|'.join(deploy_commands)))
   return parser
 
 @dataclass
@@ -64,9 +64,9 @@ def get_args() -> UserArgs:
   with open(config_path, 'r') as f:
     config = json.load(f)
   config['name'] = config_name
-  config['db_password'] = os.environ.get('RW_DB_PASSWORD', None)
+  config['db_password'] = os.environ.get('WG_DB_PASSWORD', None)
   if not config['db_password']:
-    sys.exit('The RW_DB_PASSWORD environment variable must be set')
+    sys.exit('The WG_DB_PASSWORD environment variable must be set')
   return UserArgs(site_config=SiteConfig(**config), command=args.command)
 
 def log(msg: str):
@@ -82,25 +82,28 @@ def run_cmd(cmd: str) -> str:
     sys.exit(p.stderr)
   return stdout
 
+def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, str]:
+  docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
+  variable_declarations = '\n'.join([
+    'export WG_DB_PASSWORD={db_password}',
+    'export WG_HOSTNAME={hostname}',
+    'export WG_PROTOCOL={protocol}',
+    'export SQL_BACKUP_FOLDER={sql_backup_folder}',
+    'export IMAGES_FOLDER={images_folder}',
+    'export PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
+    db_password=site_config.db_password,
+    hostname=site_config.hostname,
+    protocol=site_config.protocol,
+    sql_backup_folder=site_config.sql_backup_folder,
+    images_folder=site_config.images_folder,
+    proxy_config_folder=site_config.proxy_config_folder)
+  return variable_declarations, docker_compose_command
+
 def run_docker_compose(cmd: str, site_config: SiteConfig):
   script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docker_compose_command.sh')
-  docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
+  variable_declarations, docker_compose_command = make_docker_compose_script(cmd, site_config)
   with open(script, 'w') as f:
-    f.write(
-      '\n'.join([
-        'export WG_DB_PASSWORD={db_password}',
-        'export WG_HOSTNAME={hostname}',
-        'export WG_PROTOCOL={protocol}',
-        'export SQL_BACKUP_FOLDER={sql_backup_folder}',
-        'export IMAGES_FOLDER={images_folder}',
-        'export PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
-        db_password=site_config.db_password,
-        hostname=site_config.hostname,
-        protocol=site_config.protocol,
-        sql_backup_folder=site_config.sql_backup_folder,
-        images_folder=site_config.images_folder,
-        proxy_config_folder=site_config.proxy_config_folder) + '\n' +
-      docker_compose_command + '\n')
+    f.write(variable_declarations + '\n' + docker_compose_command + '\n')
   log('  SCRIPT {}'.format(docker_compose_command))
   run_cmd('sh {script} && rm {script}'.format(script=script))
 
@@ -231,8 +234,13 @@ def start_site(site_config: SiteConfig):
 
 @deploy_command
 def enable_tls(site_config: SiteConfig):
-  run_docker_compose('exec {reverse_proxy_container} certbot --nginx'.format(
-    reverse_proxy_container=site_config.reverse_proxy_service), site_config)
+  variable_declarations, docker_compose_command = make_docker_compose_script(
+    'exec {} certbot --nginx'.format(site_config.reverse_proxy_service), site_config)
+  script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enable_tls.sh')
+  with open(script, 'w') as f:
+    f.write(variable_declarations + '\n' + docker_compose_command + '\n')
+  log('Script generated.  To enable TLS, run:')
+  log('  sh {}'.format(script))
 
 @deploy_command
 def renew_certs(site_config: SiteConfig):
