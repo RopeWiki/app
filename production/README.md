@@ -34,10 +34,7 @@ Execute the following steps to produce a server running RopeWiki starting from a
 1. Deploy site
     1. Build `ropewiki/webserver` image from the root of this repo: `docker image build -t ropewiki/webserver .`
     1. Build `ropewiki/reverse_proxy` image by running the command specified in the [Dockerfile](reverse_proxy/Dockerfile)
-    1. Ensure environment variable for DB password is populated correctly; example:
-       ```shell
-       export RW_DB_PASSWORD=whateveryourpasswordis
-       ```
+    1. Ensure environment variable for DB password is populated correctly; example: `export RW_DB_PASSWORD=whateveryourpasswordis`
     1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
     1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
     1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`

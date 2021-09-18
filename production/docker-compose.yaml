@@ -20,7 +20,7 @@ services:
 
   # The main RopeWiki server; see instructions in ../README.md to build the image
   ropewiki_webserver:
-    image: ropewiki/legacy_webserver
+    image: ropewiki/webserver
     ports:
       - "8080:80"
     environment:
