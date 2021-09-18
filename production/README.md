@@ -28,9 +28,9 @@ Execute the following steps to produce a server running RopeWiki starting from a
     1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
 1. Transfer site data
     1. Get latest SQL backup
-        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup`
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
     1. Get `images` folder
-        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images`
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
 1. Deploy site
     1. Build `ropewiki/webserver` image from the root of this repo: `docker image build -t ropewiki/webserver .`
     1. Build `ropewiki/reverse_proxy` image by running the command specified in the [Dockerfile](reverse_proxy/Dockerfile)

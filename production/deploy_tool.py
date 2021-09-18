@@ -123,7 +123,7 @@ def latest_sql_backup(site_config: SiteConfig) -> str:
   return latest_backup
 
 @deploy_command
-def get_sql_backup(site_config: SiteConfig):
+def get_sql_backup_legacy(site_config: SiteConfig):
     log('Finding latest database backup...')
     latest_backup_zip = run_cmd('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"').strip('\n')
     log('  -> Found {}.'.format(latest_backup_zip))
@@ -153,7 +153,7 @@ def print_latest_sql_backup(site_config: SiteConfig):
   print(latest_sql_backup(site_config))
 
 @deploy_command
-def get_images(site_config: SiteConfig):
+def get_images_legacy(site_config: SiteConfig):
   """Retrieve latest files in /images folder from remote server at ropewiki.com
 
   Requires SSH access to ropewiki.com.
