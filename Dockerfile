@@ -81,6 +81,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://gitlab.com/troyengel/Preloader && cd Preloader && git checkout 4b06d0e3
 RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticForms && cd SemanticForms && git checkout 9169c63
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_24
 
 # Present in main site but not here:
 # APC
@@ -97,6 +98,9 @@ COPY ./html /usr/share/nginx/html
 # Copy in our nginx customizations
 COPY ./nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
+
+# Copy in our MMV customizations (do multiple browser back on close instead of navigate forward to original page)
+COPY ./html/ropewiki/extensions/MultimediaViewer/mmv.js /rw/extensions/MultimediaViewer/resources/mmv 
 
 # === Set up startup behavior ===
 
