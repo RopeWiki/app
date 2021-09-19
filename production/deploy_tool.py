@@ -29,9 +29,9 @@ class SiteConfig(object):
     return '{}_{}_1'.format(self.name, self.db_service)
   reverse_proxy_service = 'ropewiki_reverse_proxy'
 
-deploy_commands: Dict[str, Callable[[SiteConfig], None]] = {}
+deploy_commands: Dict[str, Callable[[SiteConfig, List[str]], None]] = {}
 
-def deploy_command(func: Callable[[SiteConfig], None]):
+def deploy_command(func: Callable[[SiteConfig, List[str]], None]):
   global deploy_commands
   deploy_commands[func.__name__] = func
   return func
@@ -50,12 +50,18 @@ def make_argparse() -> argparse.ArgumentParser:
     metavar='COMMAND',
     choices=list(deploy_commands),
     help='Deployment command to execute: {{{}}}'.format('|'.join(deploy_commands)))
+  parser.add_argument(
+    'options',
+    metavar='OPTIONS',
+    nargs='*',
+    help='Additional options for certain deployment commands')
   return parser
 
 @dataclass
 class UserArgs(object):
   site_config: SiteConfig
   command: str
+  options: List[str]
 
 def get_args() -> UserArgs:
   args = make_argparse().parse_args()
@@ -67,7 +73,7 @@ def get_args() -> UserArgs:
   config['db_password'] = os.environ.get('WG_DB_PASSWORD', None)
   if not config['db_password']:
     sys.exit('The WG_DB_PASSWORD environment variable must be set')
-  return UserArgs(site_config=SiteConfig(**config), command=args.command)
+  return UserArgs(site_config=SiteConfig(**config), command=args.command, options=args.options)
 
 def log(msg: str):
   print("{} {}".format(datetime.datetime.now().isoformat(), msg))
@@ -123,7 +129,7 @@ def latest_sql_backup(site_config: SiteConfig) -> str:
   return latest_backup
 
 @deploy_command
-def get_sql_backup_legacy(site_config: SiteConfig):
+def get_sql_backup_legacy(site_config: SiteConfig, options: List[str]):
     log('Finding latest database backup...')
     latest_backup_zip = run_cmd('ssh root@db01.ropewiki.com "cd /root/backups ; ls -1 -t *.gz | head -1"').strip('\n')
     log('  -> Found {}.'.format(latest_backup_zip))
@@ -149,11 +155,11 @@ def get_sql_backup_legacy(site_config: SiteConfig):
       log('  -> Unzipped {}.'.format(latest_sql_backup(site_config)))
 
 @deploy_command
-def print_latest_sql_backup(site_config: SiteConfig):
+def print_latest_sql_backup(site_config: SiteConfig, options: List[str]):
   print(latest_sql_backup(site_config))
 
 @deploy_command
-def get_images_legacy(site_config: SiteConfig):
+def get_images_legacy(site_config: SiteConfig, options: List[str]):
   """Retrieve latest files in /images folder from remote server at ropewiki.com
 
   Requires SSH access to ropewiki.com.
@@ -172,7 +178,7 @@ def get_images_legacy(site_config: SiteConfig):
   log('  -> Latest /images content copied locally.')
 
 @deploy_command
-def create_db(site_config: SiteConfig):
+def create_db(site_config: SiteConfig, options: List[str]):
   """Intended to be run once to create an empty database while deploying a production system.
 
   It sets up the ropewiki_db service defined in docker-compose.yaml"""
@@ -216,7 +222,7 @@ def create_db(site_config: SiteConfig):
   log('RopeWiki database initialized successfully.')
 
 @deploy_command
-def restore_db(site_config: SiteConfig):
+def restore_db(site_config: SiteConfig, options: List[str]):
   """Restore content from a .sql backup file into the database described in docker-compose.yaml.
   """
 
@@ -230,12 +236,12 @@ def restore_db(site_config: SiteConfig):
   log('  -> Backup restored.')
 
 @deploy_command
-def start_site(site_config: SiteConfig):
+def start_site(site_config: SiteConfig, options: List[str]):
   run_cmd('mkdir -p {}'.format(site_config.proxy_config_folder))
   run_docker_compose('up -d', site_config)
 
 @deploy_command
-def enable_tls(site_config: SiteConfig):
+def enable_tls(site_config: SiteConfig, options: List[str]):
   variable_declarations, docker_compose_command = make_docker_compose_script(
     'exec {} certbot --nginx'.format(site_config.reverse_proxy_service), site_config)
   script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enable_tls.sh')
@@ -245,7 +251,7 @@ def enable_tls(site_config: SiteConfig):
   log('  sh {}'.format(script))
 
 @deploy_command
-def renew_certs(site_config: SiteConfig):
+def renew_certs(site_config: SiteConfig, options: List[str]):
   log('Starting cert renewal check...')
   response = run_docker_compose('exec {reverse_proxy_container} certbot renew'.format(
     reverse_proxy_container=site_config.reverse_proxy_service), site_config)
@@ -253,22 +259,31 @@ def renew_certs(site_config: SiteConfig):
   print(response)
 
 @deploy_command
-def add_cert_cronjob(site_config: SiteConfig):
+def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
   deploy_tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deploy_tool.py')
   cert_renewal_log = os.path.join(site_config.logs_folder, 'cert_renewals.log')
-  cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
-    deploy_tool=deploy_tool, site_name=site_config.name, cert_renewal_log=cert_renewal_log)
+  cmd_to_run = ('export WG_DB_PASSWORD={db_password} && ' +
+                'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1').format(
+    db_password=site_config.db_password, deploy_tool=deploy_tool, site_name=site_config.name,
+    cert_renewal_log=cert_renewal_log)
   run_cmd('crontab -l | {{ cat; echo "0 */12 * * * {cmd}"; }} | crontab -'.format(cmd=cmd_to_run))
 
 @deploy_command
-def tear_down(site_config: SiteConfig):
-  run_docker_compose('down', site_config)
+def dc(site_config: SiteConfig, options: List[str]):
+  dc_commands = {
+    'build', 'bundle', 'config', 'create', 'down', 'events', 'exec', 'help', 'images', 'kill', 'logs', 'pause', 'port',
+    'ps', 'pull', 'push', 'restart', 'rm', 'run', 'scale', 'start', 'stop', 'top', 'unpause', 'up', 'version'}
+  if not options:
+    raise ValueError('Usage: deploy_tool.py dc {{{}}}'.format('|'.join(dc_commands)))
+  output = run_docker_compose(' '.join(options), site_config)
+  log('Command complete; results:')
+  print(output)
 
 def main():
   args = get_args()
   if args.command not in deploy_commands:
     sys.exit('Command not recognized: {}'.format(args.command))
-  deploy_commands[args.command](args.site_config)
+  deploy_commands[args.command](args.site_config, args.options)
 
 if __name__ == '__main__':
   main()
