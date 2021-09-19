@@ -213,6 +213,7 @@ require_once("$IP/extensions/HeaderFooter/HeaderFooter.php");
 require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
+require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 
 # Developer tools
 require_once( "$IP/extensions/UrlGetParameters/UrlGetParameters.php" );

@@ -4,6 +4,11 @@
 # To build this image, run this in this folder:
 #   docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .
 
+# !Important -- if you have moved the 'images' assets folder into the 'html/ropewiki' 
+# subfolder already, move them out before doing the docker image build, because the 
+# build daemon sends the entire contents of the folder where the dockerfile is located,
+# and images is 17GB. Similarly if you have a .sql backup file in 'mysql/backup'.
+
 FROM ubuntu:14.04
 
 # === Install services and tools ===
