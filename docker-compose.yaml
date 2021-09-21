@@ -9,7 +9,7 @@ version: '3.6'
 services:
 
   # MySQL database; see https://hub.docker.com/_/mysql
-  ropewiki_legacy_db:
+  ropewiki_db:
     image: mysql:5.5
     environment:
       - MYSQL_ROOT_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
@@ -21,16 +21,19 @@ services:
   # The main RopeWiki server; see instructions in ../README.md to build the image
   ropewiki_webserver:
     image: ropewiki/webserver
+    build:
+      context: ./webserver
+      dockerfile: Dockerfile
     ports:
       - "8080:80"
     environment:
       - WG_PROTOCOL=${WG_PROTOCOL:-http}
       - WG_HOSTNAME=${WG_HOSTNAME:-localhost:8080}
-      - WG_DB_SERVER=ropewiki_legacy_db
-      - WG_DB_USER=ropewiki
+      - WG_DB_SERVER=ropewiki_db
+      - WG_DB_USER=${WG_DB_USERNAME:-ropewiki}
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
     depends_on:
-      - ropewiki_legacy_db
+      - ropewiki_db
     volumes:
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
     #restart: always
@@ -38,6 +41,9 @@ services:
   # The reverse proxy that directs traffic to the appropriate places
   ropewiki_reverse_proxy:
     image: ropewiki/reverse_proxy
+    build:
+      context: ./reverse_proxy
+      dockerfile: Dockerfile
     logging:
       driver: json-file
       options:

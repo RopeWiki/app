@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 from dataclasses import dataclass
@@ -22,7 +22,7 @@ class SiteConfig(object):
   images_folder: str
   proxy_config_folder: str
 
-  db_service = 'ropewiki_legacy_db'
+  db_service = 'ropewiki_db'
   db_volume = 'ropewiki_database_storage'
   @property
   def db_container(self) -> str:
@@ -228,7 +228,7 @@ def restore_db(site_config: SiteConfig, options: List[str]):
 
   latest_backup = latest_sql_backup(site_config)
 
-  log('Restoring backup ${LATEST_BACKUP}...')
+  log('Restoring backup {}...'.format(latest_backup))
   cmd = ('cat {latest_backup} | ' +
          'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki').format(
            latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password)

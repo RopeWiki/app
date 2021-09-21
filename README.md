@@ -1,85 +1,158 @@
-# Ropewiki Frontend Application
+# RopeWiki server
 
-## Legacy system
+## Introduction
 
-This section describes how to build a legacy system intended to be as similar to the currently-deployed RopeWiki site as practical to facilitate practicing restoring the database and practicing upgrades and migrations.  When complete, this system should be as similar to the server accessible at ropewiki.com as practical.
+This repository contains the information necessary to deploy the RopeWiki technical infrastructure (though it does not
+contain the database content nor the `images` folder content of the real site).
 
-### Prerequisites
+## Site deployment
 
-To complete these instructions, you must have:
-* [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) installed
+Execute the steps below to produce a server running RopeWiki. The instructions assume an Ubuntu machine. On Windows, the
+easiest option is probably to install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and host a virtual Ubuntu
+system. Alternately, all of the steps after the firewall (which can be skipped) should be possible directly in a Windows
+command prompt as long as [Python 3](https://www.python.org/downloads/) is installed and added to
+the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instead perform the Windows alternative.
+
+### Deployment procedure
+
+1. Protect the system
+    1. Setup firewall from scratch
+        1. Block everything incoming (`sudo ufw default deny incoming`)
+        1. Allow everything outgoing (`sudo ufw default allow outgoing`)
+        1. Allow SSH (`sudo ufw allow OpenSSH`)
+        1. Allow web server requests (`sudo ufw allow 80/tcp && ufw allow 443/tcp`)
+        1. Optionally, allow debugging: (`sudo ufw allow 8080/tcp)
+    1. Alternately, setup firewall by importing rules
+        1. Copy `/etc/ufw/user.rules`
+        1. Copy `/etc/ufw/user6.rules`
+    1. Enable firewall (`sudo ufw enable`)
+1. Install necessary tools
+    1. Update packages (`sudo apt-get update`)
+    1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+    1. [Install docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems)
+        1. Fix [this issue](https://github.com/docker/compose/issues/6931)
+           with `sudo apt update && apt install rng-tools`
+    1. Install git (`sudo apt-get install git`)
+    1. Clone this repository into an appropriate folder (perhaps `/rw`)
+1. Define site to be deployed
+    1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
+    1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
+        1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`) and define folders relative to
+           that folder
+    1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
+1. Transfer site data
+    1. Get latest SQL backup
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
+    1. Get `images` folder
+        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
+1. Deploy site
+    1. Ensure environment variable for DB password is populated correctly;
+       example: `export WG_DB_PASSWORD=whateveryourpasswordis`
+    1. Build the necessary images: `python3 deploy_tool.py <SITE_NAME> dc build`
+    1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
+    1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
+    1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
+    1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by
+       visiting `http://<hostname>:8080`
+    1. Confirm that the site is working via HTTP by visiting `http://<hostname>`
+    1. Enable TLS with `python3 deploy_tool.py <SITE_NAME> enable_tls`
+        1. Note that the certs should be persisted in `${proxy_config_folder}/letsencrypt`; select option 1 to reinstall
+           the existing cert if prompted
+        1. Enable redirection (option 2) when prompted
+        1. Verify success by visiting https://<hostname>
+    1. Create cronjob to automatically update certificates
+        1. From this working directory, run `python3 deploy_tool.py <SITE_NAME> add_cert_cronjob`
+        1. To edit or delete crontabs, `crontab -e`
+
+## Site maintenance
+
+### Refreshing TLS certificates manually
+
+This should be performed by a cron job, but in the event of needing to do it manually,
+run `python3 deploy_tool.py <SITE_NAME> renew_certs`
+
+### Arbitrary docker-compose commands
+
+The docker-compose.yaml configuration requires a number of environment variables to be set before it can be used. To
+avoid the need to set these variables yourself (apart from WG_DB_PASSWORD), use
+`python3 deploy_tool.py <SITE_NAME> dc "<YOUR COMMAND>"`. For instance, `python3 deploy_tool.py dev dc "up -d"`.
+
+### Updating webserver
+
+To deploy changes to the webserver Dockerfile:
+
+1. Build the Dockerfile (`docker image build -t ropewiki/webserver .` from the root of this repo)
+1. Kill and remove the webserver (`python3 deploy_tool.py <SITE_NAME> dc "rm -f -s -v ropewiki_webserver"`)
+1. Restore the full deployment (`python3 deploy_tool.py <SITE_NAME> start_site`)
+
+## Troubleshooting
+
+### The site can't be reached after updating the webserver
+
+Reset the containers and redeploy:
+
+1. Tear the site down (`python3 deploy_tool.py <SITE_NAME> dc "down -v"`)
+1. Bring the site back up (`python3 deploy_tool.py <SITE_NAME> start_site`)
+1. Re-enable TLS (`python3 deploy_tool.py <SITE_NAME> enable_tls` then run the specified script, choosing to reinstall
+   the certificate)
+
+### Sorry! This site is experiencing technical difficulties.
+
+If this is accompanied by "(Cannot contact the database server)", it means the MediaWiki app (the ropewiki_webserver
+container) is not configured properly to contact the database (the ropewiki_db container). The most likely problem is
+that you have not specified the WG_DB_PASSWORD environment variable to match the one in the database backup you
+restored. WG_DB_PASSWORD should be specified to match the password used in the database you restored; see instructions
+above.
+
+To verify whether a connection with a particular username and password can be established, open a terminal in the
+database container: `docker container exec -it dev_ropewiki_db_1 /bin/bash` (but with an appropriate
+container; `python3 deploy_tool.py <SITE_NAME> dc ps` to list containers). Then, attempt to connect to the database
+with `mysql -u <USERNAME> -p<PASSWORD`. If successful, check users with `select host, user, password from mysql.user;`.
+
+If the above is successful, verify that the connection can be made from the webserver container by opening a terminal in
+the webserver container via a similar process as above. Add the hostname to the `mysql` command
+like: `mysql -h ropewiki_db -u <USERNAME> -p<PASSWORD>`.
+
+## Running a local development instance
+
+These instructions can be used to run a local development instance with just a few adjustments. Simply make sure there
+is a site_config appropriate to your local machine, and otherwise follow the instructions above normally. The
+site_config "`local`" is excluded from git tracking, so it is an ideal place to define a system configuration that other
+people are unlikely to use. However, if your local development instance setup is likely to be reusable by others, feel
+free to add it to site_configs; a `local_windows.json` site_config would probably be helpful to others, for instance.
+
+Note that, in all cases, the following resources (not included in this repo) are necessary to bring up a functional
+site:
+
 * A backup of the site database in .sql format (1.2+ GB)
 * The `images` folder of the site (18.3+ GB)
 
-Although these instructions should work on any Docker-equipped system, they have only been tested on Ubuntu 18.04.
+TLS is not necessary, and sometimes not feasible, on a local development instance. In that case, simply don't enable TLS
+and instead access the site with `http`. If the site_config `hostname` is `localhost`, then port 80 will be used and the
+site should be accessible at `http://localhost`. To use a different port, specify, e.g., a `hostname`
+of `localhost:8081` making the site available at `http://localhost:8081`. Do not use port 8080 because it is already
+used to provide debug access directly to the webserver without going through the reverse_proxy.
 
-### Run a legacy system
+### Exploring the system
 
-* Build the `ropewiki/legacy_webserver` image
-  * `docker image build -f Dockerfile_legacy -t ropewiki/legacy_webserver .`
-    * Note: if you have moved the 'images' assets folder into the 'html/ropewiki' subfolder already, move them out before doing the docker image build, because the build daemon sends the entire contents of the folder where the dockerfile is located, and images is >15GB. Similarly if you have a .sql backup file in 'mysql/backup'.
-* [Optional] Open an interactive shell to view files and run test commands in webserver
-  * `docker container run -it ropewiki/legacy_webserver /bin/bash`
-* Place a database *.sql backup file in ./mysql/backup
-* Place images folder (or symlink) in ./html/ropewiki/images
-  * To create a symlink from the root of this repo: `ln -s /path/to/images ./html/ropewiki/images`
-* Set the password to use for the ropewiki user in the restored database by editing docker-compose_legacy.yaml and changing WG_DB_PASSWORD and MYSQL_ROOT_PASSWORD to the appropriate password for the database you will be restoring
-* Bring up the system with docker-compose
-  * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy up`
-* [Optional] Explore the database with adminer
-  * Navigate to http://localhost:8081 in a browser
-  * Log in with
-    * System: MySQL
-    * Server: ropewiki_legacy_db
-    * Username: root (if that fails, try 'ropewiki')
-    * Password: (whatever is set in docker-compose_legacy.yaml)
-    * Database: (leave this box blank)
-* Open an interactive shell in the MySQL container
-  * `docker container exec -it rwlegacy_ropewiki_legacy_db_1 /bin/bash`
-  * Create an empty database to be filled with the backup
-    * `mysqladmin -u root -p create ropewiki`
-      * The password is whatever is set in docker-compose_legacy.yaml for MYSQL_ROOT_PASSWORD
-  * Restore backup into empty database
-    * `mysql -u root -p ropewiki < /root/backup/all-backup-2020-06-12.sql`
-      * The password is whatever is set in docker-compose_legacy.yaml for MYSQL_ROOT_PASSWORD
-      * Note: replace all-backup-2020-06-12.sql with the name of your backup file
-      * The path '/root/backup' mapping to a directory on the host OS is set in the docker-compose-legacy.yaml file under 'volumes'
-      * Note: this operation will take a few minutes with no visual feedback
-  * [Optional] View database content in adminer
-    * Note: When the above operation is complete, the database list in adminer may not update properly.  To force an update, create a new empty database (and then drop it).
-  * Exit the shell in the MySQL container
-    * `exit`
-* [Optional, but likely necessary] Restart the system
-  * Stop the system
-    * CTRL-c / CMD-C
-  * Restart the system
-    * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy up`
-* Your site is now set up; visit http://localhost:8080 to see it!
-* [Optional] Delete the system
-  * `docker-compose -f docker-compose_legacy.yaml -p rwlegacy down`
-    * Note that this will disconnect the docker volume automatically created for the mysql container from any container (leaving it dangling).  If you have restored the database, this will leave a very large volume dangling
-    * [Optional] See your dangling volumes and their space
-      * `docker system df -v`
-    * [Optional] Delete your dangling volumes to free disk space
-      * ``docker volume rm `docker volume ls -q -f dangling=true` ``
-
-### Troubleshooting running a legacy system
-
-* Sorry! This site is experiencing technical difficulties.
-  * If this is accompanied by "(Cannot contact the database server)", it means the MediaWiki app (the ropewiki_legacy_webserver container) is not configured properly to contact the database (the ropewiki_legacy_db container).  The most likely problem is that you have not changed WG_DB_PASSWORD to match the one in the database backup you restored.  This password should be changed in docker-compose_legacy.yaml to match the password used in the database you restored; see instructions above.
-
-### Exploring a legacy system
+_The commands below assume the use of the `local` SITE_NAME/site_config; change the commands to reflect your site
+configuration name if necessary._
 
 * Print webserver stdout + stderr (there should not be much here)
-  * `docker container logs rwlegacy_ropewiki_legacy_webserver_1`
+    * `python3 deploy_tool.py local dc logs ropewiki_webserver`
 * Run an interactive shell inside the webserver
-  * `docker container exec -it rwlegacy_ropewiki_legacy_webserver_1 /bin/bash`
-  * Print normal access log
-    * `cat /var/log/nginx/access.log`
-  * Print error log
-    * `cat /var/log/nginx/error.log`
-
-## Mirror server
-
-This repository includes scripts for mirroring the production legacy webserver to a local development instance.  `init_mirror_server.sh` creates a new database container and volume intended for use in the development instance (after removing any previous container or volume created by prior runs of the script).  `refresh_mirror_server.sh` retrieves the most recent database backup from the production server and synchronizes any new content in the /images folder, but these operations require public key access to the production servers.  This latter script is intended to be run as a nightly cronjob.
-
+    * Determine the name of the webserver container with `python3 deploy_tool.py local dc ps`
+    * `docker container exec -it local_ropewiki_webserver_1 /bin/bash` (but substitute your webserver container name)
+    * Print normal access log
+        * `cat /var/log/nginx/access.log`
+    * Print error log
+        * `cat /var/log/nginx/error.log`
+* Delete the system
+    * `python3 deploy_tool.py local dc down`
+        * Note that this will disconnect the docker volume automatically created for the mysql container from any
+          container (leaving it dangling). If you have restored the database, this will leave a very large volume
+          dangling
+        * See your dangling volumes and their space
+            * `docker system df -v`
+        * Delete your dangling volumes to free disk space
+            * ``docker volume rm `docker volume ls -q -f dangling=true` ``

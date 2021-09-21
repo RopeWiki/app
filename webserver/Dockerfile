@@ -31,7 +31,7 @@ RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imag
 
 # Install composer
 COPY ./scripts/install_composer.sh /root/install_composer.sh
-RUN /root/install_composer.sh && \
+RUN sh /root/install_composer.sh && \
     mv composer.phar /usr/local/bin/composer
 
 # === Install MediaWiki ===
@@ -107,15 +107,15 @@ COPY ./html/ropewiki/extensions/MultimediaViewer/mmv.js /rw/extensions/Multimedi
 COPY ./scripts/system_start.sh ./root/system_start.sh
 
 # Set default parameters (that may be overwritten via environment variables)
-ENV WG_DB_SERVER ropewiki_legacy_db
+ENV WG_DB_SERVER ropewiki_db
 ENV WG_DB_USER ropewiki
-ENV WG_DB_PASSWORD ropewikilegacydatabasepassword
+ENV WG_DB_PASSWORD ropewikidatabasepassword
 ENV WG_HOSTNAME localhost
 ENV WG_PROTOCOL http
 ENV WG_SECRET_KEY 04f44118ad1899762bc60ed90d778aa72f92e9dc0d298c8f327755e503ceb84a
 ENV WG_UPGRADE_KEY 1ce9e4e2a0a3bf63
 
-CMD /root/system_start.sh
+CMD sh /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
 #   docker container run -it ropewiki/legacy_webserver
