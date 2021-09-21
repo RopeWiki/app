@@ -90,6 +90,38 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 # UserAdmin
 # xml2wiki-dr
 
+
+# === Install SphinxSearch ===
+
+RUN apt-get install -y --no-install-recommends sphinxsearch
+
+# download Mediawiki v1.24 compatible extension
+RUN cd rw/extensions \
+ && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_24.tar.gz \
+ && mkdir -p SphinxSearch \
+ && tar -xzf REL1_24.tar.gz -C SphinxSearch \
+ && rm REL1_24.tar.gz
+
+# need to manually download sphinxapi.php if not using composer to install (composer installs the latest version, which we don't want)
+RUN cd rw/extensions/SphinxSearch \
+ && curl -O https://raw.githubusercontent.com/romainneutron/Sphinx-Search-API-PHP-Client/master/sphinxapi.php
+
+# copy our ropewiki specific configuration file over
+COPY ./html/ropewiki/extensions/SphinxSearch/sphinx.conf /etc/sphinxsearch/sphinx.conf
+
+# replace mediawiki extension with our modified version (allows substring search on page titles instead of exact match from the start)
+COPY ./html/ropewiki/extensions/SphinxSearch/SphinxMWSearch.php /rw/extensions/SphinxSearch/SphinxMWSearch.php
+
+# required for logging
+RUN mkdir -p /var/data/sphinx
+
+# setup chron job
+COPY ./html/ropewiki/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update
+RUN chmod 0644 /etc/cron.d/sphinxsearch-update
+RUN crontab /etc/cron.d/sphinxsearch-update
+RUN touch /var/log/cron.log
+
+
 # === Customize site (including custom extensions) ===
 
 # Copy in our MediaWiki customizations
