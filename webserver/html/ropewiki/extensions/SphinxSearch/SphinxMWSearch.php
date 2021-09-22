@@ -17,7 +17,7 @@
  * removed the caret ^ in the search block of line 55 in SphinxMWSearch.php
  * changed line 556 in SphinxMWSearch.php to:
  *   parent::initFromTitle(Title::makeTitle( $row->page_namespace, $row->page_title ) );
-/**
+ */
 
 class SphinxMWSearch extends SearchEngine {
 
