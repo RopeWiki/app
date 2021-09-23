@@ -283,3 +283,7 @@ $wgScriptPath	    = "";
 $wgArticlePath      = "/$1";
 $wgUsePathInfo      = true;
 $wgScriptExtension  = ".php";
+
+$wgSearchType = "SphinxMWSearch";
+require_once "$IP/extensions/SphinxSearch/SphinxSearch.php";
+$wgEnableSphinxPrefixSearch = true;

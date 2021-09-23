@@ -1,0 +1,1 @@
+0 10 * * * /usr/bin/indexer --rotate --config /etc/sphinxsearch/sphinx.conf --all

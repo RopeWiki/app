@@ -17,6 +17,16 @@ sed -i "s/{{WG_UPGRADE_KEY}}/$WG_UPGRADE_KEY/g" SiteSpecificSettings.php
 service php5-fpm start
 service nginx start
 
+# Start Sphinx indexer
+cd /etc/sphinxsearch
+sed -i "s/{{WG_DB_SERVER}}/$WG_DB_SERVER/g" sphinx.conf
+sed -i "s/{{WG_DB_USER}}/$WG_DB_USER/g" sphinx.conf
+sed -i "s/{{WG_DB_PASSWORD}}/$WG_DB_PASSWORD/g" sphinx.conf
+echo Sphinx indexer started -- can take up to a minute
+indexer --config /etc/sphinxsearch/sphinx.conf --all
+echo Sphinx indexer finished -- starting service
+searchd --config /etc/sphinxsearch/sphinx.conf >> /var/log/sphinxsearch/sphinx-startup.log 2>&1
+
 echo RopeWiki webserver ready to go!
 
 # Let the services run in the background indefinitely
