@@ -182,9 +182,6 @@ foreach ( $arr as $key => $value ) {
 # Skin
 require_once "$IP/skins/Vector/Vector.php";
 
-# Rename edit tabs to "edit" and "edit source"
-$sfgRenameEditTabs = true;
-
 # Admin tools
 require_once( "$IP/extensions/Nuke/Nuke.php" );
 require_once( "$IP/extensions/TitleBlacklist/TitleBlacklist.php" );
@@ -225,6 +222,7 @@ require_once "$IP/extensions/TreeToQuery/TreeToQuery.php";
 require_once( "$IP/extensions/MyVariables/MyVariables.php" );
 
 # Feature tools
+require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
 require_once( "$IP/extensions/CategoryTree/CategoryTree.php" );
 require_once("$IP/extensions/ContributionScores/ContributionScores.php"); 
@@ -232,7 +230,6 @@ $wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - 
 $wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
 $wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
 $wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table. 
-require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 
 //Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted. 
 $wgContribScoreReports = array( 
@@ -261,6 +258,9 @@ require_once( "$IP/extensions/SemanticDrilldown/SemanticDrilldown.php" );
 require_once( "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php" );
 
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
+
+# Rename edit tabs to "edit" and "edit source"
+$sfgRenameEditTabs = true;
 
 # ===================================================
 
