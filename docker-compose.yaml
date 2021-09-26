@@ -1,33 +1,43 @@
-# This docker-compose file will bring up a production system with this command:
-#   docker-compose up
+# This docker-compose file will bring up a production system.
+# As per README.md, direct docker-compose commands are not
+# recommended because that requires many environment variables
+# to be set.  Instead, the use of deploy_tool.py is recommended
+# as per README.md.
 
-# Before the command above is executed, the ropewiki/webserver image
-# must be built according to the instructions in README.md.
+# Before any other docker-compose commands above are executed,
+# the necessary images must be built according to the instructions
+# in README.md.
+#   python3 deploy_tool.py <SITE_NAME> dc build
 
 version: '3.6'
 
 services:
 
+  # The RopeWiki MySQL database; see instructions in README.md to build the image
   ropewiki_db:
     image: ropewiki/database
     build:
-      context: ./database
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: database/Dockerfile
+    ports:
+      - "22001:22"
     environment:
-      - MYSQL_ROOT_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
+      - MYSQL_ROOT_PASSWORD=${RW_ROOT_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
+      - RW_ROOT_DB_PASSWORD=${RW_ROOT_DB_PASSWORD:-}
     volumes:
       - ropewiki_database_storage:/var/lib/mysql
       - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/root/backup
-    restart: always
+#    restart: always
 
-  # The main RopeWiki server; see instructions in ../README.md to build the image
+  # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image
   ropewiki_webserver:
     image: ropewiki/webserver
     build:
-      context: ./webserver
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: webserver/Dockerfile
     ports:
       - "8080:80"
+      - "22002:22"
     environment:
       - WG_PROTOCOL=${WG_PROTOCOL:-http}
       - WG_HOSTNAME=${WG_HOSTNAME:-localhost:8080}
@@ -40,7 +50,7 @@ services:
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/usr/share/nginx/html/ropewiki/images
     #restart: always
 
-  # The reverse proxy that directs traffic to the appropriate places
+  # The reverse proxy that directs traffic to the appropriate places; see instructions in README.md to build the image
   ropewiki_reverse_proxy:
     image: ropewiki/reverse_proxy
     build:

@@ -5,6 +5,17 @@
 This repository contains the information necessary to deploy the RopeWiki technical infrastructure (though it does not
 contain the database content nor the `images` folder content of the real site).
 
+### Site architecture
+
+* The [MySQL database](database/README.md) stores all the non-file site data
+    * Exposes port 22001 for SSH access to [`backupreader`](backup_pubkeys/README.md) users
+* The [webserver](webserver/README.md) runs MediaWiki with extensions, and also stores all the file-based site
+  data/uploads
+    * Exposes port 8080 for direct access to the webserver that bypasses the reverse proxy
+    * Will expose port 22002 for SSH access to [`backupreader`](backup_pubkeys/README.md) users
+* The [reverse proxy](reverse_proxy/README.md) manages TLS termination and also redirects according to target site
+    * Exposes ports 80 & 443 as the external-facing webserver
+
 ## Site deployment
 
 Execute the steps below to produce a server running RopeWiki. The instructions assume an Ubuntu machine. On Windows, the
@@ -13,53 +24,63 @@ system. Alternately, all of the steps after the firewall (which can be skipped) 
 command prompt as long as [Python 3](https://www.python.org/downloads/) is installed and added to
 the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instead perform the Windows alternative.
 
-### Deployment procedure
+### Protect the system
 
-1. Protect the system
-    1. Setup firewall from scratch
-        1. Block everything incoming (`sudo ufw default deny incoming`)
-        1. Allow everything outgoing (`sudo ufw default allow outgoing`)
-        1. Allow SSH (`sudo ufw allow OpenSSH`)
-        1. Allow web server requests (`sudo ufw allow 80/tcp && ufw allow 443/tcp`)
-        1. Optionally, allow debugging: (`sudo ufw allow 8080/tcp)
-    1. Alternately, setup firewall by importing rules
-        1. Copy `/etc/ufw/user.rules`
-        1. Copy `/etc/ufw/user6.rules`
-    1. Enable firewall (`sudo ufw enable`)
-1. Install necessary tools
-    1. Update packages (`sudo apt-get update`)
-    1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-    1. [Install docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems)
-        1. Fix [this issue](https://github.com/docker/compose/issues/6931)
-           with `sudo apt update && apt install rng-tools`
-    1. Install git (`sudo apt-get install git`)
-    1. Clone this repository into an appropriate folder (perhaps `/rw`)
-1. Define site to be deployed
-    1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
-    1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
-        1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`) and define folders relative to
-           that folder
-    1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
-1. Transfer site data
-    1. Get latest SQL backup
-        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
-    1. Get `images` folder
-        1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
-1. Deploy site
-    1. Ensure environment variable for DB password is populated correctly;
-       example: `export WG_DB_PASSWORD=whateveryourpasswordis`
-    1. Build the necessary images: `python3 deploy_tool.py <SITE_NAME> dc build`
-    1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
-    1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
-    1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
-    1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by
-       visiting `http://<hostname>:8080`
-    1. Confirm that the site is working via HTTP by visiting `http://<hostname>`
-    1. Enable TLS with `python3 deploy_tool.py <SITE_NAME> enable_tls`
-        1. Note that the certs should be persisted in `${proxy_config_folder}/letsencrypt`; select option 1 to reinstall
-           the existing cert if prompted
-        1. Enable redirection (option 2) when prompted
-        1. Verify success by visiting https://<hostname>
+1. Setup firewall from scratch
+    1. Block everything incoming (`sudo ufw default deny incoming`)
+    1. Allow everything outgoing (`sudo ufw default allow outgoing`)
+    1. Allow SSH to host machine (`sudo ufw allow OpenSSH`)
+    1. Allow web server requests (`sudo ufw allow 80/tcp && ufw allow 443/tcp`)
+    1. Allow SSH directly to containers (`sudo ufw allow 22001/tcp && ufw allow 22002/tcp`)
+    1. Optionally, allow debugging: (`sudo ufw allow 8080/tcp`)
+1. Alternately, setup firewall by importing rules
+    1. Copy `/etc/ufw/user.rules`
+    1. Copy `/etc/ufw/user6.rules`
+1. Enable firewall (`sudo ufw enable`)
+
+### Install necessary tools
+
+1. Update packages (`sudo apt-get update`)
+1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
+1. [Install docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems)
+    1. Fix [this issue](https://github.com/docker/compose/issues/6931)
+       with `sudo apt update && apt install rng-tools`
+1. Install git (`sudo apt-get install git`)
+1. Clone this repository into an appropriate folder (perhaps `/rw`)
+
+### Define site to be deployed
+
+1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
+1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
+    1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`) and define folders relative to that
+       folder
+1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
+
+### Transfer site data
+
+1. Get latest SQL backup
+    1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
+1. Get `images` folder
+    1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
+
+### Deploy site
+
+1. Build the necessary images: `python3 deploy_tool.py <SITE_NAME> dc build`
+1. Ensure environment variable for the `ropewiki` DB user password is populated correctly;
+   example: `export WG_DB_PASSWORD=whateveryourpasswordis`
+1. Ensure environment variable for the `root` DB user password is populated correctly;
+   example: `export RW_ROOT_DB_PASSWORD=whateveryourpasswordis`
+1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
+1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
+1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
+1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by
+   visiting `http://<hostname>:8080`
+1. Confirm that the site is working via HTTP by visiting `http://<hostname>`
+1. Enable TLS with `python3 deploy_tool.py <SITE_NAME> enable_tls`
+    1. Note that the certs should be persisted in `${proxy_config_folder}/letsencrypt`; select option 1 to reinstall the
+       existing cert if prompted
+    1. Enable redirection (option 2) when prompted
+    1. Verify success by visiting https://<hostname>
     1. Create cronjob to automatically update certificates
         1. From this working directory, run `python3 deploy_tool.py <SITE_NAME> add_cert_cronjob`
         1. To edit or delete crontabs, `crontab -e`
@@ -79,7 +100,9 @@ avoid the need to set these variables yourself (apart from WG_DB_PASSWORD), use
 
 ### Updating webserver
 
-To deploy changes to the webserver Dockerfile:
+To deploy changes to the webserver Dockerfile: `python3 deploy_tool.py redeploy webserver`
+
+OR, manually:
 
 1. Build the Dockerfile (`docker image build -t ropewiki/webserver .` from the root of this repo)
 1. Kill and remove the webserver (`python3 deploy_tool.py <SITE_NAME> dc "rm -f -s -v ropewiki_webserver"`)

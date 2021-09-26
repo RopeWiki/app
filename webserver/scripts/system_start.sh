@@ -16,6 +16,8 @@ sed -i "s/{{WG_UPGRADE_KEY}}/$WG_UPGRADE_KEY/g" SiteSpecificSettings.php
 # Start up services
 service php5-fpm start
 service nginx start
+service cron start
+service ssh start
 
 # Start Sphinx indexer
 cd /etc/sphinxsearch
