@@ -85,6 +85,24 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
         1. From this working directory, run `python3 deploy_tool.py <SITE_NAME> add_cert_cronjob`
         1. To edit or delete crontabs, `crontab -e`
 
+## Backups
+
+Direct SSH access is provided to the database and webserver containers at the ports 22001 and 22002 for
+the `backupreader` user for clients who possess the private key to any of the public keys listed
+in [authorized_keys](backup_pubkeys/authorized_keys).
+
+### Database
+
+In the database container, the `backupreader`'s home directory has a `backups` folder where complete backups of the
+database will be created daily and named `all-backup-YYYY-MM-DD.tar.gz`. An off-site backup client should connect to the
+database container and copy the latest `all-backup` file to back up the database.
+
+### Images
+
+In the webserver container, the `backupreader`'s home directory has a symlink to the `images` folder which contains most
+of the file-based data uploaded to the site. An off-site backup client should connect to the webserver container and
+synchronize the full content of the `images` folder to back them up.
+
 ## Site maintenance
 
 ### Refreshing TLS certificates manually
