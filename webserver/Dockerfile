@@ -12,6 +12,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 
+# Fix CA cert issue in Ubuntu 14.04 (https://stackoverflow.com/questions/69420612/how-can-i-update-my-root-certificates-in-an-ubuntu-14-04-dockerfile)
+RUN apt-get install -y --no-install-recommends sed && \
+    sed -i '/^mozilla\/DST_Root_CA_X3/s/^/!/' /etc/ca-certificates.conf && update-ca-certificates -f
+
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
