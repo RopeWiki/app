@@ -54,8 +54,8 @@ services:
   ropewiki_reverse_proxy:
     image: ropewiki/reverse_proxy
     build:
-      context: ./reverse_proxy
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: reverse_proxy/Dockerfile
     logging:
       driver: json-file
       options:
@@ -64,6 +64,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - WG_HOSTNAME=${WG_HOSTNAME:-localhost}
     depends_on:
       - ropewiki_webserver
     volumes:
