@@ -106,35 +106,34 @@ RUN cd /rw/extensions \
 RUN cd /rw/extensions/SphinxSearch \
  && curl -O https://raw.githubusercontent.com/romainneutron/Sphinx-Search-API-PHP-Client/master/sphinxapi.php
 
-# copy our ropewiki specific configuration file over
-COPY ./html/ropewiki/extensions/SphinxSearch/sphinx.conf /etc/sphinxsearch/sphinx.conf
-
-# replace mediawiki extension with our modified version (allows substring search on page titles instead of exact match from the start)
-COPY ./html/ropewiki/extensions/SphinxSearch/SphinxMWSearch.php /rw/extensions/SphinxSearch/SphinxMWSearch.php
-
 # required for logging
 RUN mkdir -p /var/data/sphinx
-
-# setup chron job
-COPY ./html/ropewiki/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update
-RUN chmod 0644 /etc/cron.d/sphinxsearch-update
-RUN crontab /etc/cron.d/sphinxsearch-update
-RUN touch /var/log/cron.log
 
 
 # === Customize site (including custom extensions) ===
 
-# Copy in our MediaWiki customizations
+# MediaWiki: Copy in our customizations
 COPY ./html /usr/share/nginx/html
 
-# Copy in our nginx customizations
+# nginx: Copy in our customizations
 COPY ./nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
-# Copy in our MMV customizations (do multiple browser back on close instead of navigate forward to original page)
+# MMV: Copy in our customizations (do multiple browser back on close instead of navigate forward to original page)
 RUN cd /rw/extensions/MultimediaViewer \
  && mv -f mmv.js /rw/extensions/MultimediaViewer/resources/mmv \
  && mv -f mmv.bootstrap.js /rw/extensions/MultimediaViewer/resources/mmv
+
+# Sphinx: Copy our configuration file over, along with our modified mediawiki extension (allows substring search on page titles instead of exact match from the start)
+RUN cd /rw/extensions/SphinxSearch \
+ && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
+
+# Sphinx: Setup chron job
+RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
+ && chmod 0644 /etc/cron.d/sphinxsearch-update \
+ && crontab /etc/cron.d/sphinxsearch-update \
+ && touch /var/log/cron.log
+
 
 # === Set up startup behavior ===
 
