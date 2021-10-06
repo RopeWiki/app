@@ -96,14 +96,14 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
 # download Mediawiki v1.24 compatible extension
-RUN cd rw/extensions \
+RUN cd /rw/extensions \
  && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_24.tar.gz \
  && mkdir -p SphinxSearch \
  && tar -xzf REL1_24.tar.gz -C SphinxSearch \
  && rm REL1_24.tar.gz
 
 # need to manually download sphinxapi.php if not using composer to install (composer installs the latest version, which we don't want)
-RUN cd rw/extensions/SphinxSearch \
+RUN cd /rw/extensions/SphinxSearch \
  && curl -O https://raw.githubusercontent.com/romainneutron/Sphinx-Search-API-PHP-Client/master/sphinxapi.php
 
 # copy our ropewiki specific configuration file over
@@ -132,7 +132,9 @@ COPY ./nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
 # Copy in our MMV customizations (do multiple browser back on close instead of navigate forward to original page)
-COPY ./html/ropewiki/extensions/MultimediaViewer/mmv.js /rw/extensions/MultimediaViewer/resources/mmv 
+RUN cd /rw/extensions/MultimediaViewer \
+ && mv -f mmv.js /rw/extensions/MultimediaViewer/resources/mmv \
+ && mv -f mmv.bootstrap.js /rw/extensions/MultimediaViewer/resources/mmv
 
 # === Set up startup behavior ===
 
