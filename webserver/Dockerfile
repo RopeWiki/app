@@ -144,6 +144,15 @@ RUN ln -s /rw/images /home/backupreader/images
 USER backupreader
 COPY ./backup_pubkeys/authorized_keys /home/backupreader/.ssh/authorized_keys
 
+# === Set up email ===
+USER root
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    debconf-set-selections <<< "postfix postfix/mailname string ropewiki.com" && \
+    debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'" && \
+    apt-get install --assume-yes postfix
+
+#COPY ./webserver/postfix /etc/postfix
+
 # === Set up startup behavior ===
 USER root
 COPY ./webserver/scripts/system_start.sh /root/system_start.sh
