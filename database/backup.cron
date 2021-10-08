@@ -1,1 +1,1 @@
-0 3 * * * /bin/sh /home/root/backup_mysql.sh > /dev/null 2>&1
+0 10 * * * /bin/sh /home/root/backup_mysql.sh > /dev/null 2>&1
