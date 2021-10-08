@@ -4,11 +4,6 @@
 # To build this image, run this in this folder:
 #   docker image build -f Dockerfile -t ropewiki/webserver .
 
-# !Important -- if you have moved the 'images' assets folder into the 'html/ropewiki' 
-# subfolder already, move them out before doing the docker image build, because the 
-# build daemon sends the entire contents of the folder where the dockerfile is located,
-# and images is 17GB. Similarly if you have a .sql backup file in 'mysql/backup'.
-
 FROM ubuntu:14.04
 
 # === Install services and tools ===
@@ -16,6 +11,10 @@ FROM ubuntu:14.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
+
+# Fix CA cert issue in Ubuntu 14.04 (https://stackoverflow.com/questions/69420612/how-can-i-update-my-root-certificates-in-an-ubuntu-14-04-dockerfile)
+RUN apt-get install -y --no-install-recommends sed && \
+    sed -i '/^mozilla\/DST_Root_CA_X3/s/^/!/' /etc/ca-certificates.conf && update-ca-certificates -f
 
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
@@ -27,10 +26,10 @@ RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
     apt-get install -y --no-install-recommends php5-fpm php5-cli php5-mysql
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick php5-imagick
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick php5-imagick openssh-server
 
 # Install composer
-COPY ./scripts/install_composer.sh /root/install_composer.sh
+COPY ./webserver/scripts/install_composer.sh /root/install_composer.sh
 RUN sh /root/install_composer.sh && \
     mv composer.phar /usr/local/bin/composer
 
@@ -48,7 +47,7 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 
 # === Install extensions ===
 
-COPY ./html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
+COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
 RUN cd /rw && composer install
 
 # Note: We do not need to follow the rest of the instructions to install
@@ -109,14 +108,13 @@ RUN cd /rw/extensions/SphinxSearch \
 # required for logging
 RUN mkdir -p /var/data/sphinx
 
-
 # === Customize site (including custom extensions) ===
 
 # MediaWiki: Copy in our customizations
-COPY ./html /usr/share/nginx/html
+COPY ./webserver/html /usr/share/nginx/html
 
 # nginx: Copy in our customizations
-COPY ./nginx /etc/nginx
+COPY ./webserver/nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
 # MMV: Copy in our customizations (do multiple browser back on close instead of navigate forward to original page)
@@ -134,10 +132,21 @@ RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-updat
  && crontab /etc/cron.d/sphinxsearch-update \
  && touch /var/log/cron.log
 
+# === Create backupreader user ===
+
+# Create a user named `backupreader` for reading images folder
+RUN useradd --create-home --shell /bin/bash backupreader
+USER backupreader
+USER root
+RUN ln -s /rw/images /home/backupreader/images
+
+# Provide SSH access to backupreaders
+USER backupreader
+COPY ./backup_pubkeys/authorized_keys /home/backupreader/.ssh/authorized_keys
 
 # === Set up startup behavior ===
-
-COPY ./scripts/system_start.sh ./root/system_start.sh
+USER root
+COPY ./webserver/scripts/system_start.sh /root/system_start.sh
 
 # Set default parameters (that may be overwritten via environment variables)
 ENV WG_DB_SERVER ropewiki_db
@@ -151,6 +160,6 @@ ENV WG_UPGRADE_KEY 1ce9e4e2a0a3bf63
 CMD sh /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
-#   docker container run -it ropewiki/legacy_webserver
+#   docker container run -it ropewiki/webserver
 
 # /etc/php5/fpm/php-fmp.conf
