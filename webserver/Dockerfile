@@ -95,43 +95,42 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
 # download Mediawiki v1.24 compatible extension
-RUN cd rw/extensions \
+RUN cd /rw/extensions \
  && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_24.tar.gz \
  && mkdir -p SphinxSearch \
  && tar -xzf REL1_24.tar.gz -C SphinxSearch \
  && rm REL1_24.tar.gz
 
 # need to manually download sphinxapi.php if not using composer to install (composer installs the latest version, which we don't want)
-RUN cd rw/extensions/SphinxSearch \
+RUN cd /rw/extensions/SphinxSearch \
  && curl -O https://raw.githubusercontent.com/romainneutron/Sphinx-Search-API-PHP-Client/master/sphinxapi.php
-
-# copy our ropewiki specific configuration file over
-COPY ./webserver/html/ropewiki/extensions/SphinxSearch/sphinx.conf /etc/sphinxsearch/sphinx.conf
-
-# replace mediawiki extension with our modified version (allows substring search on page titles instead of exact match from the start)
-COPY ./webserver/html/ropewiki/extensions/SphinxSearch/SphinxMWSearch.php /rw/extensions/SphinxSearch/SphinxMWSearch.php
 
 # required for logging
 RUN mkdir -p /var/data/sphinx
 
-# setup chron job
-COPY ./webserver/html/ropewiki/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update
-RUN chmod 0644 /etc/cron.d/sphinxsearch-update \
- && crontab /etc/cron.d/sphinxsearch-update \
- && touch /var/log/cron.log
-
-
 # === Customize site (including custom extensions) ===
 
-# Copy in our MediaWiki customizations
+# MediaWiki: Copy in our customizations
 COPY ./webserver/html /usr/share/nginx/html
 
-# Copy in our nginx customizations
+# nginx: Copy in our customizations
 COPY ./webserver/nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
-# Copy in our MMV customizations (do multiple browser back on close instead of navigate forward to original page)
-COPY ./webserver/html/ropewiki/extensions/MultimediaViewer/mmv.js /rw/extensions/MultimediaViewer/resources/mmv
+# MMV: Copy in our customizations (do multiple browser back on close instead of navigate forward to original page)
+RUN cd /rw/extensions/MultimediaViewer \
+ && mv -f mmv.js /rw/extensions/MultimediaViewer/resources/mmv \
+ && mv -f mmv.bootstrap.js /rw/extensions/MultimediaViewer/resources/mmv
+
+# Sphinx: Copy our configuration file over, along with our modified mediawiki extension (allows substring search on page titles instead of exact match from the start)
+RUN cd /rw/extensions/SphinxSearch \
+ && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
+
+# Sphinx: Setup chron job
+RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
+ && chmod 0644 /etc/cron.d/sphinxsearch-update \
+ && crontab /etc/cron.d/sphinxsearch-update \
+ && touch /var/log/cron.log
 
 # === Create backupreader user ===
 
