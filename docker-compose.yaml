@@ -35,6 +35,8 @@ services:
     build:
       context: .
       dockerfile: webserver/Dockerfile
+      args:
+        codebaseversion: ${CODEBASE_VERSION:-When this image was built with docker-compose, <pre>CODEBASE_VERSION</pre> environment variable was not present.}
     ports:
       - "8080:80"
       - "22002:22"
