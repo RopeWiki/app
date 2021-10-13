@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -130,6 +131,29 @@ def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
     subprocess.check_call(cmd, shell=True)
     return None
 
+def make_env_var_safe(s: str) -> str:
+  return s.replace('\n', '<br>').replace('"', '&quot;')
+
+_codebase_version = None
+def get_codebase_version() -> str:
+  global _codebase_version
+  if _codebase_version is None:
+    timestamp = 'Built {} UTC, {} local'.format(
+      datetime.datetime.utcnow().isoformat('T', 'seconds'), datetime.datetime.now().isoformat('T', 'seconds'))
+    gitlog = make_env_var_safe(run_cmd('git log -n 1', True))
+    m = re.search(r'commit ([a-f0-9]+)', gitlog)
+    if m:
+      commit = 'https://github.com/RopeWiki/app/tree/{}'.format(m.group(1), m.group(1))
+    else:
+      commit = 'Could not determine commit'
+    gitstatus = make_env_var_safe(run_cmd('git status', True).replace('\n', '<br>'))
+    _codebase_version = ('<h2>Build</h2><p>{timestamp}</p>' +
+                         '<h2>Commit</h2><p>{commit}</p>' +
+                         '<h2>git log -n 1</h2><pre>{gitlog}</pre>' +
+                         '<h2>git status</h2><pre>{gitstatus}</pre>').format(
+      timestamp=timestamp, commit=commit, gitlog=gitlog, gitstatus=gitstatus)
+  return _codebase_version
+
 def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, str]:
   make_var_cmd = 'set ' if platform.system() == 'Windows' else 'export '
   docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
@@ -140,7 +164,8 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
     '{cmd}WG_PROTOCOL={protocol}',
     '{cmd}SQL_BACKUP_FOLDER={sql_backup_folder}',
     '{cmd}IMAGES_FOLDER={images_folder}',
-    '{cmd}PROXY_CONFIG_FOLDER={proxy_config_folder}']).format(
+    '{cmd}PROXY_CONFIG_FOLDER={proxy_config_folder}',
+    '{cmd}CODEBASE_VERSION="{codebase_version}"']).format(
     cmd=make_var_cmd,
     root_db_password=site_config.root_db_password,
     db_password=site_config.db_password,
@@ -148,7 +173,8 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
     protocol=site_config.protocol,
     sql_backup_folder=site_config.sql_backup_folder,
     images_folder=site_config.images_folder,
-    proxy_config_folder=site_config.proxy_config_folder)
+    proxy_config_folder=site_config.proxy_config_folder,
+    codebase_version=get_codebase_version())
   return variable_declarations, docker_compose_command
 
 def run_docker_compose(cmd: str, site_config: SiteConfig, capture_result=False) -> str:

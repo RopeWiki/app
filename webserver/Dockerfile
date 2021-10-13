@@ -157,6 +157,9 @@ ENV WG_PROTOCOL http
 ENV WG_SECRET_KEY 04f44118ad1899762bc60ed90d778aa72f92e9dc0d298c8f327755e503ceb84a
 ENV WG_UPGRADE_KEY 1ce9e4e2a0a3bf63
 
+ARG codebaseversion=When this image was built with Docker, <pre>codebaseversion</pre> Docker arg was not specified.
+RUN echo "<html><body>${codebaseversion}</body></html>" > /rw/codebase_version.html
+
 CMD sh /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
