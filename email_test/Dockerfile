@@ -1,20 +1,15 @@
-# docker build -t postfix_test .
-# Windows: docker run -it -v c:\ropewiki\postfix\mount:/external postfix_test
-# Linux:   docker run -it -v `pwd`:/external postfix_test
+FROM alpine:3.13
 
-FROM ubuntu:14.04
+RUN apk update && \
+    apk add bash gawk cyrus-sasl cyrus-sasl-login cyrus-sasl-crammd5 mailx \
+    postfix && \
+    rm -rf /var/cache/apk/* && \
+    mkdir -p /var/log/supervisor/ /var/run/supervisor/ && \
+    sed -i -e 's/inet_interfaces = localhost/inet_interfaces = all/g' /etc/postfix/main.cf
 
-# https://blog.codinghorror.com/so-youd-like-to-send-some-email-through-code/
-ENV DEBIAN_FRONTEND=noninteractive
-# All options: https://gist.github.com/gene1wood/e4dd448513cb425b5ec398f95cda2462
-RUN echo "postfix postfix/mailname string dev.ropewiki.com" | debconf-set-selections
-RUN echo "postfix postfix/main_mailer_type string 'Internet Site'" | debconf-set-selections
-RUN echo "postfix postfix/protocols select all" | debconf-set-selections
-RUN apt-get update && apt-get install --assume-yes postfix mailutils
+COPY run.sh /
+RUN chmod +x /run.sh
+RUN newaliases
 
-COPY ./system_start.sh /system_start.sh
-
-CMD bash /system_start.sh
-
-# echo "Test message from local Docker container" | mail -s "Local mail test" bjpcaltech@gmail.com
-# echo "Test message from monolith" | mail -s "Monolith mail test" bjpcaltech@gmail.com
+EXPOSE 25
+CMD ["/run.sh"]
