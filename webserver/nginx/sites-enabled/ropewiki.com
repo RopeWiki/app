@@ -28,16 +28,11 @@ server {
 		root /usr/share/nginx/html/ropewiki;
 	}
 
-	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+	# pass the PHP scripts to FastCGI server
 	#
 	location ~ \.php$ {
 		fastcgi_split_path_info ^(.+\.php)(/.+)$;
-	#	# NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
-	#
-	#	# With php5-cgi alone:
-	#	fastcgi_pass 127.0.0.1:9000;
-	#	# With php5-fpm:
-		fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+		fastcgi_pass unix:/var/run/php/php5.6-fpm.sock;
 		fastcgi_index index.php;
 		include fastcgi_params;
 	}

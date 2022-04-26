@@ -19,10 +19,11 @@ RUN apt-get -y upgrade
 RUN apt-get install -y --no-install-recommends nginx
 
 # Install php and associated packages
+# PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
 # https://stackoverflow.com/a/48782486/651139
 RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
-    apt-get install -y --no-install-recommends php7.4 php7.4-fpm php7.4-cli php7.4-mysql php7.4-imagick php7.4-xml php7.4-mbstring
+    apt-get install -y --no-install-recommends php5.6 php5.6-fpm php5.6-cli php5.6-mysql php5.6-imagick php5.6-xml php5.6-mbstring
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick openssh-server
