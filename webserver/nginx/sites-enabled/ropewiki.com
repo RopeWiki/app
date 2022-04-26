@@ -34,7 +34,7 @@ server {
 		fastcgi_split_path_info ^(.+\.php)(/.+)$;
 		fastcgi_pass unix:/var/run/php/php5.6-fpm.sock;
 		fastcgi_index index.php;
-		include fastcgi_params;
+		include fastcgi.conf;
 	}
 
 	# deny access to .htaccess files, if Apache's document root
