@@ -304,7 +304,6 @@ def create_db(site_config: SiteConfig, options: List[str]):
       print('Container exited unexpectedly; logs:')
       run_cmd('docker container logs {}'.format(site_config.db_container))
       sys.exit('The container {} exited unexpectedly'.format(site_config.db_container))
-    log('  {}'.format(db_status))
     time.sleep(10)
 
   # Create an empty ropewiki database
