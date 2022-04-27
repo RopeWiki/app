@@ -118,12 +118,12 @@ def log(msg: str):
 def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
   log('  RUN {}'.format(cmd))
   if capture_result:
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
     stdout = p.stdout
     if p.returncode != 0:
       print(stdout)
       print('ERROR: Return code {}'.format(p.returncode))
-      sys.exit(p.stderr)
+      sys.exit(p.returncode)
     if not isinstance(stdout, str):
       stdout = stdout.decode('utf-8')
     return stdout
@@ -159,6 +159,7 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
   docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
   variable_declarations = '\n'.join([
     '{cmd}RW_ROOT_DB_PASSWORD={root_db_password}',
+    '{cmd}MYSQL_ROOT_PASSWORD={root_db_password}',
     '{cmd}WG_DB_PASSWORD={db_password}',
     '{cmd}WG_HOSTNAME={hostname}',
     '{cmd}WG_PROTOCOL={protocol}',
@@ -286,18 +287,23 @@ def create_db(site_config: SiteConfig, options: List[str]):
 
   # Wait for container to come up
   log('>> Waiting for MySQL database to initialize...')
-  time.sleep(10)
+  time.sleep(5)
   while True:
     db_status = run_cmd(
       'docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container),
       capture_result=True).strip()
+    log('    DB status: ' + db_status)
     if db_status == 'running':
-      break
+      # We *think* it's ready, but it's actually likely not.  It apparently has to effectively start twice >:|
+      db_logs = run_cmd('docker container logs {}'.format(site_config.db_container), capture_result=True)
+      ready_count = db_logs.count('ready for connections')
+      log('    Ready count: {}'.format(ready_count))
+      if ready_count >= 2:
+        break
     if db_status == 'exited':
       print('Container exited unexpectedly; logs:')
       run_cmd('docker container logs {}'.format(site_config.db_container))
       sys.exit('The container {} exited unexpectedly'.format(site_config.db_container))
-    log('  {}'.format(db_status))
     time.sleep(10)
 
   # Create an empty ropewiki database

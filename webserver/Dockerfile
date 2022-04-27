@@ -1,10 +1,9 @@
-# This image represents the current production deployment of the RopeWiki
-# server.
+# This image describes the RopeWiki webserver.
 
-# To build this image, run this in this folder:
-#   docker image build -f Dockerfile -t ropewiki/webserver .
+# To build this image, run the following command starting from the root of the repository:
+#   docker image build -f webserver/Dockerfile -t ropewiki/webserver .
 
-FROM ubuntu:14.04
+FROM ubuntu:20.04
 
 # === Install services and tools ===
 
@@ -12,26 +11,29 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 
-# Fix CA cert issue in Ubuntu 14.04 (https://stackoverflow.com/questions/69420612/how-can-i-update-my-root-certificates-in-an-ubuntu-14-04-dockerfile)
-RUN apt-get install -y --no-install-recommends sed && \
-    sed -i '/^mozilla\/DST_Root_CA_X3/s/^/!/' /etc/ca-certificates.conf && update-ca-certificates -f
+# Fix SSL crap related to Let's Encrypt Sept 2021 certificate expiration
+RUN apt-get install -y --no-install-recommends openssl ca-certificates
+RUN apt-get -y upgrade
 
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
-# Install php
+# Install php and associated packages
+# PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
 # https://stackoverflow.com/a/48782486/651139
-RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
-    apt-get install -y --no-install-recommends php5-fpm php5-cli php5-mysql
+RUN apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:ondrej/php && \
+    apt-get update && \
+    printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
+    apt-get install -y --no-install-recommends php5.6 php5.6-fpm php5.6-cli php5.6-mysql php5.6-imagick php5.6-xml php5.6-mbstring
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick php5-imagick openssh-server
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick openssh-server
 
 # Install composer
-COPY ./webserver/scripts/install_composer.sh /root/install_composer.sh
-RUN sh /root/install_composer.sh && \
-    mv composer.phar /usr/local/bin/composer
+# https://stackoverflow.com/a/51446468/651139
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # === Install MediaWiki ===
 
@@ -89,7 +91,6 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 # UserAdmin
 # xml2wiki-dr
 
-
 # === Install SphinxSearch ===
 
 RUN apt-get install -y --no-install-recommends sphinxsearch
@@ -127,7 +128,8 @@ RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
 
 # Sphinx: Setup chron job
-RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
+RUN apt-get install cron \
+ && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
  && crontab /etc/cron.d/sphinxsearch-update \
  && touch /var/log/cron.log
@@ -164,5 +166,3 @@ CMD sh /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
 #   docker container run -it ropewiki/webserver
-
-# /etc/php5/fpm/php-fmp.conf
