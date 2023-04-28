@@ -69,6 +69,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CategoryTree CategoryTree && cd CategoryTree && git checkout 52c3eb7
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CheckUser CheckUser && cd CheckUser && git checkout 99f4a22
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ContributionScores ContributionScores && cd ContributionScores && git checkout 7e02f8a
+RUN cd /rw/extensions && git clone https://github.com/enterprisemediawiki/HeaderFooter HeaderFooter && cd HeaderFooter && git checkout a06c320 
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout 22c450d
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Arrays Arrays && cd Arrays && git checkout f28592b
 RUN cd /rw/extensions && git clone https://gitlab.com/HydraWiki/extensions/embedvideo.git EmbedVideo && cd EmbedVideo && git checkout bdc2cf1
