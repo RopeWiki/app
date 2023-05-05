@@ -63,7 +63,7 @@ RUN cd /rw && composer install
 # https://github.com/NVIDIA/nvidia-docker/issues/714#issuecomment-386244620
 
 RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticCompoundQueries.git && cd SemanticCompoundQueries && git checkout f5eed72
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout a569de7
+RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout a569de7
 RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticFormsInputs.git && cd SemanticFormsInputs && git checkout e8254cf
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating && cd SemanticRating && git checkout 3af01d6
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CategoryTree CategoryTree && cd CategoryTree && git checkout 52c3eb7
