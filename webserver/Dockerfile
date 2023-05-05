@@ -50,7 +50,7 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 # === Install extensions ===
 
 COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
-RUN cd /rw && composer install
+RUN cd /rw && composer config --no-plugins allow-plugins.composer/installers false && composer install
 
 # Note: We do not need to follow the rest of the instructions to install
 # SemanticMediaWiki 2.1 because the files we will copy over are already
