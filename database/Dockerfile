@@ -2,7 +2,7 @@
 #   docker image build -f Dockerfile -t ropewiki/database .
 
 # MySQL database; see https://hub.docker.com/_/mysql
-FROM mysql:5.7
+FROM mysql:5.7-debian
 
 # Install necessary tools
 RUN apt-get update && apt-get -y install cron openssh-server
