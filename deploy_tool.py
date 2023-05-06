@@ -377,10 +377,10 @@ def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
 
 @deploy_command
 def redeploy(site_config: SiteConfig, options: List[str]):
-  redeploy_targets = {'webserver', 'db'}
-  if options[0] not in redeploy_targets:
+  redeploy_targets = {'webserver', 'db', 'reverse-proxy'}
+  if not options or options[0] not in redeploy_targets:
     sys.exit('Expected: redeploy {{{}}}'.format('|'.join(redeploy_targets)))
-  log('Redeploying webserver by rebuilding, taking down, then restarting service')
+  log(f'Redeploying {options[0]} by rebuilding, taking down, then restarting service')
   if options[0] == 'webserver':
     run_docker_compose('build {}'.format(site_config.webserver_service), site_config)
     run_docker_compose('rm -f -s -v {}'.format(site_config.webserver_service), site_config)
@@ -388,6 +388,10 @@ def redeploy(site_config: SiteConfig, options: List[str]):
   elif options[0] == 'db':
     run_docker_compose('build {}'.format(site_config.db_service), site_config)
     run_docker_compose('rm -f -s {}'.format(site_config.db_service), site_config)
+    start_site(site_config, [])
+  elif options[0] == 'reverse-proxy':
+    run_docker_compose('build {}'.format(site_config.reverse_proxy_service), site_config)
+    run_docker_compose('rm -f -s {}'.format(site_config.reverse_proxy_service), site_config)
     start_site(site_config, [])
 
 @deploy_command
