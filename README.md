@@ -51,7 +51,7 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
 ### Define site to be deployed
 
 1. Ensure that there is a .json file in [site_configs](site_configs) corresponding to the site to be deployed
-1. Create a new .json file, modeled after [example.json](site_configs/example.json), if necessary
+1. Create a new .json file, modeled after [dev.json](site_configs/dev.json), if necessary
     1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`) and define folders relative to that
        folder
 1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
