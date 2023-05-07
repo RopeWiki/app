@@ -1,9 +1,3 @@
 user-agent: *
-disallow: /
-
-user-agent: Googlebot
-user-agent: Slurp
-user-agent: msnbot
-user-agent: Mediapartners-Google
 allow: /
 disallow: /luca/
