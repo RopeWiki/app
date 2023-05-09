@@ -42,9 +42,10 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
 
 1. Update packages (`sudo apt-get update`)
 1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-1. [Install docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems)
+1. [Install legacy/v1 docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems) with `sudo apt install docker-compose`
     1. Fix [this issue](https://github.com/docker/compose/issues/6931)
        with `sudo apt update && apt install rng-tools`
+    1. Verify installation with `docker-compose --version`; result should be 1.29.2 or similar, not 2.x.x
 1. Install git (`sudo apt-get install git`)
 1. Clone this repository into an appropriate folder (perhaps `/rw`)
 
@@ -62,14 +63,18 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
     1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
 1. Get `images` folder
     1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
+1. Create a shortcut to declare passwords: create `~/rw_passwords.sh` (or another location) with content like:
+```shell
+#!/bin/bash
+
+export WG_DB_PASSWORD=<The password for the `ropewiki` DB user>
+export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
+```
 
 ### Deploy site
 
 1. Build the necessary images: `python3 deploy_tool.py <SITE_NAME> dc build`
-1. Ensure environment variable for the `ropewiki` DB user password is populated correctly;
-   example: `export WG_DB_PASSWORD=whateveryourpasswordis`
-1. Ensure environment variable for the `root` DB user password is populated correctly;
-   example: `export RW_ROOT_DB_PASSWORD=whateveryourpasswordis`
+1. Make password variables accessible in the terminal: `source ~/rw_passwords.sh`
 1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
 1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
 1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
@@ -113,7 +118,7 @@ run `python3 deploy_tool.py <SITE_NAME> renew_certs`
 ### Arbitrary docker-compose commands
 
 The docker-compose.yaml configuration requires a number of environment variables to be set before it can be used. To
-avoid the need to set these variables yourself (apart from WG_DB_PASSWORD), use
+avoid the need to set these variables yourself (apart from WG_DB_PASSWORD and RW_ROOT_DB_PASSWORD), use
 `python3 deploy_tool.py <SITE_NAME> dc "<YOUR COMMAND>"`. For instance, `python3 deploy_tool.py dev dc "up -d"`.
 
 ### Updating webserver
