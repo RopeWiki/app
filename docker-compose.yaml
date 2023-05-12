@@ -16,6 +16,7 @@ services:
   # The RopeWiki MySQL database; see instructions in README.md to build the image
   ropewiki_db:
     image: ropewiki/database
+    hostname: ropewiki_db
     build:
       context: .
       dockerfile: database/Dockerfile
@@ -32,6 +33,7 @@ services:
   # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image
   ropewiki_webserver:
     image: ropewiki/webserver
+    hostname: ropewiki_webserver
     build:
       context: .
       dockerfile: webserver/Dockerfile
@@ -55,6 +57,7 @@ services:
   # The reverse proxy that directs traffic to the appropriate places; see instructions in README.md to build the image
   ropewiki_reverse_proxy:
     image: ropewiki/reverse_proxy
+    hostname: ropewiki_reverse_proxy
     build:
       context: .
       dockerfile: reverse_proxy/Dockerfile
