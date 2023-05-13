@@ -341,6 +341,27 @@ def restore_db(site_config: SiteConfig, options: List[str]):
   run_cmd(cmd)
   log('  -> Backup restored.')
 
+
+@deploy_command
+def restore_schema(site_config: SiteConfig, options: List[str]):
+  """Restore an empty db schema
+  """
+
+  schema_file = "/rw/database/empty_schema.sql"
+
+  log('Restoring schema {}...'.format(schema_file))
+  if platform.system() == 'Windows':
+    cmd = ('type {schema_file} | ' +
+           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
+  else:
+    cmd = ('cat {schema_file} | ' +
+           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
+  cmd = cmd.format(
+    schema_file=schema_file, db_container=site_config.db_container, db_password=site_config.db_password)
+  run_cmd(cmd)
+  log('  -> Schema restored.')
+
+
 @deploy_command
 def start_site(site_config: SiteConfig, options: List[str]):
   site_config.assert_root_db_password_is_set()
