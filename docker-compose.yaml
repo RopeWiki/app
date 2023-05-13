@@ -81,6 +81,7 @@ services:
 
   ropewiki_mailserver:
     image: ropewiki/mailserver
+    hostname: ropewiki_mailserver
     build:
       context: .
       dockerfile: mailserver/Dockerfile
@@ -96,9 +97,14 @@ services:
       - POSTFIX_mynetworks=172.0.0.0/8  # which clients we will relay traffic for
       - POSTFIX_smtp_tls_security_level=may  # prefer outbound tls to the internet
       - POSTFIX_smtpd_tls_security_level=none  # don't require inbound tls from local clients
+      - OPENDKIM_DOMAINS=ropewiki.com  # domains to generate dkim keys for
+    volumes:
+      - ropewiki_mailserver_keys:/etc/opendkim/keys  # persist keys
 
 volumes:
   ropewiki_database_storage:
     name: ropewiki_database_storage
   ropewiki_proxy_certs:
     name: ropewiki_proxy_certs
+  ropewiki_mailserver_keys:
+    name: ropewiki_mailserver_keys
