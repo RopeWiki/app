@@ -1,13 +1,31 @@
 #!/bin/bash
+set -euo pipefail
 
-DATE=`date -I`
-BACKUP=/home/backupreader/backups/all-backup-${DATE}.sql.gz
+echo "=== $(date) ==="
 
-mysqldump --all-databases \
+# Backups can be disabled by touching `/do_not_backup_db`.
+if test -f "/do_not_backup_db"; then
+    echo "Backups disabled - found /do_not_backup_db"
+    exit
+fi
+
+BASE_PATH="/home/backupreader/backups"
+DATE=$(date +'%Y-%m-%d-%H%M%S')  # e.g. 2023-05-13-181803
+BACKUP="${BASE_PATH}/all-backup-${DATE}.sql.gz"
+
+echo "Starting backup to $BACKUP"
+
+time mysqldump --all-databases \
           --add-drop-database \
           --single-transaction \
           --user=root --password="{{RW_ROOT_DB_PASSWORD}}" \
           | gzip > ${BACKUP}
 
-# Owner: rwx, Group: r--, Others: r--
-chmod 744 ${BACKUP}
+# Owner: rw-, Group: r--, Others: r--
+chmod 644 ${BACKUP}
+
+ls -lah ${BACKUP}
+
+touch $BASE_PATH/last_success
+
+echo "==============="
