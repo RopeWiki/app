@@ -17,6 +17,7 @@ services:
   ropewiki_db:
     image: ropewiki/database
     hostname: ropewiki_db
+    init: true
     build:
       context: .
       dockerfile: database/Dockerfile
