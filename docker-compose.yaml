@@ -28,7 +28,7 @@ services:
       - RW_ROOT_DB_PASSWORD=${RW_ROOT_DB_PASSWORD:-}
     volumes:
       - ropewiki_database_storage:/var/lib/mysql
-      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/root/backup
+      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/home/backupreader/backups
 #    restart: always
 
   # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image

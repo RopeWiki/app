@@ -20,6 +20,7 @@ else
 
   # Enable SSH
   service ssh start
+  service cron start
 
   touch /ropewiki_setup_complete
 
