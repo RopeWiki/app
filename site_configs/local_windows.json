@@ -4,5 +4,6 @@
   "logs_folder": "c:\\ropewiki\\mount",
   "sql_backup_folder": "c:\\ropewiki\\mount\\sqlbackup",
   "images_folder": "c:\\ropewiki\\mount\\images",
-  "proxy_config_folder": "c:\\ropewiki\\mount\\proxy_config"
+  "proxy_config_folder": "c:\\ropewiki\\mount\\proxy_config",
+  "robots": "robots_dev.txt"
 }

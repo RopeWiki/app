@@ -40,7 +40,7 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
 RUN pear install --alldeps mail
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick openssh-server
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick openssh-server less rsync
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
@@ -145,6 +145,9 @@ RUN apt-get install cron \
  && crontab /etc/cron.d/sphinxsearch-update \
  && touch /var/log/cron.log
 
+# robots: Copy the robots.txt candidates that can be selected at startup
+COPY ./webserver/robots /rw/robots
+
 # === Create backupreader user ===
 
 # Create a user named `backupreader` for reading images folder
@@ -169,6 +172,7 @@ ENV WG_HOSTNAME localhost
 ENV WG_PROTOCOL http
 ENV WG_SECRET_KEY 04f44118ad1899762bc60ed90d778aa72f92e9dc0d298c8f327755e503ceb84a
 ENV WG_UPGRADE_KEY 1ce9e4e2a0a3bf63
+ENV RW_ROBOTS robots_dev.txt
 
 ARG codebaseversion=When this image was built with Docker, <pre>codebaseversion</pre> Docker arg was not specified.
 RUN echo "<html><body>${codebaseversion}</body></html>" > /rw/codebase_version.html

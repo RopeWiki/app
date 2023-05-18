@@ -21,6 +21,8 @@ class SiteConfig(object):
   hostname: str
   protocol: str
 
+  robots: str
+
   logs_folder: str
   sql_backup_folder: str
   images_folder: str
@@ -129,7 +131,12 @@ def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
       stdout = stdout.decode('utf-8')
     return stdout
   else:
-    subprocess.check_call(cmd, shell=True)
+    try:
+      subprocess.check_call(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+      log(f"Error running command '{cmd}'; rerunning to capture result...")
+      run_cmd(cmd, capture_result=True)
+      raise
     return None
 
 def make_env_var_safe(s: str) -> str:
@@ -167,7 +174,8 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
     '{cmd}SQL_BACKUP_FOLDER={sql_backup_folder}',
     '{cmd}IMAGES_FOLDER={images_folder}',
     '{cmd}PROXY_CONFIG_FOLDER={proxy_config_folder}',
-    '{cmd}CODEBASE_VERSION="{codebase_version}"']).format(
+    '{cmd}CODEBASE_VERSION="{codebase_version}"',
+    '{cmd}RW_ROBOTS="{robots}"']).format(
     cmd=make_var_cmd,
     root_db_password=site_config.root_db_password,
     db_password=site_config.db_password,
@@ -176,7 +184,8 @@ def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, 
     sql_backup_folder=site_config.sql_backup_folder,
     images_folder=site_config.images_folder,
     proxy_config_folder=site_config.proxy_config_folder,
-    codebase_version=get_codebase_version())
+    codebase_version=get_codebase_version(),
+    robots=site_config.robots)
   return variable_declarations, docker_compose_command
 
 def run_docker_compose(cmd: str, site_config: SiteConfig, capture_result=False) -> str:
@@ -341,6 +350,27 @@ def restore_db(site_config: SiteConfig, options: List[str]):
     latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password)
   run_cmd(cmd)
   log('  -> Backup restored.')
+
+
+@deploy_command
+def restore_schema(site_config: SiteConfig, options: List[str]):
+  """Restore an empty db schema
+  """
+
+  schema_file = "/rw/database/empty_schema.sql"
+
+  log('Restoring schema {}...'.format(schema_file))
+  if platform.system() == 'Windows':
+    cmd = ('type {schema_file} | ' +
+           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
+  else:
+    cmd = ('cat {schema_file} | ' +
+           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
+  cmd = cmd.format(
+    schema_file=schema_file, db_container=site_config.db_container, db_password=site_config.db_password)
+  run_cmd(cmd)
+  log('  -> Schema restored.')
+
 
 @deploy_command
 def start_site(site_config: SiteConfig, options: List[str]):

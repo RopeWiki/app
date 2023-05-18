@@ -17,6 +17,7 @@ services:
   ropewiki_db:
     image: ropewiki/database
     hostname: ropewiki_db
+    init: true
     build:
       context: .
       dockerfile: database/Dockerfile
@@ -27,7 +28,7 @@ services:
       - RW_ROOT_DB_PASSWORD=${RW_ROOT_DB_PASSWORD:-}
     volumes:
       - ropewiki_database_storage:/var/lib/mysql
-      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/root/backup
+      - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/home/backupreader/backups
 #    restart: always
 
   # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image
@@ -48,6 +49,7 @@ services:
       - WG_DB_SERVER=ropewiki_db
       - WG_DB_USER=${WG_DB_USERNAME:-ropewiki}
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
+      - RW_ROBOTS=${RW_ROBOTS:-robots_dev.txt}
     depends_on:
       - ropewiki_db
     volumes:
