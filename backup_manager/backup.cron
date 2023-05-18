@@ -1,0 +1,1 @@
+0 10 * * * bash /backup_mysql.sh >> /home/backupreader/backups/backup.log 2>&1

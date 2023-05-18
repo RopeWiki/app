@@ -32,6 +32,7 @@ class SiteConfig(object):
   db_volume = 'ropewiki_database_storage'
   reverse_proxy_service = 'ropewiki_reverse_proxy'
   webserver_service = 'ropewiki_webserver'
+  backup_manager_service = 'ropewiki_backup_manager'
 
   _db_password: str
   _root_db_password: str
@@ -356,7 +357,8 @@ def restore_schema(site_config: SiteConfig, options: List[str]):
   """Restore an empty db schema
   """
 
-  schema_file = "/rw/database/empty_schema.sql"
+  dir_path = os.path.dirname(os.path.realpath(__file__))
+  schema_file = os.path.join(dir_path, "database", "empty_schema.sql")
 
   log('Restoring schema {}...'.format(schema_file))
   if platform.system() == 'Windows':
@@ -407,7 +409,7 @@ def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
 
 @deploy_command
 def redeploy(site_config: SiteConfig, options: List[str]):
-  redeploy_targets = {'webserver', 'db', 'reverse-proxy'}
+  redeploy_targets = {'webserver', 'db', 'reverse_proxy', 'backup_manager'}
   if not options or options[0] not in redeploy_targets:
     sys.exit('Expected: redeploy {{{}}}'.format('|'.join(redeploy_targets)))
   log(f'Redeploying {options[0]} by rebuilding, taking down, then restarting service')
@@ -419,9 +421,13 @@ def redeploy(site_config: SiteConfig, options: List[str]):
     run_docker_compose('build {}'.format(site_config.db_service), site_config)
     run_docker_compose('rm -f -s {}'.format(site_config.db_service), site_config)
     start_site(site_config, [])
-  elif options[0] == 'reverse-proxy':
+  elif options[0] == 'reverse_proxy':
     run_docker_compose('build {}'.format(site_config.reverse_proxy_service), site_config)
     run_docker_compose('rm -f -s {}'.format(site_config.reverse_proxy_service), site_config)
+    start_site(site_config, [])
+  elif options[0] == 'backup_manager':
+    run_docker_compose('build {}'.format(site_config.backup_manager_service), site_config)
+    run_docker_compose('rm -f -s {}'.format(site_config.backup_manager_service), site_config)
     start_site(site_config, [])
 
 @deploy_command

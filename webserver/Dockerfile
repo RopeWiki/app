@@ -127,7 +127,7 @@ RUN cd /rw/extensions/MultimediaViewer \
 RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
 
-# Sphinx: Setup chron job
+# Sphinx: Setup cron job
 RUN apt-get install cron \
  && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
@@ -136,18 +136,6 @@ RUN apt-get install cron \
 
 # robots: Copy the robots.txt candidates that can be selected at startup
 COPY ./webserver/robots /rw/robots
-
-# === Create backupreader user ===
-
-# Create a user named `backupreader` for reading images folder
-RUN useradd --create-home --shell /bin/bash backupreader
-USER backupreader
-USER root
-RUN ln -s /rw/images /home/backupreader/images
-
-# Provide SSH access to backupreaders
-USER backupreader
-COPY ./backup_pubkeys/authorized_keys /home/backupreader/.ssh/authorized_keys
 
 # === Set up startup behavior ===
 USER root
