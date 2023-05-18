@@ -3,7 +3,7 @@
 ## Overview
 
 The RopeWiki backup manager automatically makes periodic backups, when enabled. The backups files
-follow the form `all-backup-YYYY-MM-DD-FFFFFF.sql.gz` and are stored in /home/backupreader/backups/ according
+follow the form `all-backup-YYYY-MM-DD-HHMMSS.sql.gz` and are stored in /home/backupreader/backups/ according
 to [backup_mysql.sh](scripts/backup_mysql.sh).
 
 ## Copying backups offsite

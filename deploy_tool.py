@@ -353,7 +353,7 @@ def restore_db(site_config: SiteConfig, options: List[str]):
 
 
 @deploy_command
-def restore_schema(site_config: SiteConfig, options: List[str]):
+def restore_empty_db(site_config: SiteConfig, options: List[str]):
   """Restore an empty db schema
   """
 
