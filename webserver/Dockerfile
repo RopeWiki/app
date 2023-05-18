@@ -29,7 +29,7 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
     apt-get install -y --no-install-recommends php5.6 php5.6-fpm php5.6-cli php5.6-mysql php5.6-imagick php5.6-xml php5.6-mbstring
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick openssh-server less rsync
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139

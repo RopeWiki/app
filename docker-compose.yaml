@@ -74,7 +74,7 @@ services:
       - ropewiki_proxy_certs:/etc/letsencrypt
 #    restart: always
 
-  # The RopeWiki MySQL database; see instructions in README.md to build the image
+  # The RopeWiki backup manager; see instructions in README.md to build the image
   ropewiki_backup_manager:
     image: ropewiki/backup_manager
     hostname: ropewiki_backup_manager
@@ -86,6 +86,8 @@ services:
       - "22001:22"
     environment:
       - RW_ROOT_DB_PASSWORD=${RW_ROOT_DB_PASSWORD:-}
+    depends_on:
+      - ropewiki_db
     volumes:
       - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/home/backupreader/backups
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/home/backupreader/images:ro
