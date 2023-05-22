@@ -4,6 +4,12 @@ It doesn't really need its own custom docker image, as the upstream image is ful
 
 Clients running inside the docker network can send mail to `ropewiki_mailserver` on port 25 to have mail relayed for them.
 
+### Deployment
+
+The mailserver container is largely stateless, and can be restarted without issue.
+
+But if you tear down the `ropewiki_mailserver_keys` volume we'll loose the DKIM private key. A new one will be automatically regenerated when the container is restarted - however the DNS records will need to be manually updated with the new key.
+
 
 ### Testing & Investigating
 
