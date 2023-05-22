@@ -89,17 +89,15 @@ services:
       driver: json-file
       options:
         max-size: 10m
-    ports:
-      - "25:25"
     environment:
       - POSTFIX_myhostname=ropewiki.com  # who we identify ourselves as to clients
       - POSTFIX_mydestination=localhost  # which domains we consider ourself the final destination for (i.e. none)
-      - POSTFIX_mynetworks=172.0.0.0/8  # which clients we will relay traffic for
+      - POSTFIX_mynetworks=172.16.0.0/12  # which clients we will relay traffic for
       - POSTFIX_smtp_tls_security_level=may  # prefer outbound tls to the internet
       - POSTFIX_smtpd_tls_security_level=none  # don't require inbound tls from local clients
       - OPENDKIM_DOMAINS=ropewiki.com  # domains to generate dkim keys for
     volumes:
-      - ropewiki_mailserver_keys:/etc/opendkim/keys  # persist keys
+      - ropewiki_mailserver_keys:/etc/opendkim/keys  # persist dkim keys
 
 volumes:
   ropewiki_database_storage:
