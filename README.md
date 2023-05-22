@@ -8,13 +8,13 @@ contain the database content nor the `images` folder content of the real site).
 ### Site architecture
 
 * The [MySQL database](database/README.md) stores all the non-file site data
-    * Exposes port 22001 for SSH access to [`backupreader`](backup_pubkeys/README.md) users
 * The [webserver](webserver/README.md) runs MediaWiki with extensions, and also stores all the file-based site
   data/uploads
     * Exposes port 8080 for direct access to the webserver that bypasses the reverse proxy
-    * Will expose port 22002 for SSH access to [`backupreader`](backup_pubkeys/README.md) users
 * The [reverse proxy](reverse_proxy/README.md) manages TLS termination and also redirects according to target site
     * Exposes ports 80 & 443 as the external-facing webserver
+* The [backup manager](backup_manager/README.md) exposes site data for backup
+    * Exposes port 22001 for SSH access to [`backupreader`](backup_manager/pubkeys/README.md) users
 
 ## Site deployment
 
@@ -77,6 +77,7 @@ export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
 1. Make password variables accessible in the terminal: `source ~/rw_passwords.sh`
 1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
 1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
+    1. Or, for a development deployment, create a minimal database using `python3 deploy_tool.py <SITE_NAME> restore_schema`
 1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
 1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by
    visiting `http://<hostname>:8080`
@@ -85,27 +86,27 @@ export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
     1. Note that the certs should be persisted in `${proxy_config_folder}/letsencrypt`; select option 1 to reinstall the
        existing cert if prompted
     1. Enable redirection (option 2) when prompted
-    1. Verify success by visiting https://<hostname>
+    1. Verify success by visiting `https://<hostname>`
     1. Create cronjob to automatically update certificates
         1. From this working directory, run `python3 deploy_tool.py <SITE_NAME> add_cert_cronjob`
         1. To edit or delete crontabs, `crontab -e`
 
 ## Backups
 
-Direct SSH access is provided to the database and webserver containers at the ports 22001 and 22002 for
+Direct SSH access is provided to the backup manager at port 22001 for
 the `backupreader` user for clients who possess the private key to any of the public keys listed
-in [authorized_keys](backup_pubkeys/authorized_keys).
+in [authorized_keys](backup_manager/pubkeys/authorized_keys).
 
 ### Database
 
-In the database container, the `backupreader`'s home directory has a `backups` folder where complete backups of the
-database will be created daily and named `all-backup-YYYY-MM-DD.tar.gz`. An off-site backup client should connect to the
-database container and copy the latest `all-backup` file to back up the database.
+In the backup manager, the `backupreader`'s home directory has a `backups` folder where complete backups of the database
+will be created daily and named `all-backup-YYYY-MM-DD-FFFFFF.tar.gz`. An off-site backup client should connect to this
+container and copy the latest `all-backup` file to back up the database.
 
 ### Images
 
-In the webserver container, the `backupreader`'s home directory has a symlink to the `images` folder which contains most
-of the file-based data uploaded to the site. An off-site backup client should connect to the webserver container and
+In the backup manager, the `backupreader`'s home directory has a symlink to the `images` folder which contains most
+of the file-based data uploaded to the site. An off-site backup client should connect to this container and
 synchronize the full content of the `images` folder to back them up.
 
 ## Site maintenance
