@@ -290,3 +290,11 @@ $wgScriptExtension  = ".php";
 $wgSearchType = "SphinxMWSearch";
 require_once "$IP/extensions/SphinxSearch/SphinxSearch.php";
 $wgEnableSphinxPrefixSearch = true;
+
+# With this config we don't need to install & configure sendmail inside
+# the webserver container (which php's mail() will try and use by default).
+$wgSMTP = array(
+    'host' => 'ropewiki_mailserver',
+    'port' => 25,
+    'auth' => false
+);

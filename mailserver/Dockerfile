@@ -1,0 +1,1 @@
+FROM alterrebe/postfix-relay:latest
