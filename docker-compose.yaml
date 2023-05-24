@@ -93,6 +93,27 @@ services:
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/home/backupreader/images:ro
 #    restart: always
 
+  ropewiki_mailserver:
+    image: ropewiki/mailserver
+    hostname: ropewiki_mailserver
+    build:
+      context: .
+      dockerfile: mailserver/Dockerfile
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    environment:
+      - RELAY_HOST_NAME=${WG_HOSTNAME:-localhost}
+      - EXT_RELAY_HOST=${RW_SMTP_HOST:-smtp.gmail.com}
+      - EXT_RELAY_PORT=${RW_SMTP_PORT:-587}
+      - SMTP_LOGIN="${RW_SMTP_USERNAME:?RW_SMTP_USERNAME must be non-empty}"
+      - SMTP_PASSWORD="${RW_SMTP_PASSWORD:?RW_SMTP_PASSWORD must be non-empty}"
+      - USE_TLS=yes  # Use TLS to talk upstream to the internet
+      - TLS_VERIFY=may
+      - INBOUND_TLS=no  # Don't require local clients to use TLS
+      - ACCEPTED_NETWORKS=172.16.0.0/12  # Only accept connections from docker's internal network
+
 volumes:
   ropewiki_database_storage:
     name: ropewiki_database_storage

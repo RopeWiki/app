@@ -26,7 +26,18 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
     add-apt-repository ppa:ondrej/php && \
     apt-get update && \
     printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
-    apt-get install -y --no-install-recommends php5.6 php5.6-fpm php5.6-cli php5.6-mysql php5.6-imagick php5.6-xml php5.6-mbstring
+    apt-get install -y --no-install-recommends \
+        php5.6 \
+        php5.6-fpm \
+        php5.6-cli \
+        php5.6-mysql \
+        php5.6-imagick \
+        php5.6-xml \
+        php5.6-mbstring \
+        php-pear
+
+# Install the PEAR mail module and its deps.
+RUN pear install --alldeps mail
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less
