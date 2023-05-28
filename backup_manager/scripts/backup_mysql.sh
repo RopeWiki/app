@@ -16,7 +16,6 @@ BACKUP="${BASE_PATH}/all-backup-${DATE}.sql.gz"
 echo "Starting backup to $BACKUP"
 
 time mysqldump --host ropewiki_db \
-          --column-statistics=0 \
           --all-databases \
           --add-drop-database \
           --single-transaction \
