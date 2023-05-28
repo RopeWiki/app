@@ -33,6 +33,7 @@ class SiteConfig(object):
   reverse_proxy_service = 'ropewiki_reverse_proxy'
   webserver_service = 'ropewiki_webserver'
   backup_manager_service = 'ropewiki_backup_manager'
+  mailserver_service = 'ropewiki_mailserver'
 
   _db_password: str
   _root_db_password: str
@@ -408,7 +409,7 @@ def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
 
 @deploy_command
 def redeploy(site_config: SiteConfig, options: List[str]):
-  redeploy_targets = {'webserver', 'db', 'reverse_proxy', 'backup_manager'}
+  redeploy_targets = {'webserver', 'db', 'reverse_proxy', 'backup_manager', 'mailserver'}
   if not options or options[0] not in redeploy_targets:
     sys.exit('Expected: redeploy {{{}}}'.format('|'.join(redeploy_targets)))
   log(f'Redeploying {options[0]} by rebuilding, taking down, then restarting service')
@@ -427,6 +428,10 @@ def redeploy(site_config: SiteConfig, options: List[str]):
   elif options[0] == 'backup_manager':
     run_docker_compose('build {}'.format(site_config.backup_manager_service), site_config)
     run_docker_compose('rm -f -s {}'.format(site_config.backup_manager_service), site_config)
+    start_site(site_config, [])
+  elif options[0] == 'mailserver':
+    run_docker_compose('build {}'.format(site_config.mailserver_service), site_config)
+    run_docker_compose('rm -f -s {}'.format(site_config.mailserver_service), site_config)
     start_site(site_config, [])
 
 @deploy_command
