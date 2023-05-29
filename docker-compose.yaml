@@ -107,8 +107,8 @@ services:
       - RELAY_HOST_NAME=${WG_HOSTNAME:-localhost}
       - EXT_RELAY_HOST=${RW_SMTP_HOST:-smtp.gmail.com}
       - EXT_RELAY_PORT=${RW_SMTP_PORT:-587}
-      - SMTP_LOGIN="${RW_SMTP_USERNAME:?RW_SMTP_USERNAME must be non-empty}"
-      - SMTP_PASSWORD="${RW_SMTP_PASSWORD:?RW_SMTP_PASSWORD must be non-empty}"
+      - SMTP_LOGIN=${RW_SMTP_USERNAME:?RW_SMTP_USERNAME must be non-empty}
+      - SMTP_PASSWORD=${RW_SMTP_PASSWORD:?RW_SMTP_PASSWORD must be non-empty}
       - USE_TLS=yes  # Use TLS to talk upstream to the internet
       - TLS_VERIFY=may
       - INBOUND_TLS=no  # Don't require local clients to use TLS
