@@ -298,3 +298,7 @@ $wgSMTP = array(
     'port' => 25,
     'auth' => false
 );
+
+# Use the X-Forwarded-For IP address as the remote address
+# See: https://www.mediawiki.org/wiki/Topic:Ra22sndx88fnifz1
+$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
