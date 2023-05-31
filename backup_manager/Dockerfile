@@ -3,10 +3,10 @@
 # To build this image, run the following command starting from the root of the repository:
 #   docker image build -f backup_manager/Dockerfile -t ropewiki/backup_manager .
 
-FROM ubuntu:22.04
+FROM mysql:5.7-debian
 
 # Install necessary tools
-RUN apt-get update && apt-get -y install mysql-client cron openssh-server less rsync nano
+RUN apt-get update && apt-get -y install cron openssh-server less rsync nano
 
 # Create a user named `backupreader` for reading database backups
 RUN useradd --create-home --shell /bin/bash backupreader
@@ -30,4 +30,5 @@ COPY backup_manager/pubkeys/authorized_keys /home/backupreader/.ssh/authorized_k
 # Start as root
 USER root
 
+ENTRYPOINT ["/bin/bash"]
 CMD ["/entrypoint.sh"]

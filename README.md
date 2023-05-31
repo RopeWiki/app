@@ -79,7 +79,7 @@ export RW_SMTP_PASSWORD=<The password for logging into the smtp relay>
 1. Make password variables accessible in the terminal: `source ~/rw_passwords.sh`
 1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
 1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
-    1. Or, for a development deployment, create a minimal database using `python3 deploy_tool.py <SITE_NAME> restore_schema`
+    1. Or, for a development deployment, create a minimal database using `python3 deploy_tool.py <SITE_NAME> restore_empty_db`
 1. Bring site up with `python3 deploy_tool.py <SITE_NAME> start_site`
 1. (Optional) Confirm that the webserver container is working, apart from the reverse proxy, by
    visiting `http://<hostname>:8080`
@@ -102,7 +102,7 @@ in [authorized_keys](backup_manager/pubkeys/authorized_keys).
 ### Database
 
 In the backup manager, the `backupreader`'s home directory has a `backups` folder where complete backups of the database
-will be created daily and named `all-backup-YYYY-MM-DD-FFFFFF.tar.gz`. An off-site backup client should connect to this
+will be created daily and named `all-backup-YYYY-MM-DD-HHMMSS.tar.gz`. An off-site backup client should connect to this
 container and copy the latest `all-backup` file to back up the database.
 
 ### Images

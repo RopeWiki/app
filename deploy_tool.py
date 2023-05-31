@@ -43,6 +43,14 @@ class SiteConfig(object):
     return '{}_{}_1'.format(self.name, self.db_service)
 
   @property
+  def db_hostname(self) -> str:
+    return self.db_service
+
+  @property
+  def backup_manager_container(self) -> str:
+    return '{}_{}_1'.format(self.name, self.backup_manager_service)
+
+  @property
   def db_password(self) -> str:
     if not self._db_password:
       return 'thispasswordonlyworksuntildbisrestored'
@@ -200,10 +208,11 @@ def run_docker_compose(cmd: str, site_config: SiteConfig, capture_result=False) 
   return run_cmd(run_script.format(script=script), capture_result=capture_result)
 
 def execute_sql(sql_cmd: str, user: str, site_config: SiteConfig):
-  run_cmd('docker container exec {db_container} mysql -u{user} -p{password} -e "{cmd}"'.format(
+  run_cmd('docker container exec {db_container} mysql -u{user} -p{password} --host {db_hostname} -e "{cmd}"'.format(
     db_container=site_config.db_container,
     user=user,
     password=site_config.root_db_password if user == 'root' else site_config.db_password,
+    db_hostname=site_config.db_hostname,
     cmd=sql_cmd))
 
 def get_docker_volumes() -> List[str]:
@@ -293,8 +302,8 @@ def create_db(site_config: SiteConfig, options: List[str]):
   if site_config.db_volume in volumes:
     run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
-  # Bring the database up
-  run_docker_compose('up -d {db_service}'.format(db_service=site_config.db_service), site_config)
+  # Bring the database and backup manager up
+  run_docker_compose(f'up -d {site_config.db_service} {site_config.backup_manager_service}', site_config)
 
   # Wait for container to come up
   log('>> Waiting for MySQL database to initialize...')
@@ -332,47 +341,37 @@ def create_db(site_config: SiteConfig, options: List[str]):
 
   log('RopeWiki database initialized successfully.')
 
+def load_sql(site_config: SiteConfig, backup_path: str):
+  cat_tool = 'type' if platform.system() == 'Windows' else 'cat'
+
+  log('Ensuring backup manager is available...')
+  run_docker_compose('up -d {backup_manager_service}'.format(backup_manager_service=site_config.backup_manager_service), site_config)
+
+  log('Loading {}...'.format(backup_path))
+  log('  (NOTE: this operation usually takes a few minutes)')
+  cmd = '{cat_tool} {backup_path} | docker container exec -i {db_container} mysql -uropewiki -p{db_password} --host {db_hostname} ropewiki'
+  cmd = cmd.format(
+    cat_tool=cat_tool, backup_path=backup_path, db_container=site_config.backup_manager_container,
+    db_password=site_config.db_password, db_hostname=site_config.db_hostname)
+  run_cmd(cmd)
+  log('  -> Backup restored.')
+
 @deploy_command
 def restore_db(site_config: SiteConfig, options: List[str]):
   """Restore content from a .sql backup file into the database described in docker-compose.yaml.
   """
 
   latest_backup = latest_sql_backup(site_config)
-
-  log('Restoring backup {}...'.format(latest_backup))
-  log('  (NOTE: this operation usually takes a few minutes)')
-  if platform.system() == 'Windows':
-    cmd = ('type {latest_backup} | ' +
-           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
-  else:
-    cmd = ('cat {latest_backup} | ' +
-           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
-  cmd = cmd.format(
-    latest_backup=latest_backup, db_container=site_config.db_container, db_password=site_config.db_password)
-  run_cmd(cmd)
-  log('  -> Backup restored.')
-
+  load_sql(site_config, latest_backup)
 
 @deploy_command
-def restore_schema(site_config: SiteConfig, options: List[str]):
+def restore_empty_db(site_config: SiteConfig, options: List[str]):
   """Restore an empty db schema
   """
 
   dir_path = os.path.dirname(os.path.realpath(__file__))
   schema_file = os.path.join(dir_path, "database", "empty_schema.sql")
-
-  log('Restoring schema {}...'.format(schema_file))
-  if platform.system() == 'Windows':
-    cmd = ('type {schema_file} | ' +
-           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
-  else:
-    cmd = ('cat {schema_file} | ' +
-           'docker container exec -i {db_container} mysql -uropewiki -p{db_password} ropewiki')
-  cmd = cmd.format(
-    schema_file=schema_file, db_container=site_config.db_container, db_password=site_config.db_password)
-  run_cmd(cmd)
-  log('  -> Schema restored.')
-
+  load_sql(site_config, schema_file)
 
 @deploy_command
 def start_site(site_config: SiteConfig, options: List[str]):
