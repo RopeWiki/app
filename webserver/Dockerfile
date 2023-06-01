@@ -63,6 +63,9 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
 RUN cd /rw && composer config --no-plugins allow-plugins.composer/installers false && composer install
 
+# Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
+COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/resources/images/smw_button.png
+
 # Note: We do not need to follow the rest of the instructions to install
 # SemanticMediaWiki 2.1 because the files we will copy over are already
 # configured.  But for reference:
