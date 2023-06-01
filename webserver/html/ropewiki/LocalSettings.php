@@ -183,8 +183,8 @@ foreach ( $arr as $key => $value ) {
 require_once "$IP/skins/Vector/Vector.php";
 
 # Admin tools
-require_once( "$IP/extensions/Nuke/Nuke.php" );
-require_once( "$IP/extensions/TitleBlacklist/TitleBlacklist.php" );
+require_once "$IP/extensions/Nuke/Nuke.php";
+require_once "$IP/extensions/TitleBlacklist/TitleBlacklist.php";
 $wgGroupPermissions['sysop']['tboverride'] = false;
 $wgTitleBlacklistSources = array(
 	array(
@@ -194,38 +194,38 @@ $wgTitleBlacklistSources = array(
 );
 require_once "$IP/extensions/UserMerge/UserMerge.php";
 $wgGroupPermissions['bureaucrat']['usermerge'] = true;
-require_once("$IP/extensions/Renameuser/Renameuser.php");
-#require_once("$IP/extensions/UserAdmin/UserAdmin.php");
-require_once("$IP/extensions/MagicNoCache/MagicNoCache.php");
-require_once( "$IP/extensions/Preloader/Preloader.php" );
+require_once "$IP/extensions/Renameuser/Renameuser.php";
+#require_once "$IP/extensions/UserAdmin/UserAdmin.php";
+require_once "$IP/extensions/MagicNoCache/MagicNoCache.php";
+require_once "$IP/extensions/Preloader/Preloader.php";
 $wgPreloaderSource[NS_CONDITIONS] = 'Template:ConditionsBoilerplate';
-require_once( "$IP/extensions/CheckUser/CheckUser.php" );
+require_once "$IP/extensions/CheckUser/CheckUser.php";
 
 # Editor tools
-require_once( "$IP/extensions/WikiEditor/WikiEditor.php" );
-require_once( "$IP/extensions/ParserFunctions/ParserFunctions.php" );
+require_once "$IP/extensions/WikiEditor/WikiEditor.php";
+require_once "$IP/extensions/ParserFunctions/ParserFunctions.php";
 $wgPFEnableStringFunctions = true;
-require_once("$IP/extensions/Cite/Cite.php");
-require_once( "$IP/extensions/Scribunto/Scribunto.php");
+require_once "$IP/extensions/Cite/Cite.php";
+require_once "$IP/extensions/Scribunto/Scribunto.php";
 require_once "$IP/extensions/EmbedVideo/EmbedVideo.php";
 $wgScribuntoDefaultEngine = 'luastandalone';
-require_once("$IP/vendor/mediawiki/header-footer/HeaderFooter.php");
+require_once "$IP/vendor/mediawiki/header-footer/HeaderFooter.php";
 require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
 
 # Developer tools
-require_once( "$IP/extensions/UrlGetParameters/UrlGetParameters.php" );
-require_once("$IP/extensions/Arrays/Arrays.php");
-require_once("$IP/extensions/Variables/Variables.php");
+require_once "$IP/extensions/UrlGetParameters/UrlGetParameters.php";
+require_once "$IP/extensions/Arrays/Arrays.php";
+require_once "$IP/extensions/Variables/Variables.php";
 require_once "$IP/extensions/TreeToQuery/TreeToQuery.php";
-require_once( "$IP/extensions/MyVariables/MyVariables.php" );
+require_once "$IP/extensions/MyVariables/MyVariables.php";
 
 # Feature tools
 require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
-require_once( "$IP/extensions/CategoryTree/CategoryTree.php" );
-require_once("$IP/extensions/ContributionScores/ContributionScores.php"); 
+require_once "$IP/extensions/CategoryTree/CategoryTree.php";
+require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
 $wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
 $wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
 $wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
@@ -247,15 +247,15 @@ $smwgNamespacesWithSemanticLinks[NS_INCIDENTS] = true;
 $smwgNamespacesWithSemanticLinks[NS_VOTES] = true;
 $smwgNamespacesWithSemanticLinks[NS_EVENTS] = true;
 
-include_once("$IP/extensions/SemanticForms/SemanticForms.php");
-require_once("$IP/extensions/SemanticFormsInputs/SemanticFormsInputs.php");
-require_once( "$IP/extensions/SemanticRating/SemanticRating.php" );
+include_once "$IP/extensions/SemanticForms/SemanticForms.php";
+require_once "$IP/extensions/SemanticFormsInputs/SemanticFormsInputs.php";
+require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
 #require_once( "$IP/extensions/Maps/Maps.php" );
 $egMapsGMaps3Type = 'hybrid';
 
-require_once( "$IP/extensions/SemanticDrilldown/SemanticDrilldown.php" );
-require_once( "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php" );
+require_once "$IP/extensions/SemanticDrilldown/SemanticDrilldown.php";
+require_once "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php";
 
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 
@@ -264,7 +264,7 @@ $sfgRenameEditTabs = true;
 
 # ===================================================
 
-require_once( "$IP/extensions/googleAnalytics/googleAnalytics.php" );
+require_once "$IP/extensions/googleAnalytics/googleAnalytics.php";
 // Replace xxxxxxx-x with YOUR GoogleAnalytics UA number
 $wgGoogleAnalyticsAccount = "UA-51086630-1"; 
 // Optional Variables (both default to true)
