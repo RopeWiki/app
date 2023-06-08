@@ -302,8 +302,8 @@ def create_db(site_config: SiteConfig, options: List[str]):
   if site_config.db_volume in volumes:
     run_cmd('docker volume rm {db_volume}'.format(db_volume=site_config.db_volume))
 
-  # Bring the database and backup manager up
-  run_docker_compose(f'up -d {site_config.db_service} {site_config.backup_manager_service}', site_config)
+  # Bring the database up
+  run_docker_compose(f'up -d {site_config.db_service}', site_config)
 
   # Wait for container to come up
   log('>> Waiting for MySQL database to initialize...')
