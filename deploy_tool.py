@@ -344,6 +344,11 @@ def create_db(site_config: SiteConfig, options: List[str]):
 def load_sql(site_config: SiteConfig, backup_path: str):
   cat_tool = 'type' if platform.system() == 'Windows' else 'cat'
 
+  response = input(f"Restore {backup_path}? (y/n): ").lower()
+  if response not in ("y", "yes"):
+    log('Aborting restore')
+    sys.exit(1)
+
   log('Ensuring backup manager is available...')
   run_docker_compose('up -d {backup_manager_service}'.format(backup_manager_service=site_config.backup_manager_service), site_config)
 
