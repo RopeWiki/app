@@ -97,6 +97,7 @@ RUN cd /rw/extensions && git clone https://gitlab.com/troyengel/Preloader && cd 
 RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticForms && cd SemanticForms && git checkout 9169c63
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_24
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ReplaceText ReplaceText && cd ReplaceText && git checkout REL1_24
 
 # Present in main site but not here:
 # APC

@@ -200,6 +200,7 @@ require_once "$IP/extensions/MagicNoCache/MagicNoCache.php";
 require_once "$IP/extensions/Preloader/Preloader.php";
 $wgPreloaderSource[NS_CONDITIONS] = 'Template:ConditionsBoilerplate';
 require_once "$IP/extensions/CheckUser/CheckUser.php";
+require_once "$IP/extensions/ReplaceText/ReplaceText.php";
 
 # Editor tools
 require_once "$IP/extensions/WikiEditor/WikiEditor.php";
