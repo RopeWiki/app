@@ -6,7 +6,13 @@
 FROM mysql:5.7-debian
 
 # Install necessary tools
-RUN apt-get update && apt-get -y install cron openssh-server less rsync nano
+RUN apt-get update && apt-get -y install \
+    cron \
+    less \
+    nano \
+    openssh-server \
+    rsync \
+    zstd
 
 # Create a user named `backupreader` for reading database backups
 RUN useradd --create-home --shell /bin/bash backupreader
