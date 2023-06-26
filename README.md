@@ -42,10 +42,9 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
 
 1. Update packages (`sudo apt-get update`)
 1. [Install docker](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
-1. [Install legacy/v1 docker-compose](https://docs.docker.com/compose/install/#install-compose-on-linux-systems) with `sudo apt install docker-compose`
     1. Fix [this issue](https://github.com/docker/compose/issues/6931)
-       with `sudo apt update && apt install rng-tools`
-    1. Verify installation with `docker-compose --version`; result should be 1.29.2 or similar, not 2.x.x
+       with `sudo apt update && apt install rng-tools` (note: this may no longer be necessary with docker compose v2)
+    1. Verify installation with `docker compose version`; result should be 2.x.x
 1. Install git (`sudo apt-get install git`)
 1. Clone this repository into an appropriate folder (perhaps `/rw`)
 
@@ -118,7 +117,7 @@ synchronize the full content of the `images` folder to back them up.
 This should be performed by a cron job, but in the event of needing to do it manually,
 run `python3 deploy_tool.py <SITE_NAME> renew_certs`
 
-### Arbitrary docker-compose commands
+### Arbitrary docker compose commands
 
 The docker-compose.yaml configuration requires a number of environment variables to be set before it can be used. To
 avoid the need to set these variables yourself (apart from WG_DB_PASSWORD and RW_ROOT_DB_PASSWORD), use
