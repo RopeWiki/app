@@ -1,10 +1,10 @@
-# This docker-compose file will bring up a production system.
-# As per README.md, direct docker-compose commands are not
+# This docker compose file will bring up a production system.
+# As per README.md, direct docker compose commands are not
 # recommended because that requires many environment variables
 # to be set.  Instead, the use of deploy_tool.py is recommended
 # as per README.md.
 
-# Before any other docker-compose commands above are executed,
+# Before any other docker compose commands above are executed,
 # the necessary images must be built according to the instructions
 # in README.md.
 #   python3 deploy_tool.py <SITE_NAME> dc build
@@ -35,7 +35,7 @@ services:
       context: .
       dockerfile: webserver/Dockerfile
       args:
-        codebaseversion: ${CODEBASE_VERSION:-When this image was built with docker-compose, <pre>CODEBASE_VERSION</pre> environment variable was not present.}
+        codebaseversion: ${CODEBASE_VERSION:-When this image was built with docker compose, <pre>CODEBASE_VERSION</pre> environment variable was not present.}
     ports:
       - "8080:80"
     environment:

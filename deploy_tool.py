@@ -40,7 +40,7 @@ class SiteConfig(object):
 
   @property
   def db_container(self) -> str:
-    return '{}_{}_1'.format(self.name, self.db_service)
+    return '{}-{}-1'.format(self.name, self.db_service)
 
   @property
   def db_hostname(self) -> str:
@@ -48,7 +48,7 @@ class SiteConfig(object):
 
   @property
   def backup_manager_container(self) -> str:
-    return '{}_{}_1'.format(self.name, self.backup_manager_service)
+    return '{}-{}-1'.format(self.name, self.backup_manager_service)
 
   @property
   def db_password(self) -> str:
@@ -173,7 +173,7 @@ def get_codebase_version() -> str:
 
 def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, str]:
   make_var_cmd = 'set ' if platform.system() == 'Windows' else 'export '
-  docker_compose_command = 'docker-compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
+  docker_compose_command = 'docker compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
   variable_declarations = '\n'.join([
     '{cmd}RW_ROOT_DB_PASSWORD={root_db_password}',
     '{cmd}MYSQL_ROOT_PASSWORD={root_db_password}',
