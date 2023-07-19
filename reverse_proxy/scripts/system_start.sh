@@ -14,4 +14,5 @@ else
 fi
 
 echo "RopeWiki reverse proxy running nginx..."
+cron &
 nginx -g "daemon off;"
