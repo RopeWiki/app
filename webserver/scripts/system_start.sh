@@ -29,6 +29,7 @@ sed -i "s/{{WG_DB_USER}}/$WG_DB_USER/g" sphinx.conf
 sed -i "s/{{WG_DB_PASSWORD}}/$WG_DB_PASSWORD/g" sphinx.conf
 echo Sphinx indexer started -- can take up to a minute
 indexer --config /etc/sphinxsearch/sphinx.conf --all
+sleep 2
 echo Sphinx indexer finished -- starting service
 searchd --config /etc/sphinxsearch/sphinx.conf >> /var/log/sphinxsearch/sphinx-startup.log 2>&1
 
