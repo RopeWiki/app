@@ -26,6 +26,7 @@ services:
     volumes:
       - ropewiki_database_storage:/var/lib/mysql
 #    restart: always
+    platform: linux/amd64
 
   # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image
   ropewiki_webserver:
@@ -92,6 +93,7 @@ services:
       - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/home/backupreader/backups
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/home/backupreader/images:ro
 #    restart: always
+    platform: linux/amd64
 
   ropewiki_mailserver:
     image: ropewiki/mailserver
