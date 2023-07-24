@@ -254,6 +254,7 @@ require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
 #require_once( "$IP/extensions/Maps/Maps.php" );
 $egMapsGMaps3Type = 'hybrid';
+$egMapsGMaps3ApiVersion = 'quarterly';
 
 require_once "$IP/extensions/SemanticDrilldown/SemanticDrilldown.php";
 require_once "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php";

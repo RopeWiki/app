@@ -12,6 +12,7 @@ sed -i "s/{{WG_HOSTNAME}}/$WG_HOSTNAME/g" SiteSpecificSettings.php
 sed -i "s/{{WG_PROTOCOL}}/$WG_PROTOCOL/g" SiteSpecificSettings.php
 sed -i "s/{{WG_SECRET_KEY}}/$WG_SECRET_KEY/g" SiteSpecificSettings.php
 sed -i "s/{{WG_UPGRADE_KEY}}/$WG_UPGRADE_KEY/g" SiteSpecificSettings.php
+sed -i "s/{{WG_GOOGLE_API_KEY}}/$WG_GOOGLE_API_KEY/g" SiteSpecificSettings.php
 
 # Configure robots.txt
 cp "robots/$RW_ROBOTS" robots.txt

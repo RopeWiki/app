@@ -46,6 +46,7 @@ services:
       - WG_DB_USER=${WG_DB_USERNAME:-ropewiki}
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
       - RW_ROBOTS=${RW_ROBOTS:-robots_dev.txt}
+      - WG_GOOGLE_API_KEY=${WG_GOOGLE_API_KEY:-}
     depends_on:
       - ropewiki_db
     volumes:
