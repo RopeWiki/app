@@ -276,7 +276,12 @@ $wgGoogleAnalyticsAddASAC = false;
 
 #These failed to work and had to be set in Maps/Maps_Settings.php
 $egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
-$egMapsCoordinateDirectional = false; 
+$egMapsCoordinateDirectional = false;
+
+# See discussion about using these: https://github.com/RopeWiki/app/pull/58
+# but regardless, set them to an empty string to just stop log spew.
+$egMapsGMaps3ApiKey = "";
+$egMapsGMaps3ApiVersion = ""; 
 
 #Didn't work?
 #$wgUploadSizeWarning = 5242880;
@@ -302,4 +307,6 @@ $wgSMTP = array(
 
 # Use the X-Forwarded-For IP address as the remote address
 # See: https://www.mediawiki.org/wiki/Topic:Ra22sndx88fnifz1
-$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+	$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+}
