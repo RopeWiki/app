@@ -72,6 +72,7 @@ services:
       - ropewiki_webserver
     volumes:
       - ropewiki_proxy_certs:/etc/letsencrypt
+      - ropewiki_proxy_logs:/logs
 #    restart: always
 
   # The RopeWiki backup manager; see instructions in README.md to build the image
@@ -119,3 +120,5 @@ volumes:
     name: ropewiki_database_storage
   ropewiki_proxy_certs:
     name: ropewiki_proxy_certs
+  ropewiki_proxy_logs:
+    name: ropewiki_proxy_logs
