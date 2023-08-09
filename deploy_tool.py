@@ -388,7 +388,8 @@ def start_site(site_config: SiteConfig, options: List[str]):
 @deploy_command
 def enable_tls(site_config: SiteConfig, options: List[str]):
   variable_declarations, docker_compose_command = make_docker_compose_script(
-    'exec {} certbot --nginx'.format(site_config.reverse_proxy_service), site_config)
+    'exec {} certbot --nginx --non-interactive -d {} -d www.{}'.format(
+      site_config.reverse_proxy_service, site_config.hostname, site_config.hostname), site_config)
   script_name = 'enable_tls.bat' if platform.system() == 'Windows' else 'enable_tls.sh'
   script = os.path.join(os.path.dirname(os.path.abspath(__file__)), script_name)
   with open(script, 'w') as f:
@@ -401,16 +402,6 @@ def renew_certs(site_config: SiteConfig, options: List[str]):
   log('Starting cert renewal check...')
   run_docker_compose('exec {reverse_proxy_container} certbot renew'.format(
     reverse_proxy_container=site_config.reverse_proxy_service), site_config)
-
-@deploy_command
-def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
-
-  deploy_tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deploy_tool.py')
-  cert_renewal_log = os.path.join(site_config.logs_folder, 'cert_renewals.log')
-  cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
-    db_password=site_config.db_password, deploy_tool=deploy_tool, site_name=site_config.name,
-    cert_renewal_log=cert_renewal_log)
-  run_cmd('crontab -l | {{ cat; echo "0 */12 * * * {cmd}"; }} | crontab -'.format(cmd=cmd_to_run))
 
 @deploy_command
 def redeploy(site_config: SiteConfig, options: List[str]):
