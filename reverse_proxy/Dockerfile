@@ -1,7 +1,7 @@
 FROM nginx
 
 RUN apt-get update
-RUN apt-get -y install certbot python3-certbot-nginx
+RUN apt-get -y install certbot python3-certbot-nginx goaccess procps vim less wget curl
 
 # Set up startup behavior
 COPY ./reverse_proxy/scripts/system_start.sh /root/system_start.sh
