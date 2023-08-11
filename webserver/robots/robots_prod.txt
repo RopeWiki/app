@@ -1,3 +1,9 @@
 user-agent: *
 allow: /
 disallow: /luca/
+
+user-agent: Amazonbot
+disallow: /
+
+user-agent: SeekportBot
+disallow: /
