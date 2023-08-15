@@ -308,5 +308,9 @@ $wgSMTP = array(
 # Use the X-Forwarded-For IP address as the remote address
 # See: https://www.mediawiki.org/wiki/Topic:Ra22sndx88fnifz1
 if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    $_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        # Mediawiki has a fit if multiple IPs are in the header, so always
+        # pick the first, which should be the real client anyhow.
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $clientIP = trim($ips[0]);
+        $_SERVER['REMOTE_ADDR'] = $clientIP;
 }
