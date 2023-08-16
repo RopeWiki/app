@@ -7,3 +7,9 @@ disallow: /
 
 user-agent: SeekportBot
 disallow: /
+
+user-agent: SemrushBot
+disallow: /
+
+user-agent: YandexRenderResourcesBot
+disallow: /
