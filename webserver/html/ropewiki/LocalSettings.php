@@ -12,7 +12,7 @@
 
 # Protect against web entry
 if ( !defined( 'MEDIAWIKI' ) ) {
-	exit;
+    exit;
 }
 
 // This should be the last entry
@@ -170,10 +170,10 @@ $wgCaptchaClass = 'QuestyCaptcha';
 $wgGroupPermissions['emailconfirmed']['skipcaptcha'] = true;
 $ceAllowConfirmedEmail = true;
 $arr = array (
-	'What do canyoneers do to go down a rope?  The answer starts with an "r", has six letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappel',
+    'What do canyoneers do to go down a rope?  The answer starts with an "r", has six letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappel',
 );
 foreach ( $arr as $key => $value ) {
-	$wgCaptchaQuestions[] = array( 'question' => $key, 'answer' => $value );
+    $wgCaptchaQuestions[] = array( 'question' => $key, 'answer' => $value );
 }
 
 # Extensions
@@ -187,10 +187,10 @@ require_once "$IP/extensions/Nuke/Nuke.php";
 require_once "$IP/extensions/TitleBlacklist/TitleBlacklist.php";
 $wgGroupPermissions['sysop']['tboverride'] = false;
 $wgTitleBlacklistSources = array(
-	array(
-		'type' => TBLSRC_LOCALPAGE,
-		'src'  => 'MediaWiki:Titleblacklist'
-	)
+    array(
+        'type' => TBLSRC_LOCALPAGE,
+        'src'  => 'MediaWiki:Titleblacklist'
+    )
 );
 require_once "$IP/extensions/UserMerge/UserMerge.php";
 $wgGroupPermissions['bureaucrat']['usermerge'] = true;
@@ -308,5 +308,9 @@ $wgSMTP = array(
 # Use the X-Forwarded-For IP address as the remote address
 # See: https://www.mediawiki.org/wiki/Topic:Ra22sndx88fnifz1
 if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-	$_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        # Mediawiki has a fit if multiple IPs are in the header, so always
+        # pick the first, which should be the real client anyhow.
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $clientIP = trim($ips[0]);
+        $_SERVER['REMOTE_ADDR'] = $clientIP;
 }
