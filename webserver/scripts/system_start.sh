@@ -16,6 +16,19 @@ sed -i "s/{{WG_UPGRADE_KEY}}/$WG_UPGRADE_KEY/g" SiteSpecificSettings.php
 # Configure robots.txt
 cp "robots/$RW_ROBOTS" robots.txt
 
+# Increase php-fpm workers
+fpm_pool_config="/etc/php/5.6/fpm/pool.d/www.conf"
+sed -i '/pm.max_children =/c\pm.max_children = 16' $fpm_pool_config
+
+# Enable php opcache
+php_ini="/etc/php/5.6/fpm/php.ini"
+sed -i '/opcache.enable=/c\opcache.enable=1' $php_ini
+sed -i '/opcache.enable_cli/c\opcache.enable_cli=1' $php_ini
+sed -i '/opcache.memory_consumption/c\opcache.memory_consumption=128' $php_ini
+sed -i '/opcache.interned_strings_buffer/c\opcache.interned_strings_buffer=8' $php_ini
+sed -i '/opcache.max_accelerated_files/c\opcache.max_accelerated_files=10000' $php_ini
+sed -i '/opcache.fast_shutdown/c\opcache.fast_shutdown=1' $php_ini
+
 # Start up services
 service php5.6-fpm start
 service nginx start
