@@ -1,6 +1,7 @@
 user-agent: *
 allow: /
 disallow: /luca/
+crawl-delay: 5
 
 user-agent: Amazonbot
 disallow: /
