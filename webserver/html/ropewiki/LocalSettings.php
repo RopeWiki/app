@@ -59,8 +59,8 @@ $wgDBTableOptions   = "ENGINE=InnoDB, DEFAULT CHARSET=utf8";
 $wgDBmysql5 = false;
 
 ## Shared memory settings
-$wgMainCacheType    = CACHE_NONE;
-#$wgMainCacheType    = CACHE_ACCEL;
+#$wgMainCacheType    = CACHE_NONE;
+$wgMainCacheType    = CACHE_ACCEL;
 $wgMemCachedServers = array();
 
 ## To enable image uploads, make sure the 'images' directory
