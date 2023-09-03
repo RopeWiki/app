@@ -314,3 +314,29 @@ if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         $clientIP = trim($ips[0]);
         $_SERVER['REMOTE_ADDR'] = $clientIP;
 }
+
+# Make short urls for actions
+#   Before: ropewiki.com/index.php?title=Lewis_River&action=formedit
+#   After: ropewiki.com/Lewis_River/formedit
+$actions = array(
+    'delete',
+    'edit',
+    'formedit',
+    'history',
+    'info'
+    'markpatrolled',
+    'protect',
+    'purge',
+    'render',
+    'revert',
+    'rollback',
+    'submit',
+    'unprotect',
+    'unwatch',
+    'watch',
+    // 'view',  # view is the default action so doesn't need its own path
+);
+
+foreach ( $actions as $action ) {
+    $wgActionPaths[ $action ] = "/$1/$action";
+}
