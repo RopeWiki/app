@@ -26,10 +26,4 @@ server {
         fastcgi_index index.php;
         include fastcgi.conf;
     }
-
-    location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {
-        access_log        off;
-        log_not_found     off;
-        expires           360d;
-    }
 }
