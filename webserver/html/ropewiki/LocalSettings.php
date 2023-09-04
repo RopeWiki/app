@@ -323,7 +323,7 @@ $actions = array(
     'edit',
     'formedit',
     'history',
-    'info'
+    'info',
     'markpatrolled',
     'protect',
     'purge',
