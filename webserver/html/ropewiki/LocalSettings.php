@@ -180,7 +180,7 @@ foreach ( $arr as $key => $value ) {
 # ===================================================
 
 # Skin
-require_once "$IP/skins/Vector/Vector.php";
+wfLoadSkin( 'Vector' );
 
 # Admin tools
 require_once "$IP/extensions/Nuke/Nuke.php";
@@ -210,7 +210,7 @@ require_once "$IP/extensions/Cite/Cite.php";
 require_once "$IP/extensions/Scribunto/Scribunto.php";
 require_once "$IP/extensions/EmbedVideo/EmbedVideo.php";
 $wgScribuntoDefaultEngine = 'luastandalone';
-require_once "$IP/vendor/mediawiki/header-footer/HeaderFooter.php";
+wfLoadExtension( 'HeaderFooter' );
 require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
