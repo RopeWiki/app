@@ -31,6 +31,7 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
         php5.6-apcu \
         php5.6-fpm \
         php5.6-cli \
+        php5.6-curl \
         php5.6-mysql \
         php5.6-imagick \
         php5.6-xml \
@@ -65,7 +66,7 @@ COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/comp
 RUN cd /rw && composer config --no-plugins allow-plugins.composer/installers false && composer install
 
 # Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
-COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/resources/images/smw_button.png
+COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/res/images/smw_button.png
 
 # Note: We do not need to follow the rest of the instructions to install
 # SemanticMediaWiki 2.1 because the files we will copy over are already
@@ -95,7 +96,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PdfHandler PdfHandler && cd PdfHandler && git checkout 5e29202
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-googleAnalytics googleAnalytics && cd googleAnalytics && git checkout ce5ef02
 RUN cd /rw/extensions && git clone https://gitlab.com/troyengel/Preloader && cd Preloader && git checkout 4b06d0e3
-RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticForms && cd SemanticForms && git checkout 9169c63
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms SemanticForms && cd SemanticForms && git checkout 3.7
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_24
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ReplaceText ReplaceText && cd ReplaceText && git checkout REL1_24
