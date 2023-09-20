@@ -354,10 +354,10 @@ def load_sql(site_config: SiteConfig, backup_path: str):
 
   log('Loading {}...'.format(backup_path))
   log('  (NOTE: this operation usually takes a few minutes)')
-  cmd = '{cat_tool} {backup_path} | docker container exec -i {db_container} mysql -uropewiki -p{db_password} --host {db_hostname} ropewiki'
+  cmd = '{cat_tool} {backup_path} | docker container exec -i {db_container} mysql -uroot -p{root_db_password} --host {db_hostname} ropewiki'
   cmd = cmd.format(
     cat_tool=cat_tool, backup_path=backup_path, db_container=site_config.backup_manager_container,
-    db_password=site_config.db_password, db_hostname=site_config.db_hostname)
+    root_db_password=site_config.root_db_password, db_hostname=site_config.db_hostname)
   run_cmd(cmd)
   log('  -> Backup restored.')
 
