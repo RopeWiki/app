@@ -70,6 +70,7 @@ export WG_DB_PASSWORD=<The password for the `ropewiki` DB user>
 export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
 export RW_SMTP_USERNAME=<The username for logging into the smtp relay>
 export RW_SMTP_PASSWORD=<The password for logging into the smtp relay>
+export WG_GOOGLE_API_KEY=<The Geocoding API key from Google Cloud Console>
 ```
 
 ### Deploy site
