@@ -47,6 +47,10 @@ RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imag
 # https://stackoverflow.com/a/51446468/651139
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Bump file size upload limit
+RUN sed -i 's/^upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/5.6/fpm/php.ini
+RUN sed -i 's/^post_max_size.*/post_max_size = 10M/' /etc/php/5.6/fpm/php.ini
+
 # === Install MediaWiki ===
 
 # Retrieve MediaWiki installation package and follow installation instructions:

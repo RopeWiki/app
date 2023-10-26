@@ -283,7 +283,7 @@ $egMapsCoordinateDirectional = false;
 $egMapsGMaps3ApiKey = "";
 $egMapsGMaps3ApiVersion = ""; 
 
-#Didn't work?
+# Upload limits are set in php.ini (upload_max_filesize)
 #$wgUploadSizeWarning = 5242880;
 #$wgMaxUploadSize = 5242880;
 
