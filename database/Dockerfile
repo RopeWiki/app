@@ -11,6 +11,11 @@ RUN echo innodb_buffer_pool_size=4G >> /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN echo innodb_log_file_size=512M >> /etc/mysql/mysql.conf.d/mysqld.cnf
 RUN echo innodb_buffer_pool_instances=4 >> /etc/mysql/mysql.conf.d/mysqld.cnf
 
+# Enable mysql slow query log
+RUN echo slow_query_log=1 >> /etc/mysql/mysql.conf.d/mysqld.cnf
+RUN echo slow_query_log_file=/var/log/mysql/mysql-slow.log >> /etc/mysql/mysql.conf.d/mysqld.cnf
+RUN echo long_query_time=1 >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
 # Add helpful tools
 RUN apt update && apt install -y vim wget curl less
 RUN wget mysqltuner.pl -O /mysqltuner.pl && chmod 755 /mysqltuner.pl
