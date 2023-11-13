@@ -48,16 +48,16 @@ RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imag
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Bump file size upload limit
-RUN sed -i 's/^upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/5.6/fpm/php.ini
-RUN sed -i 's/^post_max_size.*/post_max_size = 10M/' /etc/php/5.6/fpm/php.ini
+RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/5.6/fpm/php.ini
+RUN sed -i 's/^;\?post_max_size.*/post_max_size = 10M/' /etc/php/5.6/fpm/php.ini
 
 # Optimize php-fpm configs
-RUN sed -i 's/^emergency_restart_threshold.*/emergency_restart_threshold = 10/' /etc/php/5.6/fpm/php-fpm.conf
-RUN sed -i 's/^emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/5.6/fpm/php-fpm.conf
-RUN sed -i 's/^process_control_timeout.*/process_control_timeout = 10s/' /etc/php/5.6/fpm/php-fpm.conf
+RUN sed -i 's/^;\?emergency_restart_threshold.*/emergency_restart_threshold = 10/' /etc/php/5.6/fpm/php-fpm.conf
+RUN sed -i 's/^;\?emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/5.6/fpm/php-fpm.conf
+RUN sed -i 's/^;\?process_control_timeout.*/process_control_timeout = 10s/' /etc/php/5.6/fpm/php-fpm.conf
 
-RUN sed -i 's/^request_terminate_timeout.*/request_terminate_timeout = 30s/' /etc/php/5.6/fpm/pool.d/www.conf
-RUN sed -i 's/^process_idle_timeout.*/process_idle_timeout = 30s/' /etc/php/5.6/fpm/pool.d/www.conf
+RUN sed -i 's/^;\?request_terminate_timeout.*/request_terminate_timeout = 30s/' /etc/php/5.6/fpm/pool.d/www.conf
+RUN sed -i 's/^;\?process_idle_timeout.*/process_idle_timeout = 30s/' /etc/php/5.6/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
