@@ -183,6 +183,8 @@ ENV RW_ROBOTS robots_dev.txt
 ARG codebaseversion=When this image was built with Docker, <pre>codebaseversion</pre> Docker arg was not specified.
 RUN echo "<html><body>${codebaseversion}</body></html>" > /rw/codebase_version.html
 
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost/ || exit 1
+
 CMD sh /root/system_start.sh
 
 # To explore the system to see how things have been set up, following building:
