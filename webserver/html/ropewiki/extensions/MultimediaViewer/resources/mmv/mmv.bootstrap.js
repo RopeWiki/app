@@ -15,11 +15,6 @@
  * along with MultimediaViewer.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Ropewiki modifications:
- * Line 461: this 'if' was added so only scroll state is only saved on initial load (it was getting overridden)
- * Line 483: this was changed to window.scrollTo() from $.scrollTo() which wasn't working
- */
-
 ( function ( mw, $ ) {
 	var MMVB;
 

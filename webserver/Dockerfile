@@ -147,11 +147,6 @@ COPY ./webserver/html /usr/share/nginx/html
 COPY ./webserver/nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
-# MMV: Copy in our customizations (do multiple browser back on close instead of navigate forward to original page)
-RUN cd /rw/extensions/MultimediaViewer \
- && mv -f mmv.js /rw/extensions/MultimediaViewer/resources/mmv \
- && mv -f mmv.bootstrap.js /rw/extensions/MultimediaViewer/resources/mmv
-
 # Sphinx: Copy our configuration file over, along with our modified mediawiki extension (allows substring search on page titles instead of exact match from the start)
 RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf

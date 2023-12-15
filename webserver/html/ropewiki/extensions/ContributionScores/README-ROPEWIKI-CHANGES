@@ -1,0 +1,19 @@
+The ContributionScores extension that we currently use has a function #cscore that is one of the only ways to confirm that a user account is valid:
+
+  https://stackoverflow.com/questions/55580697/mediawiki-parser-function-extension-to-check-if-a-user-exists
+
+We are currently using this in the MediaWiki:Hf-nsheader-User page to show a more obvious "Email this user" link at the top of a User: page. This link should only be displayed if the account is actually registered (and thus has an email address). The link already appears in the left menubar if the user is registered, but many people seem to miss seeing this link.
+
+The #cscore function returns text (either a numeric score or the words 'Invalid user') that can be displayed on the page but cannot be used by any string functions as it's not an actual string. This modification changes the final line (#87) in the .php file from:
+
+  `return $parser->insertStripItem( $output, $parser->mStripState );`
+
+to:
+
+  `return $output;`
+
+in order to use the response as a string and check if it says "Invalid user" or not.
+
+The code is obtained from checkout 7e02f8a, which is the currently used version of this extension in the Dockerfile
+
+  https://github.com/wikimedia/mediawiki-extensions-ContributionScores/tree/7e02f8ac6353c2cc949b7a5fa720b083a46d125f
