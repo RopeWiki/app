@@ -16,18 +16,19 @@ else
   echo "<<< RopeWiki reverse proxy prep complete."
 fi
 
-echo "Starting up goaccess log parsing..."
-goaccess /logs/nginx/access.log \
-  -o /logs/goaccess/report.html \
-  --log-format COMBINED \
-  --real-time-html \
-  --ws-url wss://$WG_HOSTNAME:443/reportws \
-  --daemonize \
-  --db-path /logs/goaccess/db \
-  --restore \
-  --persist \
-  --html-refresh 10 \
-  --html-report-title "Ropewiki Stats"
+## While we're short on CPU, disable log constant parsing
+#echo "Starting up goaccess log parsing..."
+#goaccess /logs/nginx/access.log \
+#  -o /logs/goaccess/report.html \
+#  --log-format COMBINED \
+#  --real-time-html \
+#  --ws-url wss://$WG_HOSTNAME:443/reportws \
+#  --daemonize \
+#  --db-path /logs/goaccess/db \
+#  --restore \
+#  --persist \
+#  --html-refresh 10 \
+#  --html-report-title "Ropewiki Stats"
 
 echo "RopeWiki reverse proxy running nginx..."
 nginx -g "daemon off;"
