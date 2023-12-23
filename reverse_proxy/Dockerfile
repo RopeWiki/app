@@ -11,3 +11,4 @@ CMD sh /root/system_start.sh
 COPY ./reverse_proxy/nginx.conf /etc/nginx/nginx.conf
 COPY ./reverse_proxy/services.conf /etc/nginx/services.conf
 COPY ./reverse_proxy/blockips.conf /etc/nginx/blockips.conf
+COPY ./reverse_proxy/aws.conf /etc/nginx/aws.conf
