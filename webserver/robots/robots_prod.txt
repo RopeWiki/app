@@ -3,6 +3,7 @@ allow: /
 disallow: /luca/
 disallow: /api.php
 disallow: /Special:
+disallow: /index.php
 crawl-delay: 5
 
 user-agent: Amazonbot
