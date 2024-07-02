@@ -11,8 +11,6 @@ disallow: /*/formedit
 disallow: /*/history
 disallow: /*/info
 disallow: /*?*
-
-
 crawl-delay: 5
 
 user-agent: Amazonbot
