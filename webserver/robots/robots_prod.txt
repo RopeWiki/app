@@ -3,6 +3,14 @@ allow: /
 disallow: /luca/
 disallow: /api.php
 disallow: /Special:
+disallow: /Votes:
+disallow: /Talk:
+disallow: /index.php
+disallow: /*/edit
+disallow: /*/formedit
+disallow: /*/history
+disallow: /*/info
+disallow: /*?*
 crawl-delay: 5
 
 user-agent: Amazonbot
