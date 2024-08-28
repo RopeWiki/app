@@ -4,6 +4,11 @@
 # MySQL database; see https://hub.docker.com/_/mysql
 FROM mysql:5.7-debian
 
+# Fix for apt key errors in the ancient version of debian/mysql we're running.
+RUN gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B7B3B788A8D3785C
+RUN rm /etc/apt/keyrings/mysql.gpg
+RUN gpg --output /etc/apt/keyrings/mysql.gpg --export B7B3B788A8D3785C
+
 # These values were suggested by mysqltuner.pl after the database
 # had been running multiple days and was under sustained load.
 RUN echo key_buffer_size=64M >> /etc/mysql/mysql.conf.d/mysqld.cnf
