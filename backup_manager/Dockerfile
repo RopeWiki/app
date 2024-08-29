@@ -5,6 +5,11 @@
 
 FROM mysql:5.7-debian
 
+# Fix for apt key errors in the ancient version of debian/mysql we're running.
+RUN gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B7B3B788A8D3785C
+RUN rm /etc/apt/keyrings/mysql.gpg
+RUN gpg --output /etc/apt/keyrings/mysql.gpg --export B7B3B788A8D3785C
+
 # Install necessary tools
 RUN apt-get update && apt-get -y install \
     cron \
