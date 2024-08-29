@@ -2,7 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
-import datetime
+from datetime import datetime, timezone
 import glob
 import json
 import os
@@ -125,7 +125,7 @@ def get_args() -> UserArgs:
   return UserArgs(site_config=SiteConfig(**config), command=args.command, options=args.options)
 
 def log(msg: str):
-  print("{} {}".format(datetime.datetime.now().isoformat(), msg))
+  print("{} {}".format(datetime.now().isoformat(), msg))
 
 def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
   log('  RUN {}'.format(cmd))
@@ -142,7 +142,7 @@ def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
   else:
     try:
       subprocess.check_call(cmd, shell=True)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError as _:
       log(f"Error running command '{cmd}'; rerunning to capture result...")
       run_cmd(cmd, capture_result=True)
       raise
@@ -156,11 +156,11 @@ def get_codebase_version() -> str:
   global _codebase_version
   if _codebase_version is None:
     timestamp = 'Built {} UTC, {} local'.format(
-      datetime.datetime.utcnow().isoformat('T', 'seconds'), datetime.datetime.now().isoformat('T', 'seconds'))
+      datetime.now(timezone.utc).isoformat('T', 'seconds'), datetime.now().isoformat('T', 'seconds'))
     gitlog = make_env_var_safe(run_cmd('git log -n 1', True))
     m = re.search(r'commit ([a-f0-9]+)', gitlog)
     if m:
-      commit = 'https://github.com/RopeWiki/app/tree/{}'.format(m.group(1), m.group(1))
+      commit = 'https://github.com/RopeWiki/app/tree/{}'.format(m.group(1))
     else:
       commit = 'Could not determine commit'
     gitstatus = make_env_var_safe(run_cmd('git status', True).replace('\n', '<br>'))
@@ -408,7 +408,7 @@ def add_cert_cronjob(site_config: SiteConfig, options: List[str]):
   deploy_tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deploy_tool.py')
   cert_renewal_log = os.path.join(site_config.logs_folder, 'cert_renewals.log')
   cmd_to_run = 'python3 {deploy_tool} {site_name} renew_certs >> {cert_renewal_log} 2>&1'.format(
-    db_password=site_config.db_password, deploy_tool=deploy_tool, site_name=site_config.name,
+    deploy_tool=deploy_tool, site_name=site_config.name,
     cert_renewal_log=cert_renewal_log)
   run_cmd('crontab -l | {{ cat; echo "0 */12 * * * {cmd}"; }} | crontab -'.format(cmd=cmd_to_run))
 

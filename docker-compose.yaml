@@ -9,8 +9,6 @@
 # in README.md.
 #   python3 deploy_tool.py <SITE_NAME> dc build
 
-version: '3.6'
-
 services:
 
   # The RopeWiki MySQL database; see instructions in README.md to build the image
