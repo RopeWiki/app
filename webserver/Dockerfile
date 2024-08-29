@@ -106,7 +106,6 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout 68afd03
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout 6f4bbd0
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PdfHandler PdfHandler && cd PdfHandler && git checkout 5e29202
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-googleAnalytics googleAnalytics && cd googleAnalytics && git checkout ce5ef02
 RUN cd /rw/extensions && git clone https://gitlab.com/nornagon/Preloader && cd Preloader && git checkout 02539e0
 RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticForms && cd SemanticForms && git checkout 9169c63
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
