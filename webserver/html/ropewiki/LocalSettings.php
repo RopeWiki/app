@@ -265,15 +265,6 @@ $sfgRenameEditTabs = true;
 
 # ===================================================
 
-require_once "$IP/extensions/googleAnalytics/googleAnalytics.php";
-// Replace xxxxxxx-x with YOUR GoogleAnalytics UA number
-$wgGoogleAnalyticsAccount = "UA-51086630-1"; 
-// Optional Variables (both default to true)
-$wgGoogleAnalyticsIgnoreSysops = false;
-$wgGoogleAnalyticsIgnoreBots = false;
-// If you use AdSense as well and have linked your accounts, set this to true to enable tracking
-$wgGoogleAnalyticsAddASAC = false;
-
 #These failed to work and had to be set in Maps/Maps_Settings.php
 $egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
 $egMapsCoordinateDirectional = false;
