@@ -3,7 +3,7 @@
 # To build this image, run the following command starting from the root of the repository:
 #   docker image build -f webserver/Dockerfile -t ropewiki/webserver .
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 # === Install services and tools ===
 
@@ -154,7 +154,7 @@ RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
 
 # Sphinx: Setup cron job
-RUN apt-get install cron \
+RUN apt-get install -y cron \
  && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
  && crontab /etc/cron.d/sphinxsearch-update \
