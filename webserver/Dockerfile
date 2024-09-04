@@ -18,7 +18,7 @@ RUN apt-get -y upgrade
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
-ARG PHP_VERSION=5.6
+ARG PHP_VERSION=7.1
 # Install php and associated packages
 # PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
