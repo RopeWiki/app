@@ -18,6 +18,7 @@ RUN apt-get -y upgrade
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
+ARG PHP_VERSION=5.6
 # Install php and associated packages
 # PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
@@ -27,15 +28,19 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
     apt-get update && \
     printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
     apt-get install -y --no-install-recommends \
-        php5.6 \
-        php5.6-apcu \
-        php5.6-fpm \
-        php5.6-cli \
-        php5.6-mysql \
-        php5.6-imagick \
-        php5.6-xml \
-        php5.6-mbstring \
+        php$PHP_VERSION \
+        php$PHP_VERSION-apcu \
+        php$PHP_VERSION-fpm \
+        php$PHP_VERSION-cli \
+        php$PHP_VERSION-mysql \
+        php$PHP_VERSION-imagick \
+        php$PHP_VERSION-xml \
+        php$PHP_VERSION-mbstring \
         php-pear
+
+# Make version agnostic paths
+RUN ln -s /etc/php/$PHP_VERSION /etc/php/current
+RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 
 # Install the PEAR mail module and its deps.
 RUN pear install --alldeps mail
@@ -48,26 +53,24 @@ RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imag
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Bump file size upload limit
-RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/5.6/fpm/php.ini
-RUN sed -i 's/^;\?post_max_size.*/post_max_size = 10M/' /etc/php/5.6/fpm/php.ini
+RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/current/fpm/php.ini
+RUN sed -i 's/^;\?post_max_size.*/post_max_size = 10M/' /etc/php/current/fpm/php.ini
 
 # Optimize php-fpm configs
-RUN sed -i 's/^;\?emergency_restart_threshold.*/emergency_restart_threshold = 10/' /etc/php/5.6/fpm/php-fpm.conf
-RUN sed -i 's/^;\?emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/5.6/fpm/php-fpm.conf
-RUN sed -i 's/^;\?process_control_timeout.*/process_control_timeout = 10s/' /etc/php/5.6/fpm/php-fpm.conf
+RUN sed -i 's/^;\?emergency_restart_threshold.*/emergency_restart_threshold = 10/' /etc/php/current/fpm/php-fpm.conf
+RUN sed -i 's/^;\?emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/current/fpm/php-fpm.conf
+RUN sed -i 's/^;\?process_control_timeout.*/process_control_timeout = 10s/' /etc/php/current/fpm/php-fpm.conf
 
 # php-fpm pool settings
-COPY ./webserver/fpm-pool.conf /etc/php/5.6/fpm/pool.d/www.conf
+COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-
-# Retrieve MediaWiki installation package and follow installation instructions:
-# https://phabricator.wikimedia.org/source/mediawiki/browse/REL1_25/INSTALL
-RUN wget https://releases.wikimedia.org/mediawiki/1.24/mediawiki-1.24.1.tar.gz && \
-    tar xvzf mediawiki-1.24.1.tar.gz && \
-	mv mediawiki-1.24.1 /usr/share/nginx/html/ropewiki && \
-	rm mediawiki-1.24.1.tar.gz
+ARG MV_VERSION=1.24.1
+RUN wget https://releases.wikimedia.org/mediawiki/${MV_VERSION%.*}/mediawiki-$MV_VERSION.tar.gz && \
+    tar xvzf mediawiki-$MV_VERSION.tar.gz && \
+	mv mediawiki-$MV_VERSION /usr/share/nginx/html/ropewiki && \
+	rm mediawiki-$MV_VERSION.tar.gz
 
 # Configure quick symlink
 RUN ln -s /usr/share/nginx/html/ropewiki /rw
