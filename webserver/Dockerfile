@@ -51,7 +51,7 @@ RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imag
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --1
 
 # Bump file size upload limit
 RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/current/fpm/php.ini
@@ -67,7 +67,7 @@ COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-ARG MV_VERSION=1.24.1
+ARG MV_VERSION=1.27.1
 RUN wget https://releases.wikimedia.org/mediawiki/${MV_VERSION%.*}/mediawiki-$MV_VERSION.tar.gz && \
     tar xvzf mediawiki-$MV_VERSION.tar.gz && \
 	mv mediawiki-$MV_VERSION /usr/share/nginx/html/ropewiki && \
@@ -78,8 +78,24 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 
 # === Install extensions ===
 
-COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/composer.json
-RUN cd /rw && composer config --no-plugins allow-plugins.composer/installers false && composer install
+WORKDIR /rw
+RUN composer require --no-update mediawiki/semantic-media-wiki 2.5.8
+RUN composer require --no-update mediawiki/header-footer 3.0.1
+RUN composer require --no-update mediawiki/semantic-maps 3.1.3
+RUN composer require --no-update mediawiki/semantic-result-formats 2.4.2
+RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
+WORKDIR /
+
+
+# This is hack to make the newer Vector theme work with our Common.js which
+# assumes the title is nested one level down.
+# Error:  i.children[(i.children.length - 1)] is undefined
+WORKDIR /rw/skins/Vector
+RUN sed -i '117 i\?><span><?php' VectorTemplate.php
+RUN sed -i '119 i\?></span><?php' VectorTemplate.php
+WORKDIR /
+
+
 
 # Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
 COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/res/images/smw_button.png
@@ -96,8 +112,8 @@ COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/e
 
 RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticCompoundQueries.git && cd SemanticCompoundQueries && git checkout f5eed72
 RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout a569de7
-RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticFormsInputs.git && cd SemanticFormsInputs && git checkout e8254cf
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating && cd SemanticRating && git checkout 3af01d6
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout 4.2
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating && cd SemanticRating
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CategoryTree CategoryTree && cd CategoryTree && git checkout 52c3eb7
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CheckUser CheckUser && cd CheckUser && git checkout 99f4a22
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ContributionScores ContributionScores && cd ContributionScores && git checkout 7e02f8a
@@ -109,11 +125,8 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Scribunto Scribunto && cd Scribunto && git checkout 10abeb5
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout 68afd03
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout 6f4bbd0
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PdfHandler PdfHandler && cd PdfHandler && git checkout 5e29202
 RUN cd /rw/extensions && git clone https://gitlab.com/nornagon/Preloader && cd Preloader && git checkout 02539e0
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms SemanticForms && cd SemanticForms && git checkout 3.7
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_24
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_27
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ReplaceText ReplaceText && cd ReplaceText && git checkout REL1_24
 
 # Present in main site but not here:
