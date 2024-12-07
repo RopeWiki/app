@@ -46,7 +46,7 @@ RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 RUN pear install --alldeps mail
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less vim
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less vim gpsbabel
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
