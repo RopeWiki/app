@@ -3,7 +3,7 @@
 # To build this image, run the following command starting from the root of the repository:
 #   docker image build -f webserver/Dockerfile -t ropewiki/webserver .
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 # === Install services and tools ===
 
@@ -32,6 +32,7 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
         php$PHP_VERSION-apcu \
         php$PHP_VERSION-fpm \
         php$PHP_VERSION-cli \
+        php$PHP_VERSION-curl \
         php$PHP_VERSION-mysql \
         php$PHP_VERSION-imagick \
         php$PHP_VERSION-xml \
@@ -81,7 +82,7 @@ COPY ./webserver/html/ropewiki/composer.json /usr/share/nginx/html/ropewiki/comp
 RUN cd /rw && composer config --no-plugins allow-plugins.composer/installers false && composer install
 
 # Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
-COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/resources/images/smw_button.png
+COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/res/images/smw_button.png
 
 # Note: We do not need to follow the rest of the instructions to install
 # SemanticMediaWiki 2.1 because the files we will copy over are already
@@ -110,7 +111,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout 6f4bbd0
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PdfHandler PdfHandler && cd PdfHandler && git checkout 5e29202
 RUN cd /rw/extensions && git clone https://gitlab.com/nornagon/Preloader && cd Preloader && git checkout 02539e0
-RUN cd /rw/extensions && git clone https://github.com/RopeWiki/SemanticForms && cd SemanticForms && git checkout 9169c63
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms SemanticForms && cd SemanticForms && git checkout 3.7
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-skins-Vector Vector && cd Vector && git checkout fad72e2
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_24
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ReplaceText ReplaceText && cd ReplaceText && git checkout REL1_24
@@ -154,7 +155,7 @@ RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
 
 # Sphinx: Setup cron job
-RUN apt-get install cron \
+RUN apt-get install -y cron \
  && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
  && crontab /etc/cron.d/sphinxsearch-update \
