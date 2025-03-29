@@ -148,7 +148,7 @@ $wgExtraNamespaces[NS_INCIDENTS+1] = "Incidents_talk";
 
 define("NS_VOTES", 196);
 $wgExtraNamespaces[NS_VOTES] = "Votes";
-#$wgContentNamespaces[] = NS_VOTES;
+$wgContentNamespaces[] = NS_VOTES;  # uncommenting for PageForms upgrade "Error: Invalid namespace "Votes"; only content namespaces are allowed for #autoedit."
 $wgExtraNamespaces[NS_VOTES+1] = "Votes_talk";
 
 define("NS_EVENTS", 198);
@@ -180,7 +180,7 @@ foreach ( $arr as $key => $value ) {
 # ===================================================
 
 # Skin
-require_once "$IP/skins/Vector/Vector.php";
+wfLoadSkin( 'Vector' );
 
 # Admin tools
 require_once "$IP/extensions/Nuke/Nuke.php";
@@ -210,7 +210,7 @@ require_once "$IP/extensions/Cite/Cite.php";
 require_once "$IP/extensions/Scribunto/Scribunto.php";
 require_once "$IP/extensions/EmbedVideo/EmbedVideo.php";
 $wgScribuntoDefaultEngine = 'luastandalone';
-require_once "$IP/vendor/mediawiki/header-footer/HeaderFooter.php";
+wfLoadExtension( 'HeaderFooter' );
 require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
@@ -248,8 +248,8 @@ $smwgNamespacesWithSemanticLinks[NS_INCIDENTS] = true;
 $smwgNamespacesWithSemanticLinks[NS_VOTES] = true;
 $smwgNamespacesWithSemanticLinks[NS_EVENTS] = true;
 
-include_once "$IP/extensions/SemanticForms/SemanticForms.php";
-require_once "$IP/extensions/SemanticFormsInputs/SemanticFormsInputs.php";
+wfLoadExtension( 'PageForms' );
+
 require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
 #require_once( "$IP/extensions/Maps/Maps.php" );
@@ -261,7 +261,7 @@ require_once "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 
 # Rename edit tabs to "edit" and "edit source"
-$sfgRenameEditTabs = true;
+$wgPageFormsRenameEditTabs = true;
 
 # ===================================================
 
