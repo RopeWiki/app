@@ -79,10 +79,10 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 # === Install extensions ===
 
 WORKDIR /rw
-RUN composer require --no-update mediawiki/semantic-media-wiki 2.5.8
+RUN composer require --no-update mediawiki/semantic-media-wiki 3.0.2
 RUN composer require --no-update mediawiki/header-footer 3.0.1
-RUN composer require --no-update mediawiki/semantic-maps 3.1.3
-RUN composer require --no-update mediawiki/semantic-result-formats 2.4.2
+RUN composer require --no-update mediawiki/maps 4.4.0
+RUN composer require --no-update mediawiki/semantic-result-formats 3.0.1
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 
@@ -111,7 +111,7 @@ COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/e
 # https://github.com/NVIDIA/nvidia-docker/issues/714#issuecomment-386244620
 
 RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticCompoundQueries.git && cd SemanticCompoundQueries && git checkout f5eed72
-RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout a569de7
+RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout 692537b
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout 4.2
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating && cd SemanticRating
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CategoryTree CategoryTree && cd CategoryTree && git checkout 52c3eb7
