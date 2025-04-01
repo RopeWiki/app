@@ -18,7 +18,7 @@ RUN apt-get -y upgrade
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
-ARG PHP_VERSION=5.6
+ARG PHP_VERSION=7.1
 # Install php and associated packages
 # PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
@@ -67,7 +67,7 @@ COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-ARG MV_VERSION=1.27.1
+ARG MV_VERSION=1.27.7
 RUN wget https://releases.wikimedia.org/mediawiki/${MV_VERSION%.*}/mediawiki-$MV_VERSION.tar.gz && \
     tar xvzf mediawiki-$MV_VERSION.tar.gz && \
 	mv mediawiki-$MV_VERSION /usr/share/nginx/html/ropewiki && \
