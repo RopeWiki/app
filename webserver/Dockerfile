@@ -136,6 +136,13 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 # UserAdmin
 # xml2wiki-dr
 
+# The Maps extension needs to return coordinates in decimal, not DMS.
+# Ideally this would be set in LocalSettings.php, but for some unknown
+# reason it never applies when set there.
+RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateNotation'\] =\).*/\1 Maps_COORDS_FLOAT;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
+RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateDirectional'\] =\).*/\1 false;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
+
+
 # === Install SphinxSearch ===
 
 RUN apt-get install -y --no-install-recommends sphinxsearch

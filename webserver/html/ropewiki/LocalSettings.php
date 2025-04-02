@@ -265,9 +265,9 @@ $wgPageFormsRenameEditTabs = true;
 
 # ===================================================
 
-#These failed to work and had to be set in Maps/Maps_Settings.php
-$egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
-$egMapsCoordinateDirectional = false;
+# These are set in Maps/Maps_Settings.php at container build time
+#  $egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
+#  $egMapsCoordinateDirectional = false;
 
 # See discussion about using these: https://github.com/RopeWiki/app/pull/58
 # but regardless, set them to an empty string to just stop log spew.
