@@ -47,7 +47,7 @@ RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 RUN pear install --alldeps mail
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less vim gpsbabel
+RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less vim gpsbabel patch
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
@@ -147,12 +147,12 @@ RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateDirectional'\] =\).*/\1 false;  # 
 
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
-# download Mediawiki v1.24 compatible extension
+# Download SphinxSearch extension
 RUN cd /rw/extensions \
- && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_24.tar.gz \
+ && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_27.tar.gz \
  && mkdir -p SphinxSearch \
- && tar -xzf REL1_24.tar.gz -C SphinxSearch \
- && rm REL1_24.tar.gz
+ && tar -xzf REL1_27.tar.gz -C SphinxSearch \
+ && rm REL1_27.tar.gz
 
 # need to manually download sphinxapi.php if not using composer to install (composer installs the latest version, which we don't want)
 RUN cd /rw/extensions/SphinxSearch \
@@ -173,6 +173,9 @@ RUN rm /etc/nginx/sites-enabled/default
 # Sphinx: Copy our configuration file over, along with our modified mediawiki extension (allows substring search on page titles instead of exact match from the start)
 RUN cd /rw/extensions/SphinxSearch \
  && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
+
+# Apply our custom changes to SphinxSearch code
+RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
