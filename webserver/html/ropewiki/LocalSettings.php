@@ -161,26 +161,21 @@ $wgExtraNamespaces[NS_EVENTS+1] = "Events_talk";
 #$wgContentNamespaces[] = NS_LISTS;
 #$wgExtraNamespaces[NS_LISTS+1] = "Lists_talk";
 
-#require_once( "$IP/extensions/recaptcha/ReCaptcha.php" );
-#$wgCaptchaClass = 'ReCaptcha';
-#require_once( "$IP/extensions/ConfirmEdit/ConfirmEdit.php" );
-#$wgCaptchaClass = 'ReCaptcha';
-require_once "$IP/extensions/ConfirmEdit/QuestyCaptcha.php";
 $wgCaptchaClass = 'QuestyCaptcha';
 $wgGroupPermissions['emailconfirmed']['skipcaptcha'] = true;
 $ceAllowConfirmedEmail = true;
-$arr = array (
-    'What do canyoneers do to go down a rope?  The answer starts with an "r", has six letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappel',
-);
-foreach ( $arr as $key => $value ) {
-    $wgCaptchaQuestions[] = array( 'question' => $key, 'answer' => $value );
-}
 
 # Extensions
 # ===================================================
 
 # Skin
 wfLoadSkin( 'Vector' );
+
+# Protection
+wfLoadExtensions([ 'ConfirmEdit', 'ConfirmEdit/QuestyCaptcha' ]);
+$wgCaptchaQuestions = [
+    'What do canyoneers do to go down a rope?  The answer starts with an "r", has six letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappel',
+];
 
 # Admin tools
 require_once "$IP/extensions/Nuke/Nuke.php";
