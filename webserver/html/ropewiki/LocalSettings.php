@@ -226,17 +226,17 @@ require_once "$IP/extensions/MyVariables/MyVariables.php";
 require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
 require_once "$IP/extensions/CategoryTree/CategoryTree.php";
-require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
-$wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
-$wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
-$wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
-$wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table. 
+require_once "$IP/extensions/ContributionScores/ContributionScores.php";
+$wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted.
+$wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted.
+$wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later.
+$wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table.
 
-//Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted. 
-$wgContribScoreReports = array( 
-    array(7,10), 
-    array(30,10), 
-    array(0,25)); 
+//Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted.
+$wgContribScoreReports = array(
+    array(7,10),
+    array(30,10),
+    array(0,25));
 
 # Semantic tools
 enableSemantics($semanticServer);
@@ -272,7 +272,7 @@ $wgPageFormsRenameEditTabs = true;
 # See discussion about using these: https://github.com/RopeWiki/app/pull/58
 # but regardless, set them to an empty string to just stop log spew.
 $egMapsGMaps3ApiKey = "";
-$egMapsGMaps3ApiVersion = ""; 
+$egMapsGMaps3ApiVersion = "";
 
 # Upload limits are set in php.ini (upload_max_filesize)
 #$wgUploadSizeWarning = 5242880;
@@ -287,6 +287,9 @@ $wgScriptExtension  = ".php";
 $wgSearchType = "SphinxMWSearch";
 require_once "$IP/extensions/SphinxSearch/SphinxSearch.php";
 $wgEnableSphinxPrefixSearch = true;
+
+#Disables Registration until we figure out the issue with stuff
+$wgGroupPermissions['*']['createaccount'] = false;
 
 # With this config we don't need to install & configure sendmail inside
 # the webserver container (which php's mail() will try and use by default).
