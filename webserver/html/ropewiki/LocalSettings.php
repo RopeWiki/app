@@ -170,7 +170,7 @@ $wgCaptchaClass = 'QuestyCaptcha';
 $wgGroupPermissions['emailconfirmed']['skipcaptcha'] = true;
 $ceAllowConfirmedEmail = true;
 $arr = array (
-    'What do canyoneers do to go down a rope?  The answer starts with an "r", has six letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappel',
+    'What are canyoneers doing when they go down a rope?  The answer starts with an "r", has ten letters, and is often misspelled.  The first vowel is an "a" and the correct spelling can be found by searching for any spelling and "canyoneering" on Google.  Remember to <b>check your junk/spam folder for the confirmation email!</b>' => 'rappelling',
 );
 foreach ( $arr as $key => $value ) {
     $wgCaptchaQuestions[] = array( 'question' => $key, 'answer' => $value );
