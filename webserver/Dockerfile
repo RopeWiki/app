@@ -67,11 +67,12 @@ COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-ARG MV_VERSION=1.27.7
-RUN wget https://releases.wikimedia.org/mediawiki/${MV_VERSION%.*}/mediawiki-$MV_VERSION.tar.gz && \
-    tar xvzf mediawiki-$MV_VERSION.tar.gz && \
-	mv mediawiki-$MV_VERSION /usr/share/nginx/html/ropewiki && \
-	rm mediawiki-$MV_VERSION.tar.gz
+ARG MW_VERSION="1.31.16"
+ARG MW_REL_BRANCH="REL1_31"
+RUN wget https://releases.wikimedia.org/mediawiki/${MW_VERSION%.*}/mediawiki-$MW_VERSION.tar.gz && \
+    tar xvzf mediawiki-$MW_VERSION.tar.gz && \
+	mv mediawiki-$MW_VERSION /usr/share/nginx/html/ropewiki && \
+	rm mediawiki-$MW_VERSION.tar.gz
 
 # Configure quick symlink
 RUN ln -s /usr/share/nginx/html/ropewiki /rw
@@ -86,17 +87,6 @@ RUN composer require --no-update mediawiki/semantic-result-formats 3.0.1
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 
-
-# This is hack to make the newer Vector theme work with our Common.js which
-# assumes the title is nested one level down.
-# Error:  i.children[(i.children.length - 1)] is undefined
-WORKDIR /rw/skins/Vector
-RUN sed -i '117 i\?><span><?php' VectorTemplate.php
-RUN sed -i '119 i\?></span><?php' VectorTemplate.php
-WORKDIR /
-
-
-
 # Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
 COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/res/images/smw_button.png
 
@@ -105,29 +95,25 @@ COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/e
 # configured.  But for reference:
 # https://web.archive.org/web/20150314234734/http://semantic-mediawiki.org/wiki/Help:Installation
 
-# Note: we can't use gerrit.wikimedia.org because they apparently use a cipher
-# that isn't supported in Ubuntu 14, and there don't appear to be any gnutls
-# backports to fix that.  See:
-# https://github.com/NVIDIA/nvidia-docker/issues/714#issuecomment-386244620
+# These all track $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CheckUser CheckUser && cd CheckUser && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MagicNoCache MagicNoCache && cd MagicNoCache && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MyVariables MyVariables && cd MyVariables && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Scribunto Scribunto && cd Scribunto && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
 
-RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticCompoundQueries.git && cd SemanticCompoundQueries && git checkout f5eed72
-RUN cd /rw/extensions && git clone https://github.com/SemanticMediaWiki/SemanticDrilldown SemanticDrilldown && cd SemanticDrilldown && git checkout 692537b
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout 4.2
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating && cd SemanticRating
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CategoryTree CategoryTree && cd CategoryTree && git checkout 52c3eb7
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-CheckUser CheckUser && cd CheckUser && git checkout 99f4a22
+# Used everywhere! Note: arrays & variables will break one day: https://phabricator.wikimedia.org/T250963
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Arrays Arrays && cd Arrays && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout $MW_REL_BRANCH
+
+# These just use master branch
+RUN cd /rw/extensions && git clone https://gitlab.com/HydraWiki/extensions/embedvideo.git EmbedVideo
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating
+
+# Only used on the User: page for some kind of check. It's then overwritten locally. This should be updated or deleted.
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ContributionScores ContributionScores && cd ContributionScores && git checkout 7e02f8a
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout 22c450d
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Arrays Arrays && cd Arrays && git checkout f28592b
-RUN cd /rw/extensions && git clone https://gitlab.com/HydraWiki/extensions/embedvideo.git EmbedVideo && cd EmbedVideo && git checkout bdc2cf1
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MagicNoCache MagicNoCache && cd MagicNoCache && git checkout a6aac2c
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MyVariables MyVariables && cd MyVariables && git checkout 70cf94b
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Scribunto Scribunto && cd Scribunto && git checkout 10abeb5
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout 68afd03
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout 6f4bbd0
-RUN cd /rw/extensions && git clone https://gitlab.com/nornagon/Preloader && cd Preloader && git checkout 02539e0
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer.git MultimediaViewer && cd MultimediaViewer && git checkout REL1_27
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-ReplaceText ReplaceText && cd ReplaceText && git checkout REL1_24
 
 # Present in main site but not here:
 # APC
