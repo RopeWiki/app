@@ -7,6 +7,7 @@ contain the database content nor the `images` folder content of the real site).
 
 ### Site architecture
 
+<!-- Note: it would be great to have `click` links be relative rather than absolute, but that isn't possible: https://github.com/orgs/community/discussions/46096 -->
 ```mermaid
 flowchart TD;
     classDef volume fill:#dddddd,stroke:#333,stroke-width:1px
@@ -15,19 +16,19 @@ flowchart TD;
 
     subgraph app
         ropewiki_db["ropewiki_db<br><small>Image: ropewiki/database"</small>]
-        click ropewiki_db "database" "MySQL database with non-file site data"
+        click ropewiki_db "https://github.com/RopeWiki/app/tree/master/database" "MySQL database with non-file site data"
 
         ropewiki_webserver["ropewiki_webserver<br><small>Image: ropewiki/webserver"</small>]
-        click ropewiki_webserver "webserver" "MediaWiki server and file-based site data/uploads"
+        click ropewiki_webserver "https://github.com/RopeWiki/app/tree/master/webserver" "MediaWiki server and file-based site data/uploads"
 
         ropewiki_reverse_proxy["ropewiki_reverse_proxy<br><small>Image: ropewiki/webserver"</small>]
-        click ropewiki_reverse_proxy "reverse_proxy" "TLS termination and redirects"
+        click ropewiki_reverse_proxy "https://github.com/RopeWiki/app/tree/master/reverse_proxy" "TLS termination and redirects"
 
         ropewiki_backup_manager["ropewiki_backup_manager<br><small>Image:ropewiki/backup_manager</small>"]
-        click ropewiki_backup_manager "backup_manager" "Exposes site data for backup"
+        click ropewiki_backup_manager "https://github.com/RopeWiki/app/tree/master/backup_manager" "Exposes site data for backup"
 
         ropewiki_mailserver["ropewiki_mailserver<br><small>Image:ropewiki/mailserver</small>"]
-        click ropewiki_mailserver "mailserver" "SMTP relay server to send email"
+        click ropewiki_mailserver "https://github.com/RopeWiki/app/tree/master/mailserver" "SMTP relay server to send email"
 
         ropewiki_database_storage@{shape:cyl}
         class ropewiki_database_storage volume
@@ -46,7 +47,7 @@ flowchart TD;
     class Internet external
     backupreader["<code>backupreader</code> users"]
     class backupreader external
-    click backupreader "backup_manager/pubkeys"
+    click backupreader "https://github.com/RopeWiki/app/tree/master/backup_manager/pubkeys"
     GMail
     class GMail external
 
