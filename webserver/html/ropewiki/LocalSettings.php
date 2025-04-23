@@ -179,31 +179,29 @@ $wgCaptchaQuestions = [
 
 # Admin tools
 require_once "$IP/extensions/Nuke/Nuke.php";
-require_once "$IP/extensions/TitleBlacklist/TitleBlacklist.php";
+wfLoadExtension( 'TitleBlacklist' );
+
 $wgGroupPermissions['sysop']['tboverride'] = false;
 $wgTitleBlacklistSources = array(
     array(
-        'type' => TBLSRC_LOCALPAGE,
+        'type' => 'localpage',
         'src'  => 'MediaWiki:Titleblacklist'
     )
 );
-require_once "$IP/extensions/UserMerge/UserMerge.php";
+wfLoadExtension( 'UserMerge' );
 $wgGroupPermissions['bureaucrat']['usermerge'] = true;
 require_once "$IP/extensions/Renameuser/Renameuser.php";
 #require_once "$IP/extensions/UserAdmin/UserAdmin.php";
-require_once "$IP/extensions/MagicNoCache/MagicNoCache.php";
-require_once "$IP/extensions/Preloader/Preloader.php";
-$wgPreloaderSource[NS_CONDITIONS] = 'Template:ConditionsBoilerplate';
-require_once "$IP/extensions/CheckUser/CheckUser.php";
-require_once "$IP/extensions/ReplaceText/ReplaceText.php";
+wfLoadExtension('MagicNoCache');
+wfLoadExtension( 'ReplaceText' );
 
 # Editor tools
-require_once "$IP/extensions/WikiEditor/WikiEditor.php";
+wfLoadExtension( 'WikiEditor' );
 require_once "$IP/extensions/ParserFunctions/ParserFunctions.php";
 $wgPFEnableStringFunctions = true;
 require_once "$IP/extensions/Cite/Cite.php";
 require_once "$IP/extensions/Scribunto/Scribunto.php";
-require_once "$IP/extensions/EmbedVideo/EmbedVideo.php";
+wfLoadExtension("EmbedVideo");
 $wgScribuntoDefaultEngine = 'luastandalone';
 wfLoadExtension( 'HeaderFooter' );
 require_once "$IP/extensions/KmlView/KmlView.php";
@@ -221,9 +219,9 @@ require_once "$IP/extensions/MyVariables/MyVariables.php";
 wfLoadExtension( 'SemanticResultFormats' );
 
 # Feature tools
-require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
+wfLoadExtension( 'MultimediaViewer' );
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
-require_once "$IP/extensions/CategoryTree/CategoryTree.php";
+wfLoadExtension( 'CategoryTree' );
 require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
 $wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
 $wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
@@ -252,9 +250,6 @@ require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
 #require_once( "$IP/extensions/Maps/Maps.php" );
 $egMapsGMaps3Type = 'hybrid';
-
-require_once "$IP/extensions/SemanticDrilldown/SemanticDrilldown.php";
-require_once "$IP/extensions/SemanticCompoundQueries/SemanticCompoundQueries.php";
 
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 
