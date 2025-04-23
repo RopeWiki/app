@@ -15,19 +15,19 @@ flowchart TD;
     classDef folder fill:#bbeeee
 
     subgraph app
-        ropewiki_db["ropewiki_db<br><small>Image: ropewiki/database"</small>]
+        ropewiki_db
         click ropewiki_db "https://github.com/RopeWiki/app/tree/master/database" "MySQL database with non-file site data"
 
-        ropewiki_webserver["ropewiki_webserver<br><small>Image: ropewiki/webserver"</small>]
+        ropewiki_webserver
         click ropewiki_webserver "https://github.com/RopeWiki/app/tree/master/webserver" "MediaWiki server and file-based site data/uploads"
 
-        ropewiki_reverse_proxy["ropewiki_reverse_proxy<br><small>Image: ropewiki/webserver"</small>]
+        ropewiki_reverse_proxy
         click ropewiki_reverse_proxy "https://github.com/RopeWiki/app/tree/master/reverse_proxy" "TLS termination and redirects"
 
-        ropewiki_backup_manager["ropewiki_backup_manager<br><small>Image:ropewiki/backup_manager</small>"]
+        ropewiki_backup_manager
         click ropewiki_backup_manager "https://github.com/RopeWiki/app/tree/master/backup_manager" "Exposes site data for backup"
 
-        ropewiki_mailserver["ropewiki_mailserver<br><small>Image:ropewiki/mailserver</small>"]
+        ropewiki_mailserver
         click ropewiki_mailserver "https://github.com/RopeWiki/app/tree/master/mailserver" "SMTP relay server to send email"
 
         ropewiki_database_storage@{shape:cyl}
