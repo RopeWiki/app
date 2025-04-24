@@ -14,7 +14,7 @@ flowchart TD;
     classDef external fill:#eeeebb
     classDef folder fill:#bbeeee
 
-    subgraph app
+    subgraph app["app <small>(Single VM)</small>"]
         ropewiki_db
         click ropewiki_db "https://github.com/RopeWiki/app/tree/master/database" "MySQL database with non-file site data"
 
@@ -51,7 +51,7 @@ flowchart TD;
     GMail
     class GMail external
 
-    luca_server["luca server"]
+    luca_server["luca server<br>(Windows VM)"]
     click luca_server "https://github.com/RopeWiki/RWServer"
     class luca_server external
 
@@ -59,7 +59,7 @@ flowchart TD;
     ropewiki_webserver -- /usr/share/nginx/html/ropewiki/images --> images
     ropewiki_webserver -- SMTP 25 --> ropewiki_mailserver -- TLS SMTP 587 --> GMail
     ropewiki_reverse_proxy -- HTTP 80 --> ropewiki_webserver
-    ropewiki_reverse_proxy -- HTTP 80 --> luca_server
+    ropewiki_reverse_proxy -- HTTP 80<br>/luca/* --> luca_server
     Internet -- HTTP 8080 --> ropewiki_webserver
     Internet -- HTTPS 443 --> ropewiki_reverse_proxy
     Internet -- HTTP 80 --> ropewiki_reverse_proxy
