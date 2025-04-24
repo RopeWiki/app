@@ -217,6 +217,9 @@ require_once "$IP/extensions/Variables/Variables.php";
 require_once "$IP/extensions/TreeToQuery/TreeToQuery.php";
 require_once "$IP/extensions/MyVariables/MyVariables.php";
 
+# Adds support for more output formats from SMW (e.g. "array" type).
+wfLoadExtension( 'SemanticResultFormats' );
+
 # Feature tools
 require_once "$IP/extensions/MultimediaViewer/MultimediaViewer.php";
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
