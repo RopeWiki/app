@@ -194,6 +194,7 @@ require_once "$IP/extensions/Renameuser/Renameuser.php";
 #require_once "$IP/extensions/UserAdmin/UserAdmin.php";
 wfLoadExtension('MagicNoCache');
 wfLoadExtension( 'ReplaceText' );
+wfLoadExtension('CheckUser');
 
 # Editor tools
 wfLoadExtension( 'WikiEditor' );
