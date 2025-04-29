@@ -80,10 +80,10 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 # === Install extensions ===
 
 WORKDIR /rw
-RUN composer require --no-update mediawiki/semantic-media-wiki 3.0.2
+RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
 RUN composer require --no-update mediawiki/header-footer 3.0.1
 RUN composer require --no-update mediawiki/maps 4.4.0
-RUN composer require --no-update mediawiki/semantic-result-formats 3.0.1
+RUN composer require --no-update mediawiki/semantic-result-formats 3.2
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 

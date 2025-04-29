@@ -1,6 +1,9 @@
 {
     "ropewiki": {
-        "populate.smw_hash_field_complete": true,
-        "upgrade_key": "8625c3658f9b1e6482a0c58b53b8650ace11534d"
+        "upgrade_key": "ecb6a57621ea1cbfb76860ddc03f44df504775c2",
+        "maintenance_mode": false,
+        "latest_version": "3.2.3",
+        "incomplete_tasks": [],
+        "last_optimization_run": "2025-04-19 11:27"
     }
 }
