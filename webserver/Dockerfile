@@ -54,11 +54,11 @@ RUN apt-get install -y --no-install-recommends \
     imagemagick \
     less \
     nano \
-    patch
+    patch \
     sed \
     unzip \
     vim \
-    wget \
+    wget
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
