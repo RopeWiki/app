@@ -221,11 +221,11 @@ def get_docker_volumes() -> List[str]:
   return [line[offset:] for line in lines[1:]]
 
 def latest_sql_backup(site_config: SiteConfig) -> str:
-  sql_backups = glob.glob(os.path.join(site_config.sql_backup_folder, '*.sql'))
+  patterns = ('*.sql', '*.sql.zst')
+  sql_backups = [f for pattern in patterns for f in glob.iglob(os.path.join(site_config.sql_backup_folder, pattern))]
   if not sql_backups:
-    sys.exit('Could not find latest backup in {}'.format(site_config.sql_backup_folder))
-  sql_backups.sort(reverse=True)
-  return sql_backups[0].strip()
+      sys.exit(f'Could not find latest backup in {site_config.sql_backup_folder}')
+  return max(sql_backups).strip()
 
 @deploy_command
 def get_sql_backup_legacy(site_config: SiteConfig, options: List[str]):
@@ -342,7 +342,12 @@ def create_db(site_config: SiteConfig, options: List[str]):
   log('RopeWiki database initialized successfully.')
 
 def load_sql(site_config: SiteConfig, backup_path: str):
-  cat_tool = 'type' if platform.system() == 'Windows' else 'cat'
+  if backup_path.endswith('.sql.zst'):
+      cat_tool = 'unzstd -c'
+  elif platform.system() == 'Windows':
+      cat_tool = 'type'
+  else:
+      cat_tool = 'cat'
 
   response = input(f"Restore {backup_path}? (y/n): ").lower()
   if response not in ("y", "yes"):
