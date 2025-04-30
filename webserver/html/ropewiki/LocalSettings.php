@@ -249,24 +249,15 @@ wfLoadExtension( 'PageForms' );
 
 require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
-#require_once( "$IP/extensions/Maps/Maps.php" );
-$egMapsGMaps3Type = 'hybrid';
+# These options need to be set before loading the Maps extension.
+$egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
+$egMapsCoordinateDirectional = false;
+require_once( "$IP/extensions/Maps/Maps.php" );
 
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 
 # Rename edit tabs to "edit" and "edit source"
 $wgPageFormsRenameEditTabs = true;
-
-# ===================================================
-
-# These are set in Maps/Maps_Settings.php at container build time
-#  $egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
-#  $egMapsCoordinateDirectional = false;
-
-# See discussion about using these: https://github.com/RopeWiki/app/pull/58
-# but regardless, set them to an empty string to just stop log spew.
-$egMapsGMaps3ApiKey = "";
-$egMapsGMaps3ApiVersion = ""; 
 
 # Upload limits are set in php.ini (upload_max_filesize)
 #$wgUploadSizeWarning = 5242880;

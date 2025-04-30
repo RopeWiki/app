@@ -91,9 +91,11 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 # === Install extensions ===
 
 WORKDIR /rw
-RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
 RUN composer require --no-update mediawiki/header-footer 3.0.1
+# We don't use mediawiki/maps for maps! We use it for data types.
+#   See https://github.com/RopeWiki/app/issues/141
 RUN composer require --no-update mediawiki/maps 4.4.0
+RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
 RUN composer require --no-update mediawiki/semantic-result-formats 3.2
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
@@ -133,13 +135,6 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 # SimpleAntiSpam
 # UserAdmin
 # xml2wiki-dr
-
-# The Maps extension needs to return coordinates in decimal, not DMS.
-# Ideally this would be set in LocalSettings.php, but for some unknown
-# reason it never applies when set there.
-RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateNotation'\] =\).*/\1 Maps_COORDS_FLOAT;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
-RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateDirectional'\] =\).*/\1 false;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
-
 
 # === Install SphinxSearch ===
 RUN apt-get install -y --no-install-recommends sphinxsearch
