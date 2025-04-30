@@ -1,0 +1,12 @@
+# This fixes a PHP notice warning about assuming $array[0] exists.
+--- ExtArrays.php.orig
++++ ExtArrays.php
+@@ -152,7 +152,7 @@ class ExtArrays {
+ 			// by default this would give an empty array (due to historical as well as usability reasons)
+ 			if ( !array_key_exists( 'singleempty', $arrayOptions ) ) {
+ 				// there is no other uncomplicated way than this to define a single empty elemented array currently!
+-				if ( count( $array ) === 1 && $array[0] === '' ) {
++				if ( count( $array ) === 1 && isset( $array[0] ) && $array[0] === '' ) {
+ 					$array = [];
+ 				}
+ 			}
