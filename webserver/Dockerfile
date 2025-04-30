@@ -47,7 +47,18 @@ RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 RUN pear install --alldeps mail
 
 # Install various tools
-RUN apt-get install -y --no-install-recommends wget unzip git nano sed curl imagemagick less vim gpsbabel patch
+RUN apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    gpsbabel \
+    imagemagick \
+    less \
+    nano \
+    patch
+    sed \
+    unzip \
+    vim \
+    wget \
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
@@ -101,6 +112,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MyVariables MyVariables && cd MyVariables && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Scribunto Scribunto && cd Scribunto && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SphinxSearch SphinxSearch && cd SphinxSearch && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
 
@@ -130,20 +142,11 @@ RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateDirectional'\] =\).*/\1 false;  # 
 
 
 # === Install SphinxSearch ===
-
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
-# Download SphinxSearch extension
-RUN cd /rw/extensions \
- && curl -O https://gerrit.wikimedia.org/r/plugins/gitiles/mediawiki/extensions/SphinxSearch/+archive/refs/heads/REL1_27.tar.gz \
- && mkdir -p SphinxSearch \
- && tar -xzf REL1_27.tar.gz -C SphinxSearch \
- && rm REL1_27.tar.gz
-
-# need to manually download sphinxapi.php if not using composer to install (composer installs the latest version, which we don't want)
-RUN cd /rw/extensions/SphinxSearch \
- && curl -O https://raw.githubusercontent.com/romainneutron/Sphinx-Search-API-PHP-Client/master/sphinxapi.php
-
+# Install Sphinx PHP API
+RUN cd /rw/extensions/SphinxSearch && composer install
+ 
 # required for logging
 RUN mkdir -p /var/data/sphinx
 
@@ -156,11 +159,11 @@ COPY ./webserver/html /usr/share/nginx/html
 COPY ./webserver/nginx /etc/nginx
 RUN rm /etc/nginx/sites-enabled/default
 
-# Sphinx: Copy our configuration file over, along with our modified mediawiki extension (allows substring search on page titles instead of exact match from the start)
-RUN cd /rw/extensions/SphinxSearch \
- && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
+# Sphinx: Move our config file into place
+RUN cd /rw/extensions/SphinxSearch && mv -f sphinx.conf /etc/sphinxsearch/sphinx.conf
 
-# Apply our custom changes to SphinxSearch code
+# Apply our custom patch to the SphinxSearch code
+# (allows substring search on page titles instead of exact match from the start)
 RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.patch
 
 # Sphinx: Setup cron job
