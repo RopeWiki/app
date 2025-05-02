@@ -366,3 +366,19 @@ $wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
     }
     return true;
 };
+
+// Add a "Request Rename" option in the action menu
+$wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
+    $user = $skin->getUser();
+    $title = $skin->getTitle();
+    // Only for logged-in users on main namespace pages
+    if ( $user->isRegistered() && $title->getNamespace() === NS_MAIN ) {
+        $links['actions']['request-rename'] = [
+            'text' => 'Request rename',
+            'href' => 'Request_Rename',
+            'id' => 'ca-request-rename',
+            'class' => false,
+        ];
+    }
+    return true;
+};
