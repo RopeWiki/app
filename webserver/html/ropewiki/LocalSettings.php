@@ -195,6 +195,7 @@ require_once "$IP/extensions/Renameuser/Renameuser.php";
 wfLoadExtension('MagicNoCache');
 wfLoadExtension( 'ReplaceText' );
 wfLoadExtension('CheckUser');
+wfLoadExtension( 'UserExists' );
 
 # Editor tools
 wfLoadExtension( 'WikiEditor' );
@@ -314,4 +315,37 @@ foreach ( $actions as $action ) {
     $wgActionPaths[ $action ] = "/$1/$action";
 }
 
-wfLoadExtension( 'UserExists' );
+// Replace page history & source tabs for anonymous visitors
+// This doesn't block going directly to the pages, the next code block does that.
+$wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
+    if ( !$skin->getUser()->isRegistered() ) {
+        // Clear all standard tabs
+        $links['namespaces'] = [];
+        $links['views'] = [];
+        $links['actions'] = [];
+        $links['variants'] = [];
+
+        // Insert a fake "tab" as a message in the views area
+        $links['views']['anon-message'] = [
+            'text' => 'Log in to view history & source',
+            'href' => SpecialPage::getTitleFor('Userlogin')->getLocalURL(),
+            'id' => 'ca-anon-message',
+            'class' => false,
+        ];
+    }
+    return true;
+};
+
+// Block /history & /edit paths for anonymous visitors
+$wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
+    $user = $out->getUser();
+    $request = $out->getRequest();
+    $action = $request->getVal('action', 'view');
+
+    if ( !$user->isRegistered() && in_array( $action, ['edit', 'formedit', 'history'] ) ) {
+        $out->setPageTitle( 'Login required' );
+        $out->clearHTML();
+        $out->addWikiTextAsInterface( 'You must [[Special:UserLogin|log in]] to view this page.' );
+    }
+    return true;
+};
