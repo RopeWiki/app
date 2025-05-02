@@ -1,0 +1,20 @@
+{
+    "name": "UserExists",
+    "version": "1.0",
+    "author": "ChatGPT",
+    "type": "parserhook",
+    "description": "Checks if a user exists, regardless of a User: page existing",
+    "AutoloadClasses": {
+        "UserExistsHooks": "includes/UserExistsHooks.php"
+    },
+    "Hooks": {
+        "ParserFirstCallInit": "UserExistsHooks::onParserFirstCallInit"
+    },
+    "MessagesDirs": {
+        "UserExists": [ "i18n" ]
+    },
+    "ExtensionMessagesFiles": {
+        "UserExistsMagic": "UserExists.i18n.magic.php"
+    },
+    "manifest_version": 1
+}

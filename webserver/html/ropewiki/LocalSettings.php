@@ -195,6 +195,7 @@ require_once "$IP/extensions/Renameuser/Renameuser.php";
 wfLoadExtension('MagicNoCache');
 wfLoadExtension( 'ReplaceText' );
 wfLoadExtension('CheckUser');
+wfLoadExtension( 'UserExists' );
 
 # Editor tools
 wfLoadExtension( 'WikiEditor' );
@@ -205,7 +206,6 @@ require_once "$IP/extensions/Scribunto/Scribunto.php";
 wfLoadExtension("EmbedVideo");
 $wgScribuntoDefaultEngine = 'luastandalone';
 wfLoadExtension( 'HeaderFooter' );
-require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
 
@@ -223,17 +223,6 @@ wfLoadExtension( 'SemanticResultFormats' );
 wfLoadExtension( 'MultimediaViewer' );
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
 wfLoadExtension( 'CategoryTree' );
-require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
-$wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
-$wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
-$wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
-$wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table. 
-
-//Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted. 
-$wgContribScoreReports = array( 
-    array(7,10), 
-    array(30,10), 
-    array(0,25)); 
 
 # Semantic tools
 enableSemantics($semanticServer);
