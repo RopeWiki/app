@@ -223,17 +223,6 @@ wfLoadExtension( 'SemanticResultFormats' );
 wfLoadExtension( 'MultimediaViewer' );
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
 wfLoadExtension( 'CategoryTree' );
-require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
-$wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
-$wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
-$wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
-$wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table. 
-
-//Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted. 
-$wgContribScoreReports = array( 
-    array(7,10), 
-    array(30,10), 
-    array(0,25)); 
 
 # Semantic tools
 enableSemantics($semanticServer);
@@ -325,3 +314,5 @@ $actions = array(
 foreach ( $actions as $action ) {
     $wgActionPaths[ $action ] = "/$1/$action";
 }
+
+wfLoadExtension( 'UserExists' );
