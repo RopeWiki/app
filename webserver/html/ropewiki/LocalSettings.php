@@ -195,6 +195,7 @@ require_once "$IP/extensions/Renameuser/Renameuser.php";
 wfLoadExtension('MagicNoCache');
 wfLoadExtension( 'ReplaceText' );
 wfLoadExtension('CheckUser');
+wfLoadExtension( 'UserExists' );
 
 # Editor tools
 wfLoadExtension( 'WikiEditor' );
@@ -205,7 +206,6 @@ require_once "$IP/extensions/Scribunto/Scribunto.php";
 wfLoadExtension("EmbedVideo");
 $wgScribuntoDefaultEngine = 'luastandalone';
 wfLoadExtension( 'HeaderFooter' );
-require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
 
@@ -223,17 +223,6 @@ wfLoadExtension( 'SemanticResultFormats' );
 wfLoadExtension( 'MultimediaViewer' );
 require_once "$IP/extensions/PdfHandler/PdfHandler.php";
 wfLoadExtension( 'CategoryTree' );
-require_once "$IP/extensions/ContributionScores/ContributionScores.php"; 
-$wgContribScoreIgnoreBots = true;          // Exclude Bots from the reporting - Can be omitted. 
-$wgContribScoreIgnoreBlockedUsers = true;  // Exclude Blocked Users from the reporting - Can be omitted. 
-$wgContribScoresUseRealName = true;        // Use real user names when available - Can be omitted. Only for MediaWiki 1.19 and later. 
-$wgContribScoreDisableCache = false;       // Set to true to disable cache for parser function and inclusion of table. 
-
-//Each array defines a report - 7,50 is "past 7 days" and "LIMIT 50" - Can be omitted. 
-$wgContribScoreReports = array( 
-    array(7,10), 
-    array(30,10), 
-    array(0,25)); 
 
 # Semantic tools
 enableSemantics($semanticServer);
@@ -333,12 +322,47 @@ $wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
     // Only for logged-in users on main namespace pages
     if ( $user->isRegistered() && $title->getNamespace() === NS_MAIN ) {
         $links['actions']['request-rename'] = [
-            'text' => 'Request Rename',
+            'text' => 'Request rename',
             'href' => 'Request_Rename',
             'id' => 'ca-request-rename',
             'class' => false,
         ];
     }
 
+    return true;
+};
+
+// Replace page history & source tabs for anonymous visitors
+// This doesn't block going directly to the pages, the next code block does that.
+$wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
+    if ( !$skin->getUser()->isRegistered() ) {
+        // Clear all standard tabs
+        $links['namespaces'] = [];
+        $links['views'] = [];
+        $links['actions'] = [];
+        $links['variants'] = [];
+
+        // Insert a fake "tab" as a message in the views area
+        $links['views']['anon-message'] = [
+            'text' => 'Log in to view history & source',
+            'href' => SpecialPage::getTitleFor('Userlogin')->getLocalURL(),
+            'id' => 'ca-anon-message',
+            'class' => false,
+        ];
+    }
+    return true;
+};
+
+// Block /history & /edit paths for anonymous visitors
+$wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
+    $user = $out->getUser();
+    $request = $out->getRequest();
+    $action = $request->getVal('action', 'view');
+
+    if ( !$user->isRegistered() && in_array( $action, ['edit', 'formedit', 'history'] ) ) {
+        $out->setPageTitle( 'Login required' );
+        $out->clearHTML();
+        $out->addWikiTextAsInterface( 'You must [[Special:UserLogin|log in]] to view this page.' );
+    }
     return true;
 };
