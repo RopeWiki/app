@@ -205,7 +205,6 @@ require_once "$IP/extensions/Scribunto/Scribunto.php";
 wfLoadExtension("EmbedVideo");
 $wgScribuntoDefaultEngine = 'luastandalone';
 wfLoadExtension( 'HeaderFooter' );
-require_once "$IP/extensions/KmlView/KmlView.php";
 require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
 

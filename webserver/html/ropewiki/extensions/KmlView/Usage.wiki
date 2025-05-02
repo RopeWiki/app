@@ -1,4 +1,0 @@
-
-<pre>
-Usage: &lt;kmlview filename="FileName.ext"[ width="640px"][ height="480px"][ maptype="HYBRID|ROADMAP|SATELLITE|TERRAIN">
-</pre>
