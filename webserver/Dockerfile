@@ -50,6 +50,7 @@ RUN pear install --alldeps mail
 RUN apt-get install -y --no-install-recommends \
     curl \
     git \
+    ghostscript \
     gpsbabel \
     imagemagick \
     less \
