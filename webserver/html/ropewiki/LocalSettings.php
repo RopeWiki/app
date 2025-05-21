@@ -126,6 +126,7 @@ $wgUseTidy=true;
 
 $wgCapitalLinks = true;
 $wgAllowDisplayTitle = true;
+$wgRestrictDisplayTitle = false;
 
 $wgShowExceptionDetails = true;
 $wgEmailConfirmToEdit = true;
