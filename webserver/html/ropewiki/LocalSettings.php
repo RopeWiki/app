@@ -236,6 +236,7 @@ $smwgNamespacesWithSemanticLinks[NS_VOTES] = true;
 $smwgNamespacesWithSemanticLinks[NS_EVENTS] = true;
 
 wfLoadExtension( 'PageForms' );
+wfLoadExtension( 'InputBox' );
 
 require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
