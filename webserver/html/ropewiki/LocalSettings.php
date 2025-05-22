@@ -317,6 +317,23 @@ foreach ( $actions as $action ) {
     $wgActionPaths[ $action ] = "/$1/$action";
 }
 
+// Add a "Request Rename" option in the action menu
+$wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
+    $user = $skin->getUser();
+    $title = $skin->getTitle();
+    // Only for logged-in users on main namespace pages
+    if ( $user->isRegistered() && $title->getNamespace() === NS_MAIN ) {
+        $links['actions']['request-rename'] = [
+            'text' => 'Request rename',
+            'href' => 'Request_Rename',
+            'id' => 'ca-request-rename',
+            'class' => false,
+        ];
+    }
+
+    return true;
+};
+
 // Replace page history & source tabs for anonymous visitors
 // This doesn't block going directly to the pages, the next code block does that.
 $wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
@@ -348,6 +365,22 @@ $wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
         $out->setPageTitle( 'Login required' );
         $out->clearHTML();
         $out->addWikiTextAsInterface( 'You must [[Special:UserLogin|log in]] to view this page.' );
+    }
+    return true;
+};
+
+// Add a "Request Rename" option in the action menu
+$wgHooks['SkinTemplateNavigation::Universal'][] = function ( $skin, &$links ) {
+    $user = $skin->getUser();
+    $title = $skin->getTitle();
+    // Only for logged-in users on main namespace pages
+    if ( $user->isRegistered() && $title->getNamespace() === NS_MAIN ) {
+        $links['actions']['request-rename'] = [
+            'text' => 'Request rename',
+            'href' => 'Request_Rename',
+            'id' => 'ca-request-rename',
+            'class' => false,
+        ];
     }
     return true;
 };
