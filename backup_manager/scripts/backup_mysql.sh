@@ -27,6 +27,6 @@ chmod 644 ${BACKUP}
 
 ls -lah ${BACKUP}
 
-touch $BASE_PATH/last_success
+touch "$BASE_PATH/last_success_${USER}"
 
 echo "==============="
