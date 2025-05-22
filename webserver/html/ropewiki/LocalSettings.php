@@ -191,7 +191,7 @@ $wgTitleBlacklistSources = array(
 );
 wfLoadExtension( 'UserMerge' );
 $wgGroupPermissions['bureaucrat']['usermerge'] = true;
-require_once "$IP/extensions/Renameuser/Renameuser.php";
+wfLoadExtension('Renameuser');
 #require_once "$IP/extensions/UserAdmin/UserAdmin.php";
 wfLoadExtension('MagicNoCache');
 wfLoadExtension( 'ReplaceText' );
@@ -200,10 +200,10 @@ wfLoadExtension( 'UserExists' );
 
 # Editor tools
 wfLoadExtension( 'WikiEditor' );
-require_once "$IP/extensions/ParserFunctions/ParserFunctions.php";
+wfLoadExtension( 'ParserFunctions' );
 $wgPFEnableStringFunctions = true;
-require_once "$IP/extensions/Cite/Cite.php";
-require_once "$IP/extensions/Scribunto/Scribunto.php";
+wfLoadExtension( 'Cite' );
+wfLoadExtension( 'Scribunto' );
 wfLoadExtension("EmbedVideo");
 $wgScribuntoDefaultEngine = 'luastandalone';
 wfLoadExtension( 'HeaderFooter' );
@@ -212,8 +212,8 @@ require_once "$IP/extensions/IconSummary/IconSummary.php";
 
 # Developer tools
 require_once "$IP/extensions/UrlGetParameters/UrlGetParameters.php";
-require_once "$IP/extensions/Arrays/Arrays.php";
-require_once "$IP/extensions/Variables/Variables.php";
+wfLoadExtension( 'Arrays' );
+wfLoadExtension( 'Variables' );
 require_once "$IP/extensions/TreeToQuery/TreeToQuery.php";
 require_once "$IP/extensions/MyVariables/MyVariables.php";
 
@@ -222,7 +222,7 @@ wfLoadExtension( 'SemanticResultFormats' );
 
 # Feature tools
 wfLoadExtension( 'MultimediaViewer' );
-require_once "$IP/extensions/PdfHandler/PdfHandler.php";
+wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'CategoryTree' );
 
 # Semantic tools
@@ -237,11 +237,14 @@ $smwgNamespacesWithSemanticLinks[NS_EVENTS] = true;
 
 wfLoadExtension( 'PageForms' );
 wfLoadExtension( 'InputBox' );
+$wgPageFormsAutoeditNamespaces[] = NS_VOTES;
 
 require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
-#require_once( "$IP/extensions/Maps/Maps.php" );
-$egMapsGMaps3Type = 'hybrid';
+# These map options need to be set *before* loading the extension.
+$egMapsCoordinateNotation = 'Maps_COORDS_FLAT';
+$egMapsCoordinateDirectional = false;
+wfLoadExtension('Maps');
 
 require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 
@@ -249,15 +252,6 @@ require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
 $wgPageFormsRenameEditTabs = true;
 
 # ===================================================
-
-# These are set in Maps/Maps_Settings.php at container build time
-#  $egMapsCoordinateNotation = 'Maps_COORDS_FLOAT';
-#  $egMapsCoordinateDirectional = false;
-
-# See discussion about using these: https://github.com/RopeWiki/app/pull/58
-# but regardless, set them to an empty string to just stop log spew.
-$egMapsGMaps3ApiKey = "";
-$egMapsGMaps3ApiVersion = ""; 
 
 # Upload limits are set in php.ini (upload_max_filesize)
 #$wgUploadSizeWarning = 5242880;
@@ -270,7 +264,7 @@ $wgUsePathInfo      = true;
 $wgScriptExtension  = ".php";
 
 $wgSearchType = "SphinxMWSearch";
-require_once "$IP/extensions/SphinxSearch/SphinxSearch.php";
+wfLoadExtension('SphinxSearch');
 $wgEnableSphinxPrefixSearch = true;
 
 # With this config we don't need to install & configure sendmail inside
@@ -351,3 +345,12 @@ $wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
     }
     return true;
 };
+
+// Since MW 1.35 it reaaalllly doesn't like XML files being uploaded:
+//   https://phabricator.wikimedia.org/T341565
+// I've tried various upload hooks, modifying wgXMLMimeTypes, and wgVerifyMimeTypeIE - but couldn't
+// make it work. We should try again in later versions of MW, until then removed xml from the blacklist.
+$wgMimeTypeBlacklist = array_diff(
+    $wgMimeTypeBlacklist,
+    [ 'application/xml', 'text/xml' ]
+);

@@ -18,7 +18,7 @@ RUN apt-get -y upgrade
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
-ARG PHP_VERSION=7.2
+ARG PHP_VERSION=7.4
 # Install php and associated packages
 # PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
@@ -63,7 +63,7 @@ RUN apt-get install -y --no-install-recommends \
 
 # Install composer
 # https://stackoverflow.com/a/51446468/651139
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --1
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Bump file size upload limit
 RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/current/fpm/php.ini
@@ -79,8 +79,8 @@ COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-ARG MW_VERSION="1.31.16"
-ARG MW_REL_BRANCH="REL1_31"
+ARG MW_VERSION="1.35.14"
+ARG MW_REL_BRANCH="REL1_35"
 RUN wget https://releases.wikimedia.org/mediawiki/${MW_VERSION%.*}/mediawiki-$MW_VERSION.tar.gz && \
     tar xvzf mediawiki-$MW_VERSION.tar.gz && \
 	mv mediawiki-$MW_VERSION /usr/share/nginx/html/ropewiki && \
@@ -94,10 +94,15 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 WORKDIR /rw
 RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
 RUN composer require --no-update mediawiki/header-footer 3.0.1
-RUN composer require --no-update mediawiki/maps 4.4.0
+RUN composer require --no-update mediawiki/maps 8.0.0
 RUN composer require --no-update mediawiki/semantic-result-formats 3.2
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
+
+# After MW 1.35 the "jquery.ui.xyz" modules have been removed and you just call "jquery.ui".
+# This is fixed in later version of SemanticResultFormats (after 3.2).
+RUN cd /rw/extensions/SemanticResultFormats/formats/slideshow && \
+  sed -i 's/jquery.ui.slider/jquery.ui/' SRF_SlideShow.php resources/ext.srf.slideshow.js
 
 # Copy missing 'powered by semantic mediawiki' image (seems peculiar to SMW 2.1 version)
 COPY ./webserver/html/ropewiki/extensions/SemanticMediaWiki/smw_button.png /rw/extensions/usr/share/nginx/html/ropewiki/vendor/mediawiki/semantic-media-wiki/res/images/smw_button.png
@@ -112,7 +117,6 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MagicNoCache MagicNoCache && cd MagicNoCache && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-MyVariables MyVariables && cd MyVariables && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout $MW_REL_BRANCH
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Scribunto Scribunto && cd Scribunto && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SphinxSearch SphinxSearch && cd SphinxSearch && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
@@ -131,13 +135,6 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 # SimpleAntiSpam
 # UserAdmin
 # xml2wiki-dr
-
-# The Maps extension needs to return coordinates in decimal, not DMS.
-# Ideally this would be set in LocalSettings.php, but for some unknown
-# reason it never applies when set there.
-RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateNotation'\] =\).*/\1 Maps_COORDS_FLOAT;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
-RUN sed -i "s/\(.*\$GLOBALS\['egMapsCoordinateDirectional'\] =\).*/\1 false;  # Ropewiki override/" /rw/extensions/Maps/Maps_Settings.php
-
 
 # === Install SphinxSearch ===
 RUN apt-get install -y --no-install-recommends sphinxsearch
@@ -162,7 +159,10 @@ RUN cd /rw/extensions/SphinxSearch && mv -f sphinx.conf /etc/sphinxsearch/sphinx
 
 # Apply our custom patch to the SphinxSearch code
 # (allows substring search on page titles instead of exact match from the start)
-RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.patch
+RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.$MW_REL_BRANCH.patch
+
+# Apply Arrays patch to suppress warning notice.
+RUN cd /rw/extensions/Arrays && patch -l < ExtArrays.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
