@@ -1,0 +1,37 @@
+# This patch is based on SphinxSearch REL1_27.tar.gz
+# We remove a regex caret to enable substring searches of the title.
+
+# Special for 1.35.14 upgrade: we also have to patch the DB instance logic, as 1.35 changed
+# behavior half way through it's life (around 1.35.6), but the REL1_35 release of SphinxSearch
+# wasn't updated.
+
+--- SphinxMWSearch.php.orig  2025-04-30 14:53:36.624343273 -0700
++++ SphinxMWSearch.php        2025-04-30 14:54:45.491572842 -0700
+@@ -68,12 +68,13 @@
+         * @return bool
+         */
+        public static function prefixSearch( $namespaces, $term, $limit, &$results, $offset = 0 ) {
+-               $term = '^' . $term;
++               // Displayed for ropewiki substring title matching
++               //$term = '^' . $term;
+                return self::infixSearch( $namespaces, $term, $limit, $results, $offset );
+        }
+
+        public static function infixSearch( $namespaces, $term, $limit, &$results, $offset = 0 ) {
+-               $search_engine = new SphinxMWSearch( wfGetDB( DB_REPLICA ) );
++               $search_engine = new SphinxMWSearch( MediaWiki\MediaWikiServices::getInstance()->getDBLoadBalancer() );
+                $search_engine->namespaces = $namespaces;
+                $search_engine->setLimitOffset( $limit, $offset );
+                $result_set = $search_engine->searchText( '@page_title: ' . $term . '*' );
+
+--- SphinxMWSearchResult.php.orig       2025-05-29 21:18:03.424775847 +0000
++++ SphinxMWSearchResult.php    2025-05-29 21:19:14.007250957 +0000
+@@ -25,7 +25,7 @@
+         *
+         * @return string highlighted text snippet
+         */
+-       public function getTextSnippet( $terms ) {
++       public function getTextSnippet( $terms = []) {
+                global $wgAdvancedSearchHighlighting, $wgSphinxSearchMWHighlighter, $wgSphinxSearch_index;
+
+                $this->initText();
