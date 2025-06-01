@@ -7,14 +7,76 @@ contain the database content nor the `images` folder content of the real site).
 
 ### Site architecture
 
-* The [MySQL database](database/README.md) stores all the non-file site data
-* The [webserver](webserver/README.md) runs MediaWiki with extensions, and also stores all the file-based site
-  data/uploads
-    * Exposes port 8080 for direct access to the webserver that bypasses the reverse proxy
-* The [reverse proxy](reverse_proxy/README.md) manages TLS termination and also redirects according to target site
-    * Exposes ports 80 & 443 as the external-facing webserver
-* The [backup manager](backup_manager/README.md) exposes site data for backup
-    * Exposes port 22001 for SSH access to [`backupreader`](backup_manager/pubkeys/README.md) users
+<!-- Note: it would be great to have `click` links be relative rather than absolute, but that isn't possible: https://github.com/orgs/community/discussions/46096 -->
+```mermaid
+flowchart TD;
+    classDef volume fill:#dddddd,stroke:#333,stroke-width:1px
+    classDef external fill:#eeeebb
+    classDef folder fill:#bbeeee
+
+    subgraph app["app <small>(Single VM)</small>"]
+        ropewiki_db
+        click ropewiki_db "https://github.com/RopeWiki/app/tree/master/database" "MySQL database with non-file site data"
+
+        ropewiki_webserver
+        click ropewiki_webserver "https://github.com/RopeWiki/app/tree/master/webserver" "MediaWiki server and file-based site data/uploads"
+
+        ropewiki_reverse_proxy
+        click ropewiki_reverse_proxy "https://github.com/RopeWiki/app/tree/master/reverse_proxy" "TLS termination and redirects"
+
+        ropewiki_backup_manager
+        click ropewiki_backup_manager "https://github.com/RopeWiki/app/tree/master/backup_manager" "Exposes site data for backup"
+
+        ropewiki_mailserver
+        click ropewiki_mailserver "https://github.com/RopeWiki/app/tree/master/mailserver" "SMTP relay server to send email"
+
+        ropewiki_database_storage@{shape:cyl}
+        class ropewiki_database_storage volume
+        ropewiki_proxy_certs@{shape:cyl}
+        class ropewiki_proxy_certs volume
+        ropewiki_proxy_logs@{shape:cyl}
+        class ropewiki_proxy_logs volume
+
+        images["/rw/mount/images"]@{shape:cyl}
+        class images folder
+        sqlbackup["/rw/mount/sqlbackup"]@{shape:cyl}
+        class sqlbackup folder
+    end
+
+    Internet["Public Internet"]
+    class Internet external
+    backupreader["<code>backupreader</code> users"]
+    class backupreader external
+    click backupreader "https://github.com/RopeWiki/app/tree/master/backup_manager/pubkeys"
+    GMail
+    class GMail external
+
+    luca_server["luca server<br>(Windows VM)"]
+    click luca_server "https://github.com/RopeWiki/RWServer"
+    class luca_server external
+
+    ropewiki_webserver -- MySQL 3306 --> ropewiki_db -- /var/lib/mysql --> ropewiki_database_storage
+    ropewiki_webserver -- /usr/share/nginx/html/ropewiki/images --> images
+    ropewiki_webserver -- SMTP 25 --> ropewiki_mailserver -- TLS SMTP 587 --> GMail
+    ropewiki_reverse_proxy -- HTTP 80 --> ropewiki_webserver
+    ropewiki_reverse_proxy -- HTTP 80<br>/luca/* --> luca_server
+    Internet -- HTTP 8080 --> ropewiki_webserver
+    Internet -- HTTPS 443 --> ropewiki_reverse_proxy
+    Internet -- HTTP 80 --> ropewiki_reverse_proxy
+    backupreader -- SSH 22001 --> ropewiki_backup_manager -- MySQL 3306 --> ropewiki_db
+    ropewiki_backup_manager -- mysqldump --> sqlbackup --> ropewiki_backup_manager
+    images --> ropewiki_backup_manager
+    ropewiki_reverse_proxy -- /etc/letsencrypt --> ropewiki_proxy_certs
+    ropewiki_reverse_proxy -- /logs --> ropewiki_proxy_logs
+
+    subgraph Legend
+        Container["docker container"]
+        Volume["docker-managed volume"]
+        class Volume volume
+        Folder["Folder on host machine"]
+        class Folder folder
+    end
+```
 
 ## Site deployment
 
@@ -65,7 +127,7 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
 1. Create a shortcut to declare passwords: create `~/rw_passwords.sh` (or another location) with content like:
 ```shell
 #!/bin/bash
-# These are the manditory environment variables needed to start a copy of the site
+# These are the mandatory environment variables needed to start a copy of the site
 export WG_DB_PASSWORD=<The password for the `ropewiki` DB user>
 export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
 export RW_SMTP_USERNAME=<The username for logging into the smtp relay>
