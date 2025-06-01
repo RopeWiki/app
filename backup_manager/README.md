@@ -6,6 +6,10 @@ The RopeWiki backup manager automatically makes periodic backups, when enabled. 
 follow the form `all-backup-YYYY-MM-DD-HHMMSS.sql.gz` and are stored in /home/backupreader/backups/ according
 to [backup_mysql.sh](scripts/backup_mysql.sh).
 
+The `images` data (most of the file-based data uploaded to the site) can be found in
+/home/backupreader/images/ according to the mounted volume in the
+[docker-compose file](../docker-compose.yaml).
+
 ## Copying backups offsite
 
 The database container is accessible via SSH directly at port 22001. Connect to the container using SSH via this port
