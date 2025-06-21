@@ -354,3 +354,5 @@ $wgMimeTypeBlacklist = array_diff(
     $wgMimeTypeBlacklist,
     [ 'application/xml', 'text/xml' ]
 );
+
+wfLoadExtension( 'TopoContentHandler' );
