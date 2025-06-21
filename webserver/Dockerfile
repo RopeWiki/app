@@ -92,12 +92,12 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 # === Install extensions ===
 
 WORKDIR /rw
-RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
+RUN composer require --no-update mediawiki/semantic-media-wiki 4.2.0
 RUN composer require --no-update mediawiki/header-footer 3.0.1
 # We don't use mediawiki/maps for maps! We use it for data types.
 #   See https://github.com/RopeWiki/app/issues/141
 RUN composer require --no-update mediawiki/maps 8.0.0
-RUN composer require --no-update mediawiki/semantic-result-formats 3.2
+RUN composer require --no-update mediawiki/semantic-result-formats 4.2.0
 # See https://github.com/RopeWiki/app/issues/162 for details
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins \
   audit.ignore "PKSA-t71x-qf1n-7xwy" \

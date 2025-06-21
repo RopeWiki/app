@@ -229,6 +229,7 @@ wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'CategoryTree' );
 
 # Semantic tools
+wfLoadExtension( 'SemanticMediaWiki' );
 enableSemantics($semanticServer);
 $smwgQMaxInlineLimit=2000;
 $smwgQMaxSize=100;
