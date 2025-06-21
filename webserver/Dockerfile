@@ -48,6 +48,7 @@ RUN pear install --alldeps mail
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends \
+    cron \
     curl \
     git \
     ghostscript \
@@ -170,8 +171,7 @@ RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.$MW_REL_BRANCH.p
 RUN cd /rw/extensions/Arrays && patch -l < ExtArrays.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
-RUN apt-get install -y cron \
- && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
+RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
  && crontab /etc/cron.d/sphinxsearch-update \
  && touch /var/log/cron.log

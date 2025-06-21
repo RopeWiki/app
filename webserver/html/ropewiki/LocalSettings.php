@@ -291,6 +291,7 @@ if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 $actions = array(
     'delete',
     'edit',
+    'edit-topo',
     'formedit',
     'history',
     'info',
@@ -354,3 +355,5 @@ $wgMimeTypeBlacklist = array_diff(
     $wgMimeTypeBlacklist,
     [ 'application/xml', 'text/xml' ]
 );
+
+wfLoadExtension( 'TopoContentHandler' );

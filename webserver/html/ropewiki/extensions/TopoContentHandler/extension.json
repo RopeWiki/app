@@ -1,0 +1,54 @@
+{
+    "name": "TopoContentHandler",
+    "author": "Hereward Cooper",
+    "version": "1.0.0",
+    "type": "editor",
+    "descriptionmsg": "Interactive editor for canyon topos",
+    "requires": {
+      "MediaWiki": ">= 1.35"
+    },
+    "AutoloadClasses": {
+      "TopoContentHandler": "includes/TopoContentHandler.php",
+      "TopoContent": "includes/TopoContent.php",
+      "TopoEditAction": "includes/TopoEditAction.php",
+      "TopoHooks": "includes/TopoHooks.php"
+    },
+    "Actions": {
+      "edit-topo": "TopoEditAction"
+    },
+    "ContentHandlers": {
+      "TOPO_DATA": "TopoContentHandler"
+    },
+    "namespaces": [
+      {
+        "id": 3000,
+        "constant": "NS_TOPO",
+        "name": "Topo",
+        "defaultcontentmodel": "TOPO_DATA"
+      },
+      {
+        "id": 3001,
+        "constant": "NS_TOPO_TALK",
+        "name": "Topo_talk"
+      }
+    ],
+    "ResourceModules": {
+      "ext.topo": {
+        "scripts": [ "ext.topo.js" ],
+        "styles": [],
+        "dependencies": [ "mediawiki.util" ],
+        "localBasePath": "modules",
+        "remoteExtPath": "TopoContentHandler"
+      }
+    },
+    "Hooks": {
+      "BeforePageDisplay": "TopoHooks::onBeforePageDisplay",
+      "ParserFirstCallInit": "TopoHooks::onParserFirstCallInit",
+      "SkinTemplateNavigation": "TopoHooks::onSkinTemplateNavigation"
+    },
+    "manifest_version": 2,
+    "ExtensionMessagesFiles": {
+      "TopoMagic": "i18n/Magic.php"
+    }
+  }
+  
