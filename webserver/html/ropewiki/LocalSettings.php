@@ -297,6 +297,7 @@ if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 $actions = array(
     'delete',
     'edit',
+    'edit-topo',
     'formedit',
     'history',
     'info',
@@ -369,3 +370,5 @@ $wgHooks['TitleIsAlwaysKnown'][] = function ( $title, &$isKnown ) {
 	}
 	return true;
 };
+
+wfLoadExtension( 'TopoContentHandler' );
