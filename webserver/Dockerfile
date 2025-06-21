@@ -55,6 +55,7 @@ RUN apt-get install -y --no-install-recommends \
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends \
+    cron \
     curl \
     git \
     ghostscript \
@@ -145,6 +146,8 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 
 # These just use master branch
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating
+RUN cd /rw/extensions && git clone https://github.com/ropewiki/mediawiki-extensions-TopoContentHandler TopoContentHandler
+RUN cd /rw/extensions && git clone https://github.com/hcooper/CanyonTopo ../topo
 
 # Present in main site but not here:
 # APC
@@ -203,8 +206,7 @@ RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_upload.js.$MW_REL_BRANCH.pa
 RUN cd /rw/extensions/PageForms && patch -l -p0 < extension.json.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
-RUN apt-get install -y cron \
- && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
+RUN mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
  && chmod 0644 /etc/cron.d/sphinxsearch-update \
  && crontab /etc/cron.d/sphinxsearch-update \
  && touch /var/log/cron.log
