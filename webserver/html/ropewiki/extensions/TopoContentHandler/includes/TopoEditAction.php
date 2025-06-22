@@ -35,6 +35,7 @@ class TopoEditAction extends Action {
           <textarea id="yaml-textbox" cols="100" rows="30" >'.$text.'</textarea><br />
           <button id="save-btn">Save</button>
           <input type="checkbox" id="highlight-checkbox" />Highlight Mode
+          <input type="checkbox" id="line-dragging-checkbox" />Line Dragging
         </div>
 
         <div id="rightcol">
