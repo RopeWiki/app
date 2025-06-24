@@ -77,8 +77,6 @@ RUN sed -i 's/^;\?emergency_restart_threshold.*/emergency_restart_threshold = 10
 RUN sed -i 's/^;\?emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/current/fpm/php-fpm.conf
 RUN sed -i 's/^;\?process_control_timeout.*/process_control_timeout = 10s/' /etc/php/current/fpm/php-fpm.conf
 
-
-
 # php-fpm pool settings
 COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
