@@ -24,14 +24,46 @@
                 $search_engine->setLimitOffset( $limit, $offset );
                 $result_set = $search_engine->searchText( '@page_title: ' . $term . '*' );
 
---- SphinxMWSearchResult.php.orig       2025-05-29 21:18:03.424775847 +0000
-+++ SphinxMWSearchResult.php    2025-05-29 21:19:14.007250957 +0000
-@@ -25,7 +25,7 @@
-         *
-         * @return string highlighted text snippet
-         */
--       public function getTextSnippet( $terms ) {
-+       public function getTextSnippet( $terms = []) {
-                global $wgAdvancedSearchHighlighting, $wgSphinxSearchMWHighlighter, $wgSphinxSearch_index;
-
-                $this->initText();
+--- SphinxMWSearchResult.php.orig	2025-06-11 04:04:00.089677897 +0000
++++ SphinxMWSearchResult.php	2025-06-24 01:20:29.530809534 +0000
+@@ -25,7 +25,20 @@
+ 	 *
+ 	 * @return string highlighted text snippet
+ 	 */
+-	public function getTextSnippet( $terms ) {
++	public function getTextSnippet($terms = []) {
++		global $wgRequest;
++
++		// If $terms wasn't provided, try and figure it out from the url parameters
++		if ( empty( $terms ) ) {
++        	  $query = trim( $wgRequest->getVal( 'search', '' ) );
++	          if ( $query === '' ) {
++	            $query = trim( $wgRequest->getVal( 'q', '' ) );
++	          }
++	          if ( $query !== '' ) {
++	            $terms = preg_split( '/\s+/', $query );
++	          }
++		}
++
+ 		global $wgAdvancedSearchHighlighting, $wgSphinxSearchMWHighlighter, $wgSphinxSearch_index;
+ 
+ 		$this->initText();
+@@ -48,10 +61,17 @@
+ 			"around" => $contextchars,
+ 		];
+ 
++		$query = trim( implode( ' ', $terms ) );
++		// It crashes searchd if the query is empty (null pointer), so fallback to ' '.
++		if ( $query === '' ) {
++		  $query = ' ';
++		}
++
++		wfDebugLog( 'SphinxSearch', 'BuildExcerpts query: ' . var_export( $terms, true ) );
+ 		$excerpts = $this->sphinx_client->BuildExcerpts(
+ 			[ $this->mText ],
+ 			$wgSphinxSearch_index,
+-			implode( ' ', $terms ),
++			$query,
+ 			$excerpts_opt
+ 		);
+ 
