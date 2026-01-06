@@ -96,6 +96,8 @@ RUN composer require --no-update mediawiki/semantic-media-wiki 3.2.3
 RUN composer require --no-update mediawiki/header-footer 3.0.1
 RUN composer require --no-update mediawiki/maps 8.0.0
 RUN composer require --no-update mediawiki/semantic-result-formats 3.2
+# Bypass warning regarding CVE-2022-48614 affecting SMW. See https://github.com/RopeWiki/app/issues/159
+RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins audit.ignore "PKSA-t71x-qf1n-7xwy"
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 
