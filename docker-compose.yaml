@@ -66,6 +66,7 @@ services:
       - WG_HOSTNAME=${WG_HOSTNAME:-localhost}
     depends_on:
       - ropewiki_webserver
+      - ropewiki_tileserver
     volumes:
       - ropewiki_proxy_certs:/etc/letsencrypt
       - ropewiki_proxy_logs:/logs
@@ -110,6 +111,16 @@ services:
       - TLS_VERIFY=may
       - INBOUND_TLS=no  # Don't require local clients to use TLS
       - ACCEPTED_NETWORKS=172.16.0.0/12  # Only accept connections from docker's internal network
+
+  ropewiki_tileserver:
+    image: maptiler/tileserver-gl:latest
+    hostname: ropewiki_tileserver
+    restart: unless-stopped
+    ports:
+      - "7979:7979"
+    volumes:
+      - /mnt/rwimages/tiles:/data
+    command: -c config.json -p 7979
 
 volumes:
   ropewiki_database_storage:
