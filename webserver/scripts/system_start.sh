@@ -40,7 +40,8 @@ echo Sphinx indexer started -- can take up to a minute
 indexer --config /etc/sphinxsearch/sphinx.conf --all
 sleep 2
 echo Sphinx indexer finished -- starting service
-searchd --config /etc/sphinxsearch/sphinx.conf >> /var/log/sphinxsearch/sphinx-startup.log 2>&1
+# Restart searchd if it crashes: https://github.com/RopeWiki/app/issues/154
+nohup bash -c "while true; do searchd --nodetach --config /etc/sphinxsearch/sphinx.conf >> /var/log/sphinxsearch/sphinx-startup.log 2>&1; sleep 2; done" &
 
 echo RopeWiki webserver ready to go!
 
