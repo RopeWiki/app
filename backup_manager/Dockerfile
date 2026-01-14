@@ -21,11 +21,10 @@ RUN apt-get update && apt-get -y install \
 
 # Create a user named `backupreader` for reading database backups
 RUN useradd --create-home --shell /bin/bash backupreader
-USER backupreader
-RUN mkdir -p /home/backupreader/backups
+RUN mkdir -p /home/backupreader/backups && chown backupreader /home/backupreader/backups
+VOLUME /home/backupreader/backups
 
 # Set up periodic backup
-USER root
 COPY backup_manager/backup.cron /etc/cron.d/database-backup
 RUN chmod 0644 /etc/cron.d/database-backup && \
     crontab /etc/cron.d/database-backup && \

@@ -2,6 +2,8 @@
 
 echo ">>> RopeWiki setup beginning..."
 
+chown backupreader /home/backupreader/backups
+
 if [ -z "${RW_ROOT_DB_PASSWORD}" ]; then
   echo "Disabling backups because RW_ROOT_DB_PASSWORD wasn't set"
   touch /do_not_backup_db
