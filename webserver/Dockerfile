@@ -69,6 +69,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN sed -i 's/^;\?upload_max_filesize.*/upload_max_filesize = 10M/' /etc/php/current/fpm/php.ini
 RUN sed -i 's/^;\?post_max_size.*/post_max_size = 10M/' /etc/php/current/fpm/php.ini
 
+# Control PHP session timeout (86400 = 24h)
+RUN sed -i 's/^;\?session.gc_maxlifetime.*/session.gc_maxlifetime = 86400/' /etc/php/current/fpm/php.ini
+
 # Optimize php-fpm configs
 RUN sed -i 's/^;\?emergency_restart_threshold.*/emergency_restart_threshold = 10/' /etc/php/current/fpm/php-fpm.conf
 RUN sed -i 's/^;\?emergency_restart_interval.*/emergency_restart_interval = 1m/' /etc/php/current/fpm/php-fpm.conf
