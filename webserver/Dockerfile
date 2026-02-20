@@ -100,7 +100,7 @@ RUN composer require --no-update mediawiki/semantic-result-formats 3.2
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins \
   audit.ignore "PKSA-t71x-qf1n-7xwy" \
   audit.ignore "PKSA-z3gr-8qht-p93v" \
-  audit.ignore "PKSA-4s4z-t146-6123
+  audit.ignore "PKSA-4s4z-t146-6123"
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 
