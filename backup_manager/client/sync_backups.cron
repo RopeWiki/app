@@ -1,0 +1,1 @@
+15 10 * * * bash /root/sync_backups.sh >> /root/backup.log 2>&1
