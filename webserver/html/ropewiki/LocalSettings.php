@@ -115,6 +115,9 @@ $wgResourceLoaderMaxQueryLength = -1;
 # The following permissions were set based on your choice in the installer
 $wgGroupPermissions['*']['edit'] = false;
 
+# trustedtester group (no special permissions, used for feature gating in JavaScript)
+$wgGroupPermissions['trustedtester'] = [];
+
 # End of automatically generated settings.
 # Add more configuration options below.
 
