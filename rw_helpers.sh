@@ -107,6 +107,8 @@ SELECT
     WHEN 201 THEN CONCAT('Lists talk:', REPLACE(page_title, '_', ' '))
     WHEN 828 THEN CONCAT('Module:', REPLACE(page_title, '_', ' '))
     WHEN 829 THEN CONCAT('Module talk:', REPLACE(page_title, '_', ' '))
+    WHEN 3000 THEN CONCAT('Topo:', REPLACE(page_title, '_', ' '))
+    WHEN 3001 THEN CONCAT('Topo talk:', REPLACE(page_title, '_', ' '))
     ELSE CONCAT('NS', page_namespace, ':', REPLACE(page_title, '_', ' '))
   END AS full_title
 FROM page
