@@ -1,9 +1,10 @@
 {
     "ropewiki": {
-        "upgrade_key": "ecb6a57621ea1cbfb76860ddc03f44df504775c2",
+        "upgrade_key": "46a8e8a5370b6db31ad1d4af7bbe2fb30e59e030",
         "maintenance_mode": false,
-        "latest_version": "3.2.3",
+        "latest_version": "4.2.0",
         "incomplete_tasks": [],
-        "last_optimization_run": "2025-04-19 11:27"
+        "last_optimization_run": "2026-03-02 09:43",
+        "previous_version": "3.2.3"
     }
 }
