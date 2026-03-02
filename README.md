@@ -36,6 +36,8 @@ flowchart TD;
         class ropewiki_proxy_certs volume
         ropewiki_proxy_logs@{shape:cyl}
         class ropewiki_proxy_logs volume
+        ropewiki_backup_ssh@{shape:cyl}
+        class ropewiki_backup_ssh volume
 
         images["/rw/mount/images"]@{shape:cyl}
         class images folder
@@ -66,6 +68,7 @@ flowchart TD;
     backupreader -- SSH 22001 --> ropewiki_backup_manager -- MySQL 3306 --> ropewiki_db
     ropewiki_backup_manager -- mysqldump --> sqlbackup --> ropewiki_backup_manager
     images --> ropewiki_backup_manager
+    ropewiki_backup_manager -- /etc/ssh --> ropewiki_backup_ssh
     ropewiki_reverse_proxy -- /etc/letsencrypt --> ropewiki_proxy_certs
     ropewiki_reverse_proxy -- /logs --> ropewiki_proxy_logs
 

@@ -88,6 +88,7 @@ services:
     volumes:
       - ${SQL_BACKUP_FOLDER:?SQL_BACKUP_FOLDER environment variable must be set}:/home/backupreader/backups
       - ${IMAGES_FOLDER:?IMAGES_FOLDER environment variable must be set}:/home/backupreader/images:ro
+      - ropewiki_backup_ssh:/etc/ssh
     restart: unless-stopped
 
   ropewiki_mailserver:
@@ -118,3 +119,5 @@ volumes:
     name: ropewiki_proxy_certs
   ropewiki_proxy_logs:
     name: ropewiki_proxy_logs
+  ropewiki_backup_ssh:
+    name: ropewiki_backup_ssh
