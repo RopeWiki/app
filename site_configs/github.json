@@ -1,0 +1,9 @@
+{
+  "hostname": "localhost",
+  "protocol": "http",
+  "logs_folder": "/home/runner/work/app/mount",
+  "sql_backup_folder": "/home/runner/work/app/mount/sqlbackup",
+  "images_folder": "/home/runner/work/app/mount/images",
+  "proxy_config_folder": "/home/runner/work/app/mount/proxy_config",
+  "robots": "robots_dev.txt"
+}

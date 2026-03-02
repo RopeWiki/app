@@ -1,0 +1,58 @@
+name: Test Empty Site
+
+on:
+  push:
+    branches: [ github_actions, master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  test-empty-site:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
+    env:
+      WG_DB_PASSWORD: "NotReal"
+      RW_ROOT_DB_PASSWORD: "NotReal"
+      RW_SMTP_USERNAME: "NotReal"
+      RW_SMTP_PASSWORD: "NotReal"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Docker installation
+        run: docker --version
+
+      - name: Create mount directories
+        run: mkdir -p /home/runner/work/app/mount/{sqlbackup,images,proxy_config}
+
+      - name: Build containers
+        run: ./deploy_tool.py github dc build
+
+      - name: Create mysql database
+        run: ./deploy_tool.py github create_db
+
+      - name: Restore empty mediawiki schema
+        run: echo y | ./deploy_tool.py github restore_empty_db
+
+      - name: Start the containers
+        run: ./deploy_tool.py github start_site
+
+      # The empty mediawiki schema file isn't always up-to-date, so run a schema upgrade just in case.
+      - name: Run maintenance update
+        run: ./deploy_tool.py github dc exec ropewiki_webserver "/rw/maintenance/update.php --quick"
+
+      - name: Verify site is accessible
+        run: |
+          curl -s http://localhost/Main_Page | grep -q "This is a blank copy of ropewiki"
+          if [ $? -eq 0 ]; then
+            echo "Site verification successful!"
+          else
+            echo "Site verification failed - expected string not found"
+            exit 1
+          fi
