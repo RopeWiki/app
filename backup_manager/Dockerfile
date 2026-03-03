@@ -5,6 +5,10 @@
 
 FROM mysql:5.7-debian
 
+# The mysql:5.7-debian is built upon Debian Buster, which is EOL. Until Mediawiki is upgraded to a version which has confirmed support for later Mysql (probably 8) we have to keep the container alive.
+RUN sed -i '/^deb http:\/\/deb.debian.org/d; s/^# deb http:\/\/snapshot/deb http:\/\/snapshot/' /etc/apt/sources.list
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
 # Fix for apt key errors in the ancient version of debian/mysql we're running.
 RUN gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B7B3B788A8D3785C
 RUN rm /etc/apt/keyrings/mysql.gpg
