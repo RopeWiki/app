@@ -56,3 +56,29 @@ jobs:
             echo "Site verification failed - expected string not found"
             exit 1
           fi
+
+
+      # Goal: Once a passing build has been pushed to master, it will get tagged & published.
+      # For testing currently all passing builds (not just pushed) are tagged with the hash for now.
+
+      - name: Login to GitHub Container Registry
+        #if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push images to ghcr.io
+        #if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_OWNER_LOWER="${REPO_OWNER,,}"
+          images=("backup_manager" "database" "mailserver" "reverse_proxy" "webserver")
+          for image in "${images[@]}"; do
+            # Human tags (e.g. github-master-latest) to be
+            #docker tag ropewiki/$image:latest ghcr.io/${REPO_OWNER_LOWER}/$image:github-latest
+            #docker push ghcr.io/${REPO_OWNER_LOWER}/$image:github-latest
+            docker tag ropewiki/$image:latest ghcr.io/${REPO_OWNER_LOWER}/$image:sha-${GITHUB_SHA:0:7}
+            docker push ghcr.io/${REPO_OWNER_LOWER}/$image:sha-${GITHUB_SHA:0:7}
+          done
