@@ -244,6 +244,8 @@ $wgPageFormsAutoeditNamespaces[] = NS_VOTES;
 
 require_once "$IP/extensions/SemanticRating/SemanticRating.php";
 
+# We don't use mediawiki/maps for maps! We use it for data types.
+#   See https://github.com/RopeWiki/app/issues/141
 # These map options need to be set *before* loading the extension.
 $egMapsCoordinateNotation = 'Maps_COORDS_FLAT';
 $egMapsCoordinateDirectional = false;
