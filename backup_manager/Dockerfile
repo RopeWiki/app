@@ -23,24 +23,18 @@ RUN apt-get update && apt-get -y install \
     rsync \
     zstd
 
-# Create a user named `backupreader` for reading database backups
+# Create the `backupreader` user, with direct SSH access.
 RUN useradd --create-home --shell /bin/bash backupreader
 USER backupreader
 RUN mkdir -p /home/backupreader/backups
-
-# Set up periodic backup
-USER root
-COPY backup_manager/backup.cron /etc/cron.d/database-backup
-RUN chmod 0644 /etc/cron.d/database-backup && \
-    crontab /etc/cron.d/database-backup && \
-    touch /var/log/cron.log
-
-# Run our startup script on image's startup
-COPY backup_manager/scripts/ /
-
-# Provide SSH access to backupreaders
-USER backupreader
 COPY backup_manager/pubkeys/authorized_keys /home/backupreader/.ssh/authorized_keys
+
+# Install the crontab. Note this runs as `backupreader` user.
+USER root
+COPY --chmod=0644 backup_manager/backup.cron /etc/cron.d/database-backup
+
+# Install the backup and entry scripts.
+COPY backup_manager/scripts/ /
 
 # Start as root
 USER root
