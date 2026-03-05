@@ -9,6 +9,15 @@
 # in README.md.
 #   python3 deploy_tool.py <SITE_NAME> dc build
 
+# A note on image naming:
+#   the build system produces images in the format:
+#     ropewiki/webserver:latest
+#   however in development environments we might run into different formats:
+#     ghcr.io/ropewiki:github-master-latest
+#   These envvars can overwrite the expected repo name & tag:
+#     DOCKER_IMAGE_REGISTRY
+#     DOCKER_IMAGE_TAG
+
 services:
 
   # The RopeWiki MySQL database; see instructions in README.md to build the image
