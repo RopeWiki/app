@@ -1,0 +1,92 @@
+name: Test Empty Site
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  test-empty-site:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
+    env:
+      WG_DB_PASSWORD: "NotReal"
+      RW_ROOT_DB_PASSWORD: "NotReal"
+      RW_SMTP_USERNAME: "NotReal"
+      RW_SMTP_PASSWORD: "NotReal"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Docker installation
+        run: docker --version
+
+      - name: Create mount directories
+        run: mkdir -p /home/runner/work/app/mount/{sqlbackup,images,proxy_config}
+
+      - name: Build containers
+        run: ./deploy_tool.py github dc build
+
+      - name: Create mysql database
+        run: ./deploy_tool.py github create_db
+
+      - name: Restore empty mediawiki schema
+        run: echo y | ./deploy_tool.py github restore_empty_db
+
+      - name: Start the containers
+        run: ./deploy_tool.py github start_site
+
+      # The empty mediawiki schema file isn't always up-to-date, so run a schema upgrade just in case.
+      - name: Run maintenance update
+        run: ./deploy_tool.py github dc exec ropewiki_webserver "/rw/maintenance/update.php --quick"
+
+      - name: Verify site is accessible
+        run: |
+          curl -s http://localhost/Main_Page | grep -q "This is a blank copy of ropewiki"
+          if [ $? -eq 0 ]; then
+            echo "Site verification successful!"
+          else
+            echo "Site verification failed - expected string not found"
+            exit 1
+          fi
+
+
+      # Goal: Once a passing build has been pushed to master, it will get tagged & published.
+      # For testing currently all passing builds (not just pushed) are tagged with the hash for now.
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push images to ghcr.io
+      # Publish the images tagged with the SHA hash for all passing builds.
+        run: |
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_OWNER_LOWER="${REPO_OWNER,,}"
+          images=("backup_manager" "database" "mailserver" "reverse_proxy" "webserver")
+          for image in "${images[@]}"; do
+            docker tag ropewiki/$image:latest ghcr.io/${REPO_OWNER_LOWER}/$image:sha-${GITHUB_SHA:0:7}
+            docker push ghcr.io/${REPO_OWNER_LOWER}/$image:sha-${GITHUB_SHA:0:7}
+          done
+
+      - name: Tag and push images to ghcr.io
+      # Publish the images tagged with "github-master-latest" only for builds triggered by a push to master.
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_OWNER_LOWER="${REPO_OWNER,,}"
+          images=("backup_manager" "database" "mailserver" "reverse_proxy" "webserver")
+          for image in "${images[@]}"; do
+            docker tag ropewiki/$image:latest ghcr.io/${REPO_OWNER_LOWER}/$image:github-master-latest
+            docker push ghcr.io/${REPO_OWNER_LOWER}/$image:github-master-latest
+          done
