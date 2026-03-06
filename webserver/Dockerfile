@@ -37,6 +37,7 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
         php$PHP_VERSION-imagick \
         php$PHP_VERSION-xml \
         php$PHP_VERSION-mbstring \
+        php$PHP_VERSION-intl \
         php-pear
 
 # Make version agnostic paths
@@ -79,8 +80,8 @@ COPY ./webserver/fpm-pool.conf /etc/php/current/fpm/pool.d/www.conf
 
 
 # === Install MediaWiki ===
-ARG MW_VERSION="1.35.14"
-ARG MW_REL_BRANCH="REL1_35"
+ARG MW_VERSION="1.39.17"
+ARG MW_REL_BRANCH="REL1_39"
 RUN wget https://releases.wikimedia.org/mediawiki/${MW_VERSION%.*}/mediawiki-$MW_VERSION.tar.gz && \
     tar xvzf mediawiki-$MW_VERSION.tar.gz && \
 	mv mediawiki-$MW_VERSION /usr/share/nginx/html/ropewiki && \
@@ -93,11 +94,11 @@ RUN ln -s /usr/share/nginx/html/ropewiki /rw
 
 WORKDIR /rw
 RUN composer require --no-update mediawiki/semantic-media-wiki 4.2.0
-RUN composer require --no-update mediawiki/header-footer 3.0.1
 # We don't use mediawiki/maps for maps! We use it for data types.
 #   See https://github.com/RopeWiki/app/issues/141
-RUN composer require --no-update mediawiki/maps 8.0.0
-RUN composer require --no-update mediawiki/semantic-result-formats 4.2.0
+# Maps 10.x-11.x required for MW 1.39 (fixes RepoGroup::singleton() and wfGetCache(), but <12.0 which needs MW 1.40+)
+RUN composer require --no-update mediawiki/maps "^10.0.4"
+RUN composer require --no-update mediawiki/semantic-result-formats "^4.2.1"
 # See https://github.com/RopeWiki/app/issues/162 for details
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins \
   audit.ignore "PKSA-t71x-qf1n-7xwy" \
@@ -127,13 +128,16 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SphinxSearch SphinxSearch && cd SphinxSearch && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-HeaderFooter HeaderFooter && cd HeaderFooter && git checkout $MW_REL_BRANCH
+
+# Last version to support PHP 7.x (fine to switch to master after PHP upgrade).
+RUN cd /rw/extensions && git clone https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo EmbedVideo && cd EmbedVideo && git checkout 6aa9058
 
 # Used everywhere! Note: arrays & variables will break one day: https://phabricator.wikimedia.org/T250963
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Arrays Arrays && cd Arrays && git checkout $MW_REL_BRANCH
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables && cd Variables && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Variables Variables
 
 # These just use master branch
-RUN cd /rw/extensions && git clone https://gitlab.com/HydraWiki/extensions/embedvideo.git EmbedVideo
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating
 
 # Present in main site but not here:
@@ -168,8 +172,16 @@ RUN cd /rw/extensions/SphinxSearch && mv -f sphinx.conf /etc/sphinxsearch/sphinx
 # (allows substring search on page titles instead of exact match from the start)
 RUN cd /rw/extensions/SphinxSearch && patch -l < SphinxMWSearch.$MW_REL_BRANCH.patch
 
+# Apply SphinxSearch patch for PHP 8.1+ and MediaWiki 1.32+ compatibility
+# (fixes preg_split() null parameter deprecation and implements extractResults() to avoid deprecated rewind() calls)
+RUN cd /rw/extensions/SphinxSearch && patch -l -p0 < SphinxMWSearchResultSet.php.$MW_REL_BRANCH.patch
+
 # Apply Arrays patch to suppress warning notice.
 RUN cd /rw/extensions/Arrays && patch -l < ExtArrays.php.$MW_REL_BRANCH.patch
+
+# Apply PageForms patch - shouldn't be needed after MW 1.39
+# https://phabricator.wikimedia.org/T324728
+RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
