@@ -1,0 +1,31 @@
+--- SphinxMWSearchResultSet.php.orig	2026-03-07 15:07:28.158340708 -0800
++++ SphinxMWSearchResultSet.php	2026-03-07 15:17:46.057061201 -0800
+@@ -58,7 +58,7 @@
+ 		$this->mTerms = preg_split(
+ 			"/$wgSearchHighlightBoundaries+/ui",
+ 			$terms,
+-			null,
++			-1,  // PHP 8.1+ compatibility: changed from null to -1 (default for unlimited splits)
+ 			PREG_SPLIT_NO_EMPTY
+ 		);
+ 	}
+@@ -239,6 +239,19 @@
+ 	}
+
+ 	/**
++	 * Extract all the results in the result set as array.
++	 * Implements the modern MediaWiki search API (MW 1.32+) to avoid deprecated rewind() calls.
++	 * @return SearchResult[]
++	 */
++	public function extractResults() {
++		$results = [];
++		foreach ( $this->mResultSet as $row ) {
++			$results[] = new SphinxMWSearchResult( $row, $this->sphinx_client );
++		}
++		return $results;
++	}
++
++	/**
+ 	 * @return SphinxMWSearchResult next result, false if none
+ 	 */
+ 	public function next() {

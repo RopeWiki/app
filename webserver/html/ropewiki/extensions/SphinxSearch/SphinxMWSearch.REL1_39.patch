@@ -1,0 +1,68 @@
+# This patch is based on SphinxSearch REL1_27.tar.gz
+# We remove a regex caret to enable substring searches of the title.
+
+# Special for 1.35.14 upgrade: we also have to patch the DB instance logic, as 1.35 changed
+# behavior half way through it's life (around 1.35.6), but the REL1_35 release of SphinxSearch
+# wasn't updated.
+
+--- SphinxMWSearch.php.orig	2026-03-05 11:36:20.215123827 -0800
++++ SphinxMWSearch.php	2026-03-05 11:36:20.309124500 -0800
+@@ -80,7 +80,8 @@
+ 	 * @return bool
+ 	 */
+ 	public static function prefixSearch( $namespaces, $term, $limit, &$results, $offset = 0 ) {
+-		$term = '^' . $term;
++		// Disabled for ropewiki substring title matching
++		//$term = '^' . $term;
+ 		return self::infixSearch( $namespaces, $term, $limit, $results, $offset );
+ 	}
+
+@@ -94,7 +95,7 @@
+ 	 * @return bool
+ 	 */
+ 	public static function infixSearch( $namespaces, $term, $limit, &$results, $offset = 0 ) {
+-		$search_engine = new SphinxMWSearch( wfGetDB( DB_REPLICA ) );
++		$search_engine = new SphinxMWSearch( MediaWiki\MediaWikiServices::getInstance()->getDBLoadBalancer() );
+ 		$search_engine->namespaces = $namespaces;
+ 		$search_engine->setLimitOffset( $limit, $offset );
+ 		$result_set = $search_engine->searchText( '@page_title: ' . $term . '*' );
+--- SphinxMWSearchResult.php.orig	2026-03-05 11:36:20.216123833 -0800
++++ SphinxMWSearchResult.php	2026-03-05 11:36:20.310124507 -0800
+@@ -32,6 +32,19 @@
+ 	 * @return string highlighted text snippet
+ 	 */
+ 	public function getTextSnippet( $terms = [] ) {
++		global $wgRequest;
++
++		// If $terms wasn't provided, try and figure it out from the url parameters
++		if ( empty( $terms ) ) {
++			$query = trim( $wgRequest->getVal( 'search', '' ) );
++			if ( $query === '' ) {
++				$query = trim( $wgRequest->getVal( 'q', '' ) );
++			}
++			if ( $query !== '' ) {
++				$terms = preg_split( '/\s+/', $query );
++			}
++		}
++
+ 		global $wgAdvancedSearchHighlighting, $wgSphinxSearchMWHighlighter, $wgSphinxSearch_index;
+
+ 		$this->initText();
+@@ -54,10 +67,17 @@
+ 			"around" => $contextchars,
+ 		];
+
++		$query = trim( implode( ' ', $terms ) );
++		// It crashes searchd if the query is empty (null pointer), so fallback to ' '.
++		if ( $query === '' ) {
++			$query = ' ';
++		}
++
++		wfDebugLog( 'SphinxSearch', 'BuildExcerpts query: ' . var_export( $terms, true ) );
+ 		$excerpts = $this->sphinx_client->BuildExcerpts(
+ 			[ $this->mText ],
+ 			$wgSphinxSearch_index,
+-			implode( ' ', $terms ),
++			$query,
+ 			$excerpts_opt
+ 		);

@@ -1,0 +1,11 @@
+--- includes/parserfunctions/PF_AutoEdit.php	2026-03-05 23:23:08.632932055 +0000
++++ includes/parserfunctions/PF_AutoEdit.php.orig	2026-03-05 23:22:52.667814011 +0000
+@@ -24,7 +24,7 @@
+ 		global $wgPageFormsAutoeditNamespaces;
+ 
+ 		$parser->getOutput()->addModules( [ 'ext.pageforms.autoedit' ] );
+-		$parser->getOutput()->preventClickjacking( true );
++		$parser->getOutput()->setPreventClickjacking( true );
+ 
+ 		// Set defaults.
+ 		$formcontent = '';
