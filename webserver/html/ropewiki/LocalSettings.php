@@ -182,7 +182,7 @@ $wgCaptchaQuestions = [
 ];
 
 # Admin tools
-require_once "$IP/extensions/Nuke/Nuke.php";
+wfLoadExtension( 'Nuke' );
 wfLoadExtension( 'TitleBlacklist' );
 
 $wgGroupPermissions['sysop']['tboverride'] = false;
@@ -214,11 +214,11 @@ require_once "$IP/extensions/SimpleLink/SimpleLink.php";
 require_once "$IP/extensions/IconSummary/IconSummary.php";
 
 # Developer tools
-require_once "$IP/extensions/UrlGetParameters/UrlGetParameters.php";
+wfLoadExtension( 'UrlGetParameters' );
 wfLoadExtension( 'Arrays' );
 wfLoadExtension( 'Variables' );
 require_once "$IP/extensions/TreeToQuery/TreeToQuery.php";
-require_once "$IP/extensions/MyVariables/MyVariables.php";
+wfLoadExtension( 'MyVariables' );
 
 # Adds support for more output formats from SMW (e.g. "array" type).
 wfLoadExtension( 'SemanticResultFormats' );
@@ -356,7 +356,7 @@ $wgHooks['BeforePageDisplay'][] = function ( OutputPage &$out, Skin &$skin ) {
 //   https://phabricator.wikimedia.org/T341565
 // I've tried various upload hooks, modifying wgXMLMimeTypes, and wgVerifyMimeTypeIE - but couldn't
 // make it work. We should try again in later versions of MW, until then removed xml from the blacklist.
-$wgMimeTypeBlacklist = array_diff(
-    $wgMimeTypeBlacklist,
+$wgMimeTypeExclusions = array_diff(
+    $wgMimeTypeExclusions,
     [ 'application/xml', 'text/xml' ]
 );
