@@ -1,7 +1,12 @@
 # RopeWiki Backend
 
 This repository contains the deployment framework for the RopeWiki backend infrastructure.
+
+At its hearth ropewiki is powered by [Mediawiki](https://www.mediawiki.org/wiki/MediaWiki) (the same as Wikipedia), along with an extension called [Semantic Mediawiki](https://www.semantic-mediawiki.org/wiki/Semantic_MediaWiki) which allows for meaningful connections between pieces of data.
+
 Detailed documentation previously located here has moved to the [GitHub wiki](https://github.com/RopeWiki/app/wiki/).
+
+_tl;dr - everything needed to make the site load lives here. What you actually see when the site loads does not live here._
 
 ## What lives here
 
@@ -15,8 +20,6 @@ Using this repo you can build and deploy the complete stack of services needed t
 - version control for PHP, MySQL, MediaWiki, SMW
 - backup automation
 - mail relay config
-
-_tl;dr - everything needed to make the site load lives here. What you actually see when the site loads does not live here._
 
 ## What does not live here
 
