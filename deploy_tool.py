@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from enum import IntEnum
 import glob
 import json
 import os
@@ -12,6 +13,18 @@ import subprocess
 import sys
 import time
 from typing import Callable, Dict, List, Optional, Tuple
+
+
+class LogLevel(IntEnum):
+  """Log levels for controlling output verbosity"""
+  DEBUG = 10
+  INFO = 20
+  WARNING = 30
+  ERROR = 40
+
+
+# Global verbosity setting
+_log_level: LogLevel = LogLevel.INFO
 
 
 @dataclass
@@ -105,6 +118,17 @@ def make_argparse() -> argparse.ArgumentParser:
     metavar='OPTIONS',
     nargs='*',
     help='Additional options for certain deployment commands')
+
+  verbosity_group = parser.add_mutually_exclusive_group()
+  verbosity_group.add_argument(
+    '-v', '--verbose',
+    action='store_true',
+    help='Enable verbose output (DEBUG level)')
+  verbosity_group.add_argument(
+    '-q', '--quiet',
+    action='store_true',
+    help='Quiet mode - only show warnings and errors')
+
   return parser
 
 @dataclass
@@ -114,7 +138,15 @@ class UserArgs(object):
   options: List[str]
 
 def get_args() -> UserArgs:
+  global _log_level
   args = make_argparse().parse_args()
+
+  # Set log level based on verbosity flags
+  if args.verbose:
+    _log_level = LogLevel.DEBUG
+  elif args.quiet:
+    _log_level = LogLevel.WARNING
+
   config_name = args.site_config_name
   config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site_configs', config_name + '.json')
   with open(config_path, 'r') as f:
@@ -124,17 +156,35 @@ def get_args() -> UserArgs:
   config['_root_db_password'] = os.environ.get('RW_ROOT_DB_PASSWORD', '')
   return UserArgs(site_config=SiteConfig(**config), command=args.command, options=args.options)
 
-def log(msg: str):
-  print("{} {}".format(datetime.now().isoformat(), msg))
+def log(msg: str, level: LogLevel = LogLevel.INFO):
+  """Log a message at the specified level.
+
+  Args:
+    msg: The message to log
+    level: The log level (DEBUG, INFO, WARNING, ERROR). Defaults to INFO.
+  """
+  global _log_level
+  if level < _log_level:
+    return
+
+  level_prefix = {
+    LogLevel.DEBUG: "[DEBUG]",
+    LogLevel.INFO: "[INFO] ",
+    LogLevel.WARNING: "[WARN] ",
+    LogLevel.ERROR: "[ERROR]"
+  }.get(level, "[INFO] ")
+
+  timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+  print("{} deploy_tool {} {}".format(timestamp, level_prefix, msg))
 
 def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
-  log('  RUN {}'.format(cmd))
+  log('  RUN {}'.format(cmd), LogLevel.DEBUG)
   if capture_result:
     p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
     stdout = p.stdout
     if p.returncode != 0:
       print(stdout)
-      print('ERROR: Return code {}'.format(p.returncode))
+      log('Return code {}'.format(p.returncode), LogLevel.ERROR)
       sys.exit(p.returncode)
     if not isinstance(stdout, str):
       stdout = stdout.decode('utf-8')
@@ -143,7 +193,7 @@ def run_cmd(cmd: str, capture_result=False) -> Optional[str]:
     try:
       subprocess.check_call(cmd, shell=True)
     except subprocess.CalledProcessError as _:
-      log(f"Error running command '{cmd}'; rerunning to capture result...")
+      log(f"Error running command '{cmd}'; rerunning to capture result...", LogLevel.ERROR)
       run_cmd(cmd, capture_result=True)
       raise
     return None
@@ -203,7 +253,7 @@ def run_docker_compose(cmd: str, site_config: SiteConfig, capture_result=False) 
   variable_declarations, docker_compose_command = make_docker_compose_script(cmd, site_config)
   with open(script, 'w') as f:
     f.write(variable_declarations + '\n' + docker_compose_command + '\n')
-  log('  SCRIPT {}'.format(docker_compose_command))
+  log('  SCRIPT {}'.format(docker_compose_command), LogLevel.DEBUG)
   run_script = '{script} && del {script}' if platform.system() == 'Windows' else 'sh {script} && rm {script}'
   return run_cmd(run_script.format(script=script), capture_result=capture_result)
 
@@ -312,16 +362,16 @@ def create_db(site_config: SiteConfig, options: List[str]):
     db_status = run_cmd(
       'docker inspect --format "{{{{.State.Status}}}}" {}'.format(site_config.db_container),
       capture_result=True).strip()
-    log('    DB status: ' + db_status)
+    log('    DB status: ' + db_status, LogLevel.DEBUG)
     if db_status == 'running':
       # We *think* it's ready, but it's actually likely not.  It apparently has to effectively start twice >:|
       db_logs = run_cmd('docker container logs {}'.format(site_config.db_container), capture_result=True)
       ready_count = db_logs.count('ready for connections')
-      log('    Ready count: {}'.format(ready_count))
+      log('    Ready count: {}'.format(ready_count), LogLevel.DEBUG)
       if ready_count >= 2:
         break
     if db_status == 'exited':
-      print('Container exited unexpectedly; logs:')
+      log('Container exited unexpectedly; logs:', LogLevel.ERROR)
       run_cmd('docker container logs {}'.format(site_config.db_container))
       sys.exit('The container {} exited unexpectedly'.format(site_config.db_container))
     time.sleep(10)
@@ -452,11 +502,11 @@ def dc(site_config: SiteConfig, options: List[str]):
   if not options:
     raise ValueError('Usage: deploy_tool.py dc {{{}}}'.format('|'.join(dc_commands)))
   if not site_config.db_password_is_set and not site_config.root_db_password_is_set:
-    log('WARNING: RW_ROOT_DB_PASSWORD and WG_DB_PASSWORD environment variables are not set')
+    log('RW_ROOT_DB_PASSWORD and WG_DB_PASSWORD environment variables are not set', LogLevel.WARNING)
   elif not site_config.db_password_is_set:
-    log('WARNING: WG_DB_PASSWORD environment variable is not set')
+    log('WG_DB_PASSWORD environment variable is not set', LogLevel.WARNING)
   elif not site_config.root_db_password_is_set:
-    log('WARNING: RW_ROOT_DB_PASSWORD environment variable is not set')
+    log('RW_ROOT_DB_PASSWORD environment variable is not set', LogLevel.WARNING)
   run_docker_compose(' '.join(options), site_config)
 
 def main():
