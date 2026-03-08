@@ -1,0 +1,11 @@
+--- includes/PF_FormPrinter.php.orig	2026-03-07 15:33:12.000000000 -0800
++++ includes/PF_FormPrinter.php	2026-03-07 15:33:32.000000000 -0800
+@@ -1935,7 +1935,7 @@
+ 		// If doing a replace, the page text is actually the modified
+ 		// original page.
+ 		if ( !$is_embedded ) {
+-			$form_page_title = $parser->recursiveTagParse( str_replace( "{{!}}", "|", $form_page_title ) );
++			$form_page_title = $parser->recursiveTagParse( str_replace( "{{!}}", "|", $form_page_title ?? '' ) );  // PHP 8.1+ compatibility: handle null parameter
+ 		} else {
+ 			$form_page_title = null;
+ 		}

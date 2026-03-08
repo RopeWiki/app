@@ -1,0 +1,11 @@
+--- includes/PF_TemplateField.php.orig	2026-03-07 15:31:41.000000000 -0800
++++ includes/PF_TemplateField.php	2026-03-07 15:32:15.000000000 -0800
+@@ -183,7 +183,7 @@
+ 	 * @param string $semantic_property
+ 	 */
+ 	function setSemanticProperty( $semantic_property ) {
+-		$this->mSemanticProperty = str_replace( '\\', '', $semantic_property );
++		$this->mSemanticProperty = str_replace( '\\', '', $semantic_property ?? '' );  // PHP 8.1+ compatibility: handle null parameter
+ 		$this->mPossibleValues = [];
+ 		// set field type and possible values, if any
+ 		$this->setTypeAndPossibleValues();

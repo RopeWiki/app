@@ -18,7 +18,7 @@ RUN apt-get -y upgrade
 # Install nginx
 RUN apt-get install -y --no-install-recommends nginx
 
-ARG PHP_VERSION=7.4
+ARG PHP_VERSION=8.1
 # Install php and associated packages
 # PHP compatibility: https://www.mediawiki.org/wiki/Compatibility#PHP
 # Don't start the php service after installation
@@ -129,9 +129,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-HeaderFooter HeaderFooter && cd HeaderFooter && git checkout $MW_REL_BRANCH
-
-# Last version to support PHP 7.x (fine to switch to master after PHP upgrade).
-RUN cd /rw/extensions && git clone https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo EmbedVideo && cd EmbedVideo && git checkout 6aa9058
+RUN cd /rw/extensions && git clone https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo EmbedVideo && cd EmbedVideo && git checkout $MW_REL_BRANCH
 
 # Used everywhere! Note: arrays & variables will break one day: https://phabricator.wikimedia.org/T250963
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-Arrays Arrays && cd Arrays && git checkout $MW_REL_BRANCH
@@ -182,6 +180,11 @@ RUN cd /rw/extensions/Arrays && patch -l < ExtArrays.php.$MW_REL_BRANCH.patch
 # Apply PageForms patch - shouldn't be needed after MW 1.39
 # https://phabricator.wikimedia.org/T324728
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH.patch
+
+# Apply PageForms patches for PHP 8.1+ compatibility
+# (fixes str_replace() null parameter deprecation warnings)
+RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_TemplateField.php.$MW_REL_BRANCH.patch
+RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_FormPrinter.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
