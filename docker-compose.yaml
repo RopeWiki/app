@@ -50,6 +50,7 @@ services:
       - WG_DB_USER=${WG_DB_USERNAME:-ropewiki}
       - WG_DB_PASSWORD=${WG_DB_PASSWORD:-thispasswordonlyworksuntildbisrestored}
       - RW_ROBOTS=${RW_ROBOTS:-robots_dev.txt}
+      - DEV_IMAGE_PROXY_MODE=${DEV_IMAGE_PROXY_MODE:-false}
     depends_on:
       - ropewiki_db
     volumes:
@@ -73,6 +74,7 @@ services:
       - "443:443"
     environment:
       - WG_HOSTNAME=${WG_HOSTNAME:-localhost}
+      - DEV_IMAGE_PROXY_MODE=${DEV_IMAGE_PROXY_MODE:-false}
     depends_on:
       - ropewiki_webserver
     volumes:
