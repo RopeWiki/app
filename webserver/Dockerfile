@@ -56,6 +56,7 @@ RUN apt-get install -y --no-install-recommends \
     imagemagick \
     less \
     nano \
+    npm \
     patch \
     sed \
     unzip \
@@ -89,6 +90,10 @@ RUN wget https://releases.wikimedia.org/mediawiki/${MW_VERSION%.*}/mediawiki-$MW
 
 # Configure quick symlink
 RUN ln -s /usr/share/nginx/html/ropewiki /rw
+
+# Fetch javascript libraries
+COPY ./webserver/scripts/fetch-npm-assets.sh /
+RUN bash /fetch-npm-assets.sh
 
 # === Install extensions ===
 
