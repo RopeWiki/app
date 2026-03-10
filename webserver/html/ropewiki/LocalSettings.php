@@ -369,3 +369,8 @@ $wgHooks['TitleIsAlwaysKnown'][] = function ( $title, &$isKnown ) {
 	}
 	return true;
 };
+
+wfLoadExtension( 'WikiMarkdown' );
+#$wgAllowMarkdownExtra = true;
+#$wgAllowMarkdownExtended = true;
+$wgNamespacesWithSubpages[NS_MAIN] = true;

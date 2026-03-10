@@ -1,0 +1,13 @@
+--- includes/WikiMarkdown.php.orig	2026-03-09 18:46:20.191385383 -0700
++++ includes/WikiMarkdown.php	2026-03-09 18:46:38.770520013 -0700
+@@ -12,6 +12,10 @@
+ 	 * Define content handler constant upon extension registration
+ 	 */
+ 	public static function onRegistration() {
++		// Load Composer autoloader for Parsedown and related dependencies
++		// Fix for "Class 'Parsedown' not found" error
++		require_once __DIR__ . '/../vendor/autoload.php';
++
+ 		define( 'CONTENT_MODEL_MARKDOWN', 'markdown' );
+ 		define( 'CONTENT_FORMAT_MARKDOWN', 'text/markdown' );
+ 	}

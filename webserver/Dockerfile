@@ -142,6 +142,8 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 
 # These just use master branch
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SemanticRating SemanticRating
+RUN cd /rw/extensions && git clone https://github.com/kuenzign/WikiMarkdown/ WikiMarkdown
+RUN cd /rw/extensions/WikiMarkdown && composer update --no-dev --ignore-platform-reqs
 
 # Present in main site but not here:
 # APC
@@ -190,6 +192,10 @@ RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH
 # (fixes str_replace() null parameter deprecation warnings)
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_TemplateField.php.$MW_REL_BRANCH.patch
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_FormPrinter.php.$MW_REL_BRANCH.patch
+
+# Apply WikiMarkdown patch to load Composer autoloader for Parsedown
+# (fixes "Class 'Parsedown' not found" error)
+RUN cd /rw/extensions/WikiMarkdown && patch -l -p0 < WikiMarkdown.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
