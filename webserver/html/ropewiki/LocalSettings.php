@@ -360,3 +360,12 @@ $wgMimeTypeExclusions = array_diff(
     $wgMimeTypeExclusions,
     [ 'application/xml', 'text/xml' ]
 );
+
+// Make links to User pages always appear as existing, even if not created yet.
+// MediaWiki:Hf-nsheader-User provides a user overview regardless if the page has been created.
+$wgHooks['TitleIsAlwaysKnown'][] = function ( $title, &$isKnown ) {
+	if ( $title->getNamespace() === NS_USER ) {
+		$isKnown = true;
+	}
+	return true;
+};
