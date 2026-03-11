@@ -372,3 +372,4 @@ $wgHooks['TitleIsAlwaysKnown'][] = function ( $title, &$isKnown ) {
 };
 
 wfLoadExtension( 'TopoContentHandler' );
+wfLoadExtension( 'PicDrop' );
