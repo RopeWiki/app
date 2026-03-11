@@ -1,0 +1,42 @@
+{
+	"name": "PicDrop",
+	"version": "1.0.0",
+	"author": [
+		"RopeWiki"
+	],
+	"url": "https://ropewiki.com",
+	"descriptionmsg": "picdrop-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "editor",
+	"requires": {
+		"MediaWiki": ">= 1.39.0"
+	},
+	"MessagesDirs": {
+		"PicDrop": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"PicDrop\\Hooks": "includes/Hooks.php"
+	},
+	"ResourceModules": {
+		"ext.PicDrop": {
+			"scripts": "PicDrop.js",
+			"styles": "PicDrop.css",
+			"messages": [
+				"picdrop-drop-here",
+				"picdrop-uploading",
+				"picdrop-upload-success",
+				"picdrop-upload-error"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "PicDrop/resources"
+	},
+	"Hooks": {
+		"EditPage::showEditForm:initial": "PicDrop\\Hooks::onEditPageShowEditFormInitial"
+	},
+	"manifest_version": 2
+}

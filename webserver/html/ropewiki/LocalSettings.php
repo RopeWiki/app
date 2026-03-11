@@ -369,3 +369,5 @@ $wgHooks['TitleIsAlwaysKnown'][] = function ( $title, &$isKnown ) {
 	}
 	return true;
 };
+
+wfLoadExtension( 'PicDrop' );
