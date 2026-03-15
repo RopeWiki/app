@@ -7,6 +7,7 @@
 	var PicDrop = {
 		config: null,
 		$textarea: null,
+		$fileInput: null,
 		savedCaretPos: null,
 		dragCounter: 0, // Track nested drag events
 
@@ -21,7 +22,98 @@
 				return; // No textarea found
 			}
 
+			PicDrop.createFileInput();
 			PicDrop.attachEventHandlers();
+			PicDrop.addToolbarButton();
+		},
+
+		/**
+		 * Create hidden file input element
+		 */
+		createFileInput: function () {
+			PicDrop.$fileInput = $( '<input>' )
+				.attr( {
+					type: 'file',
+					id: 'picdrop-file-input',
+					accept: 'image/*',
+					multiple: true,
+					style: 'display: none;'
+				} )
+				.on( 'change', function () {
+					var files = this.files;
+					if ( files.length > 0 ) {
+						// Save cursor position before upload
+						PicDrop.savedCaretPos = PicDrop.$textarea.textSelection( 'getCaretPosition' );
+						PicDrop.handleFiles( files );
+					}
+					// Reset input so same file can be selected again
+					$( this ).val( '' );
+				} );
+
+			// Append to body
+			$( 'body' ).append( PicDrop.$fileInput );
+		},
+
+		/**
+		 * Add upload button to WikiEditor toolbar
+		 */
+		addToolbarButton: function () {
+			// Check if WikiEditor is available
+			if ( !$.fn.wikiEditor ) {
+				// Fallback: add button near textarea if WikiEditor not available
+				PicDrop.addFallbackButton();
+				return;
+			}
+
+			// Wait for WikiEditor to be ready
+			var checkWikiEditor = setInterval( function () {
+				if ( $( '#wpTextbox1' ).data( 'wikiEditor-context' ) ) {
+					clearInterval( checkWikiEditor );
+
+					$( '#wpTextbox1' ).wikiEditor( 'addToToolbar', {
+						section: 'main',
+						group: 'insert',
+						tools: {
+							picDrop: {
+								label: 'Upload images',
+								type: 'button',
+								icon: '/extensions/PicDrop/resources/upload-icon.svg',
+								action: {
+									type: 'callback',
+									execute: function () {
+										PicDrop.$fileInput.click();
+									}
+								}
+							}
+						}
+					} );
+				}
+			}, 100 );
+
+			// Stop checking after 5 seconds
+			setTimeout( function () {
+				clearInterval( checkWikiEditor );
+			}, 5000 );
+		},
+
+		/**
+		 * Add fallback button if WikiEditor is not available
+		 */
+		addFallbackButton: function () {
+			var $button = $( '<button>' )
+				.attr( {
+					type: 'button',
+					id: 'picdrop-upload-btn',
+					class: 'picdrop-upload-button'
+				} )
+				.text( '📷 Upload Images' )
+				.on( 'click', function ( e ) {
+					e.preventDefault();
+					PicDrop.$fileInput.click();
+				} );
+
+			// Insert button above textarea
+			PicDrop.$textarea.before( $button );
 		},
 
 		/**

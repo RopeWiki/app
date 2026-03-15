@@ -10,8 +10,20 @@
 - 🏷️ **Auto-prefixing** - Adds page name to uploaded filenames (e.g., `Smith_Canyon_photo.jpg`)
 - ⌨️ **Smart cursor** - Positions cursor inside description field after upload
 - 📤 **Multiple files** - Supports dropping multiple images at once
+- 📱 **Mobile & Desktop** - Click-to-upload button works on all devices (including mobile camera/gallery access)
 
 ## Usage
+
+### Method 1: Click to Upload (Mobile & Desktop)
+
+1. **Edit any wiki page** in wikitext mode
+2. **Position your cursor** where you want the image
+3. **Click the upload button** in the editor toolbar (or above the textarea)
+4. **Select image(s)** from your device (camera/gallery on mobile, file browser on desktop)
+5. **Wait for upload** - notification will confirm success
+6. **Add description** - cursor is positioned inside `{{pic|filename ~ [HERE]}}`
+
+### Method 2: Drag & Drop (Desktop Only)
 
 1. **Edit any wiki page** in wikitext mode
 2. **Position your cursor** where you want the image
@@ -79,11 +91,26 @@ docker-compose up -d
 
 ## Technical Details
 
+### Upload Methods
+
+**Click-to-Upload:**
+- Hidden `<input type="file" accept="image/*" multiple>` element
+- Triggered by toolbar button or fallback button
+- On mobile: opens camera/gallery picker
+- On desktop: opens file browser
+- Integrates with WikiEditor toolbar when available
+
+**Drag-and-Drop:**
+- HTML5 drag-and-drop events on textarea
+- Visual feedback overlay during drag
+- Desktop browsers only
+
 ### JavaScript API Used
 
 - `$('#wpTextbox1').textSelection('getCaretPosition')` - Save cursor position
 - `$('#wpTextbox1').textSelection('setSelection', {start, end})` - Restore cursor
 - `$('#wpTextbox1').textSelection('encapsulateSelection', {pre: text})` - Insert text
+- `$('#wpTextbox1').wikiEditor('addToToolbar', {...})` - Add toolbar button (when WikiEditor available)
 - MediaWiki API `action=upload` - Upload files
 
 ### Configuration Passed to JavaScript

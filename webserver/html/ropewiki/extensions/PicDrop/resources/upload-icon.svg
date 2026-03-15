@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <!-- Upload arrow icon for PicDrop -->
+  <g fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Arrow pointing up -->
+    <path d="M11 15 L11 7"/>
+    <path d="M7 11 L11 7 L15 11"/>
+    <!-- Base tray -->
+    <path d="M4 19 L18 19"/>
+    <path d="M4 19 L4 15"/>
+    <path d="M18 19 L18 15"/>
+  </g>
+</svg>
