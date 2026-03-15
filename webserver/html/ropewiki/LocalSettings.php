@@ -259,7 +259,7 @@ $wgPageFormsRenameEditTabs = true;
 
 # ===================================================
 
-# Upload limits are set in php.ini (upload_max_filesize)
+# See README.md to understand upload limits.
 #$wgUploadSizeWarning = 5242880;
 #$wgMaxUploadSize = 5242880;
 

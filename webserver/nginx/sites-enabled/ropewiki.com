@@ -3,8 +3,7 @@
 server {
     listen 80 default_server;
     listen [::]:80 default_server ipv6only=on;
-        #add_header Access-Control-Allow-Origin www.ropewiki.com;
-        client_max_body_size 5M;
+    #add_header Access-Control-Allow-Origin www.ropewiki.com;
     root /usr/share/nginx/html/ropewiki;
     index index.php index.html index.htm;
 
