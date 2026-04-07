@@ -252,7 +252,7 @@ $egMapsCoordinateNotation = 'Maps_COORDS_FLAT';
 $egMapsCoordinateDirectional = false;
 wfLoadExtension('Maps');
 
-require_once "$IP/extensions/SemanticDependency/SemanticDependency.php";
+wfLoadExtension('SemanticDependency');
 
 # Rename edit tabs to "edit" and "edit source"
 $wgPageFormsRenameEditTabs = true;
