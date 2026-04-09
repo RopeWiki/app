@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Benjamin Pelletier"
+		]
+	},
+	"semanticdependency-desc": "Allows pages to specify that other pages should have their semantic data updated in response to an update of the current page"
+}
