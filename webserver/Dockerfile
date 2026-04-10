@@ -191,6 +191,10 @@ RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_TemplateField.php.$MW_REL_BRANCH.patch
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_FormPrinter.php.$MW_REL_BRANCH.patch
 
+# Apply PageForms patch to preserve default filenames in upload window
+# (prevents auto-filled destination filename from being overwritten by uploaded file's name)
+RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_upload.js.$MW_REL_BRANCH.patch
+
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \
  && mv -f /rw/extensions/SphinxSearch/sphinx.cron /etc/cron.d/sphinxsearch-update \
