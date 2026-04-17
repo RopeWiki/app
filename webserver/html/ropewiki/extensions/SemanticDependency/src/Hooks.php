@@ -3,13 +3,9 @@
 namespace MediaWiki\Extension\SemanticDependency;
 
 use MediaWiki\MediaWikiServices;
-use MediaWiki\Revision\RevisionRecord;
-use MediaWiki\Storage\EditResult;
-use MediaWiki\User\UserIdentity;
 use Parser;
 use SMWUpdateJob;
 use Title;
-use WikiPage;
 
 class Hooks {
 
@@ -62,31 +58,37 @@ class Hooks {
 			return;
 		}
 
-		foreach ( self::$pagesToRefresh as $title ) {
+		// Capture the pages to refresh and clear the static array immediately
+		$pagesToRefresh = self::$pagesToRefresh;
+		self::$pagesToRefresh = [];
+
+		// Push SMWUpdateJobs to the job queue instead of running them immediately
+		// This allows SMW to process the current page's semantic data first
+		// (via its own queued jobs) before dependent pages query for it
+		$jobQueueGroup = MediaWikiServices::getInstance()->getJobQueueGroup();
+
+		foreach ( $pagesToRefresh as $title ) {
 			if ( !$title->exists() ) {
 				self::log( "Skipping non-existent page: " . $title->getText() );
 				continue;
 			}
 
 			$targetTitle = $title->getText();
-			self::log( "Starting update job for dependent page: {$targetTitle}" );
+			self::log( "Pushing SMWUpdateJob to queue for dependent page: {$targetTitle}" );
 
 			try {
 				$updateJob = new SMWUpdateJob( $title );
-				$result = $updateJob->run();
-
-				if ( $result ) {
-					self::log( "Successfully completed update job for: {$targetTitle}" );
-				} else {
-					self::log( "WARNING: Update job returned false for: {$targetTitle}" );
-				}
+				// Add a release timestamp to delay job execution by 5 seconds
+				// This ensures SMW's own jobs for the current page run first
+				$updateJob->setDelay( 5 );
+				$jobQueueGroup->push( $updateJob );
+				self::log( "Successfully queued update job with 5s delay for: {$targetTitle}" );
 			} catch ( \Exception $e ) {
-				self::log( "ERROR updating {$targetTitle}: " . $e->getMessage() );
+				self::log( "ERROR queueing job for {$targetTitle}: " . $e->getMessage() );
 			}
 		}
 
 		self::log( "PageSaveComplete hook completed for: {$articleTitle}" );
-		self::$pagesToRefresh = [];
 	}
 
 	private static function log( string $message ): void {
