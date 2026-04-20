@@ -98,12 +98,13 @@ RUN bash /fetch-npm-assets.sh
 # === Install extensions ===
 
 WORKDIR /rw
-RUN composer require --no-update mediawiki/semantic-media-wiki 4.2.0
+RUN composer require --no-update mediawiki/semantic-media-wiki 5.1.0
 # We don't use mediawiki/maps for maps! We use it for data types.
 #   See https://github.com/RopeWiki/app/issues/141
 # Maps 10.x-11.x required for MW 1.39 (fixes RepoGroup::singleton() and wfGetCache(), but <12.0 which needs MW 1.40+)
-RUN composer require --no-update mediawiki/maps "^10.0.4"
-RUN composer require --no-update mediawiki/semantic-result-formats "^4.2.1"
+RUN composer require --no-update mediawiki/maps "^11.0.0"
+RUN composer require --no-update mediawiki/semantic-result-formats "^5.2.0"
+#RUN composer require --no-update mediawiki/page-forms
 # See https://github.com/RopeWiki/app/issues/162 for details
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins \
   audit.ignore "PKSA-t71x-qf1n-7xwy" \
@@ -184,12 +185,16 @@ RUN cd /rw/extensions/Arrays && patch -l < ExtArrays.php.$MW_REL_BRANCH.patch
 
 # Apply PageForms patch - shouldn't be needed after MW 1.39
 # https://phabricator.wikimedia.org/T324728
-RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH.patch
+#RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_AutoEdit.php.$MW_REL_BRANCH.patch
 
 # Apply PageForms patches for PHP 8.1+ compatibility
 # (fixes str_replace() null parameter deprecation warnings)
+#RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_TemplateField.php.$MW_REL_BRANCH.patch
+#RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_FormPrinter.php.$MW_REL_BRANCH.patch
+
+# Apply PageForms patch for SMW 5.x compatibility
+# (fixes SMWDIProperty class reference - now namespaced as SMW\DIProperty)
 RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_TemplateField.php.$MW_REL_BRANCH.patch
-RUN cd /rw/extensions/PageForms && patch -l -p0 < PF_FormPrinter.php.$MW_REL_BRANCH.patch
 
 # Sphinx: Setup cron job
 RUN apt-get install -y cron \

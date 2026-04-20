@@ -1,11 +1,11 @@
---- includes/PF_TemplateField.php.orig	2026-03-07 15:31:41.000000000 -0800
-+++ includes/PF_TemplateField.php	2026-03-07 15:32:15.000000000 -0800
-@@ -183,7 +183,7 @@
- 	 * @param string $semantic_property
- 	 */
- 	function setSemanticProperty( $semantic_property ) {
--		$this->mSemanticProperty = str_replace( '\\', '', $semantic_property );
-+		$this->mSemanticProperty = str_replace( '\\', '', $semantic_property ?? '' );  // PHP 8.1+ compatibility: handle null parameter
- 		$this->mPossibleValues = [];
- 		// set field type and possible values, if any
- 		$this->setTypeAndPossibleValues();
+--- includes/PF_TemplateField.php.orig	2026-04-19 23:46:55.275087797 -0700
++++ includes/PF_TemplateField.php	2026-04-19 23:47:13.496228457 -0700
+@@ -154,7 +154,7 @@
+ 			$allowed_values = PFValuesUtils::getSMWPropertyValues( $store, $proptitle, "Allows value list" );
+ 		}
+ 		$label_formats = PFValuesUtils::getSMWPropertyValues( $store, $proptitle, "Has field label format" );
+-		$propValue = SMWDIProperty::newFromUserLabel( $this->mSemanticProperty );
++		$propValue = SMW\DIProperty::newFromUserLabel( $this->mSemanticProperty );
+ 		$this->mPropertyType = $propValue->findPropertyTypeID();
+ 
+ 		foreach ( $allowed_values as $allowed_value ) {
