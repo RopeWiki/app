@@ -1,0 +1,35 @@
+--- libs/PF_upload.js.orig	2026-04-09 21:30:55.040234672 -0700
++++ libs/PF_upload.js	2026-04-09 21:31:15.828382322 -0700
+@@ -33,6 +33,14 @@
+ 				// Remove any previously flagged errors
+ 				$( '#mw-upload-permitted, #mw-upload-prohibited' ).removeClass();
+
++				// ROPEWIKI PATCH: Check if destination field already has a value
++				// If it does, preserve it instead of overwriting with the uploaded filename
++				var destField = $( '#wpDestFile' );
++				if ( destField.length && destField.val() && destField.val().trim() !== '' ) {
++					// Destination filename already set, don't overwrite it
++					return;
++				}
++
+ 				path = $( this ).val();
+ 				// Find trailing part
+ 				slash = path.lastIndexOf( '/' );
+@@ -53,14 +61,14 @@
+ //				}
+
+ 				// Output result
+-				if ( $( '#wpDestFile' ).length ) {
++				if ( destField.length ) {
+ 					// Call decodeURIComponent function to remove possible URL-encoded characters
+ 					// from the file name (T32390). Especially likely with upload-form-url.
+ 					// decodeURIComponent can throw an exception if input is invalid utf-8
+ 					try {
+-						$( '#wpDestFile' ).val( decodeURIComponent( fname ) );
++						destField.val( decodeURIComponent( fname ) );
+ 					} catch ( err ) {
+-						$( '#wpDestFile' ).val( fname );
++						destField.val( fname );
+ 					}
+ 					//uploadWarning.checkNow( fname );
+ 				}
