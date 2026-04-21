@@ -1,0 +1,12 @@
+--- extension.json	2026-04-21 14:30:13.653018861 -0700
++++ extension.json	2026-04-21 14:31:15.113484589 -0700
+@@ -339,6 +339,9 @@
+ 			"scripts": [
+ 				"libs/jquery.rateyo.js",
+ 				"libs/PF_rating.js"
++			],
++			"dependencies": [
++				"ext.pageforms"
+ 			]
+ 		},
+ 		"ext.pageforms.rating.styles": {
