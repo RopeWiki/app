@@ -121,6 +121,17 @@ services:
       - INBOUND_TLS=no  # Don't require local clients to use TLS
       - ACCEPTED_NETWORKS=172.16.0.0/12  # Only accept connections from docker's internal network
 
+  ropewiki_tileserver:
+    image: maptiler/tileserver-gl:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    user: root
+    volumes:
+      - /mnt/rwimages/tiles:/data
+    command: -c config.json
+    depends_on: []
+
 volumes:
   ropewiki_database_storage:
     name: ropewiki_database_storage
