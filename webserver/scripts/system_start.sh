@@ -13,6 +13,19 @@ sed -i "s/{{WG_PROTOCOL}}/$WG_PROTOCOL/g" SiteSpecificSettings.php
 sed -i "s/{{WG_SECRET_KEY}}/$WG_SECRET_KEY/g" SiteSpecificSettings.php
 sed -i "s/{{WG_UPGRADE_KEY}}/$WG_UPGRADE_KEY/g" SiteSpecificSettings.php
 
+# Configure image proxy mode if DEV_IMAGE_PROXY_MODE is set.
+# https://github.com/RopeWiki/app/wiki/Image-Proxy-Mode
+if [ -n "$DEV_IMAGE_PROXY_MODE" ]; then
+  echo "Configuring DEV_IMAGE_PROXY_MODE..."
+  cat >> LocalSettings.php <<'EOF'
+
+# Serve images from production
+$wgUploadPath = "https://ropewiki.com/images/";
+$wgThumbPath = "https://ropewiki.com/images/thumb";
+$wgGenerateThumbnailOnParse = false;
+EOF
+fi
+
 # Configure robots.txt
 cp "robots/$RW_ROBOTS" robots.txt
 
