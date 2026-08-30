@@ -157,7 +157,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
 # Install Sphinx PHP API
-RUN cd /rw/extensions/SphinxSearch && COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins --json policy.advisories.block false
+RUN cd /rw/extensions/SphinxSearch && COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins --json policy.advisories.block false && COMPOSER_ALLOW_SUPERUSER=yes composer install
  
 # required for logging
 RUN mkdir -p /var/data/sphinx
