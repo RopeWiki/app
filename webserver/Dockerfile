@@ -129,7 +129,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SphinxSearch SphinxSearch && cd SphinxSearch && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout 9e7ead30805edebf054d34106c8166304ba26fdb  # REL1_39 deleted
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-HeaderFooter HeaderFooter && cd HeaderFooter && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo EmbedVideo && cd EmbedVideo && git checkout $MW_REL_BRANCH
 
