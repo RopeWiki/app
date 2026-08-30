@@ -120,6 +120,7 @@ services:
       - TLS_VERIFY=may
       - INBOUND_TLS=no  # Don't require local clients to use TLS
       - ACCEPTED_NETWORKS=172.16.0.0/12  # Only accept connections from docker's internal network
+    restart: unless-stopped
 
 volumes:
   ropewiki_database_storage:
