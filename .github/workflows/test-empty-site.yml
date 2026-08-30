@@ -32,7 +32,7 @@ jobs:
         run: mkdir -p /home/runner/work/app/mount/{sqlbackup,images,proxy_config}
 
       - name: Build containers
-        run: ./deploy_tool.py github dc build
+        run: ./deploy_tool.py github dc -- build --no-cache --pull
 
       - name: Create mysql database
         run: ./deploy_tool.py github create_db
