@@ -44,8 +44,14 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
 RUN ln -s /etc/php/$PHP_VERSION /etc/php/current
 RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 
-# Install the PEAR mail module and its deps.
-RUN pear install --alldeps mail
+# Install the PEAR mail module and its deps (used by $wgSMTP in LocalSettings.php).
+# These come from apt rather than `pear install mail`: pear.php.net now redirects
+# its REST endpoints to https and PEAR's downloader fails to follow the redirect.
+RUN apt-get install -y --no-install-recommends \
+    php-mail \
+    php-net-smtp \
+    php-net-socket \
+    php-auth-sasl
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends \
@@ -151,7 +157,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
 # Install Sphinx PHP API
-RUN cd /rw/extensions/SphinxSearch && composer install
+RUN cd /rw/extensions/SphinxSearch && COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins --json policy.advisories.block false
  
 # required for logging
 RUN mkdir -p /var/data/sphinx
