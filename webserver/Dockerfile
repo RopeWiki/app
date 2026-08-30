@@ -105,6 +105,7 @@ RUN composer require --no-update mediawiki/semantic-media-wiki 4.2.0
 RUN composer require --no-update mediawiki/maps "^10.0.4"
 RUN composer require --no-update mediawiki/semantic-result-formats "^4.2.1"
 # See https://github.com/RopeWiki/app/issues/162 for details
+RUN echo ignore
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins policy.advisories.audit ignore
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
