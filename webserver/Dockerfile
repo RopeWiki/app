@@ -44,8 +44,14 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
 RUN ln -s /etc/php/$PHP_VERSION /etc/php/current
 RUN ln -s /etc/init.d/php$PHP_VERSION-fpm /etc/init.d/php-fpm
 
-# Install the PEAR mail module and its deps.
-RUN pear install --alldeps mail
+# Install the PEAR mail module and its deps (used by $wgSMTP in LocalSettings.php).
+# These come from apt rather than `pear install mail`: pear.php.net now redirects
+# its REST endpoints to https and PEAR's downloader fails to follow the redirect.
+RUN apt-get install -y --no-install-recommends \
+    php-mail \
+    php-net-smtp \
+    php-net-socket \
+    php-auth-sasl
 
 # Install various tools
 RUN apt-get install -y --no-install-recommends \
@@ -105,10 +111,7 @@ RUN composer require --no-update mediawiki/semantic-media-wiki 4.2.0
 RUN composer require --no-update mediawiki/maps "^10.0.4"
 RUN composer require --no-update mediawiki/semantic-result-formats "^4.2.1"
 # See https://github.com/RopeWiki/app/issues/162 for details
-RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins \
-  audit.ignore "PKSA-t71x-qf1n-7xwy" \
-  audit.ignore "PKSA-z3gr-8qht-p93v" \
-  audit.ignore "PKSA-4s4z-t146-6123"
+RUN COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins --json policy.advisories.block false
 RUN COMPOSER_ALLOW_SUPERUSER=yes composer install
 WORKDIR /
 
@@ -132,7 +135,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-PageForms PageForms && cd PageForms && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-SphinxSearch SphinxSearch && cd SphinxSearch && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters UrlGetParameters && cd UrlGetParameters && git checkout $MW_REL_BRANCH
-RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
+RUN cd /rw/extensions && git clone https://gerrit.wikimedia.org/r/mediawiki/extensions/UserMerge UserMerge && cd UserMerge && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extensions-HeaderFooter HeaderFooter && cd HeaderFooter && git checkout $MW_REL_BRANCH
 RUN cd /rw/extensions && git clone https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo EmbedVideo && cd EmbedVideo && git checkout $MW_REL_BRANCH
 
@@ -154,7 +157,7 @@ RUN cd /rw/extensions && git clone https://github.com/wikimedia/mediawiki-extens
 RUN apt-get install -y --no-install-recommends sphinxsearch
 
 # Install Sphinx PHP API
-RUN cd /rw/extensions/SphinxSearch && composer install
+RUN cd /rw/extensions/SphinxSearch && COMPOSER_ALLOW_SUPERUSER=yes composer config --no-plugins --json policy.advisories.block false && COMPOSER_ALLOW_SUPERUSER=yes composer install
  
 # required for logging
 RUN mkdir -p /var/data/sphinx

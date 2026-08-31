@@ -1,5 +1,6 @@
 *.log
 prod_env_vars.sh
+docker-compose.override.yaml
 docker_compose_command.sh
 docker_compose_command.bat
 enable_tls.sh
