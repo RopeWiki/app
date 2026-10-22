@@ -8,6 +8,20 @@ else
   echo "Configuring nginx services..."
   sed -i "s/{{WG_HOSTNAME}}/$WG_HOSTNAME/g" /etc/nginx/services.conf
 
+  # Configure image proxy mode if DEV_IMAGE_PROXY_MODE is set.
+  # https://github.com/RopeWiki/app/wiki/Image-Proxy-Mode
+  if [ -n "$DEV_IMAGE_PROXY_MODE" ]; then
+    echo "Configuring DEV_IMAGE_PROXY_MODE..."
+    sed -i '/server {/r /dev/stdin' /etc/nginx/services.conf <<'EOF'
+    location /images/ {
+        proxy_pass https://ropewiki.com/images/;
+        proxy_set_header Host ropewiki.com;
+        proxy_ssl_server_name on;
+        proxy_ssl_name ropewiki.com;
+    }
+EOF
+  fi
+
   mkdir -p /logs/goaccess/db
   mkdir -p /logs/nginx
   touch /logs/nginx/access.log
