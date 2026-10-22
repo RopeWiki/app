@@ -2,24 +2,32 @@
 
 This repository contains the deployment framework for the RopeWiki backend infrastructure.
 
-At its hearth ropewiki is powered by [Mediawiki](https://www.mediawiki.org/wiki/MediaWiki) (the same as Wikipedia), along with an extension called [Semantic Mediawiki](https://www.semantic-mediawiki.org/wiki/Semantic_MediaWiki) which allows for meaningful connections between pieces of data.
-
-Detailed documentation previously located here has moved to the [GitHub wiki](https://github.com/RopeWiki/app/wiki/).
+At its heart ropewiki is powered by [Mediawiki](https://www.mediawiki.org/wiki/MediaWiki) (the same as Wikipedia), along with an extension called [Semantic Mediawiki](https://www.semantic-mediawiki.org/wiki/Semantic_MediaWiki) which allows for meaningful connections between pieces of data.
 
 _tl;dr - everything needed to make the site load lives here. What you actually see when the site loads does not live here._
+
+## Detailed documentation
+
+* [Playbooks](./playbooks)
+    * [Deployment](./playbooks/deployment.md)
+    * [Maintenance](https://github.com/RopeWiki/app/wiki/Maintenance)
+    * [Troubleshooting](https://github.com/RopeWiki/app/wiki/Troubleshooting)
+
+Additional documentation may be found in the [GitHub wiki](https://github.com/RopeWiki/app/wiki/).
 
 ## What lives here
 
 Using this repo you can build and deploy the complete stack of services needed to run the website.
 
-- deployment tools & helpers
-- docker configs
-- webserver & proxy server configs
-- mediawiki configs
-- mediawiki extensions & patches
-- version control for PHP, MySQL, MediaWiki, SMW
-- backup automation
-- mail relay config
+- [deployment tool](deploy_tool.py) & [helper](rw_helpers.sh)
+- [docker compose config](docker-compose.yaml)
+- [webserver config](webserver)
+    - [version control for PHP, MySQL, MediaWiki, SMW](webserver/Dockerfile)
+    - [mediawiki configs](webserver/html/ropewiki/LocalSettings.php)
+    - [mediawiki extensions](webserver/Dockerfile) (plus [modified extensions](webserver/html/ropewiki/extensions)) & patches
+- [proxy server config](reverse_proxy)
+- [backup automation](backup_manager)
+- [mail relay config](mailserver)
 
 ## What does not live here
 
