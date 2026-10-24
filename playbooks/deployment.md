@@ -2,8 +2,11 @@ The following instructions assume an Ubuntu based OS, running on either a server
 
 The starting point is a vanilla Ubuntu environment, and the end goal is a locally running copy of ropewiki.
 
-### Optional: firewall the system
-If the server is directly facing the internet, as root (e.g. `sudo -s`) run:
+### Firewall the system
+
+If the system is not externally accessible, this step can be skipped.
+
+As root (e.g. `sudo -s`) run:
 
 ```bash
 ufw default deny incoming  # Block everything incoming
@@ -24,11 +27,12 @@ ufw enable  # Enable firewall
 apt install python3 git rsync zstd
 ```
 
-Then follow the appropriate instructions for installing docker, e.g. [for Ubuntu](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
+Follow the appropriate instructions for installing docker, e.g. [for Ubuntu](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
 
-Then clone this repo to somewhere convenient, if you haven't already (e.g. ./rw/app).
+Clone this repo to somewhere convenient.  Standard server deployments use `/rw/app`.
 
 ```bash
+cd /
 mkdir ./rw
 git clone https://github.com/RopeWiki/app.git ./rw/app
 ```
@@ -36,13 +40,13 @@ git clone https://github.com/RopeWiki/app.git ./rw/app
 ---
 ### Create a Site Config
 
-For each deployment of ropewiki there are a number of settings which are defined in a `site_config` file. These are specific to the site (e.g. domain name, directory locations, etc) but importantly do not include secrets (e.g. passwords, keys, etc).
+For each deployment of RopeWiki there are a number of settings which are defined in a `site_config` file. These are specific to the site (e.g. domain name, directory locations, etc) but importantly do not include secrets (e.g. passwords, keys, etc).
 
 The name of the file will be used as part of the naming scheme of the containers, e.g. `dev` will become `dev-ropewiki_webserver-1`, and also provided as a parameter to the `deploy_tool.py` command later on.
 
 Copy or modify an existing config, e.g. [dev.json](site_configs/dev.json) and modify it to suit your needs.
 
-A standard location to keep all the external ropewiki data is helpful (logs, images, etc), for instance `./rw/mount`. _We will be assuming this path for the rest of the instructions._ e.g.
+A standard location to keep all the external RopeWiki data is helpful (logs, images, etc), and `./rw/mount` will be assumed as this path for the rest of the instructions.
 
 ```
 ./rw/app
@@ -71,15 +75,13 @@ rsync -avz -e "ssh -p 22001" backupreader@app.ropewiki.com:backups/$FILE ./rw/mo
 #### Images restore
 ```bash
 # Copy all images across (Note: this is over 70GB!).
-rsync -avz -e "ssh -p 22001" backupreader@app.ropewiki.com:images/* ./rw/mount/images/
+rsync -avz --exclude='BALLAST_DELETE_IF_OUT_OF_SPACE' -e "ssh -p 22001" backupreader@app.ropewiki.com:images/* ./rw/mount/images/
 ```
-
-Note: there is a large 3GB file used to reserve disk space you can ignore/delete (`BALLAST_DELETE_IF_OUT_OF_SPACE`).
 
 ---
 
 ### Mandatory Secrets
-There are four environment values which need to be set for the ropewiki deployment system to work.
+There are four environment values which need to be set for the RopeWiki deployment system to work.
 
 It's helpful to create a small password script (e.g. `~/rw_passwords.sh`) to save them. They should not be checked into the repo.
 
@@ -100,7 +102,7 @@ export RW_SMTP_PASSWORD=<The password for logging into the smtp relay>
 
 ### Starting the site
 
-The `deploy_tool.py` command is used for nearly all management of the ropewiki containers. It provides environment variables management, ensuring secrets aren't stored persistently in our docker images.
+The `deploy_tool.py` command is used for nearly all management of the RopeWiki containers. It provides environment variables management, ensuring secrets aren't stored persistently in our docker images.
 
 ```bash
 # $SITE_NAME is the name of your `site_configs` file.
@@ -132,7 +134,7 @@ source ~/rw_passwords.sh
 
 If everything has started successfully the site should be reachable via `http://$hostname/`.
 
-If the containers are all running (`docker ps -a`) but something doesn't work with the shit, the first things to test eck are the protocol and hostname. They both form part of the initial redirect the webserver does.
+If the containers are all running (`docker ps -a`) but something doesn't work, the first things to check are the protocol and hostname. They both form part of the webserver's initial redirect.
 
 ```bash
 # Requests without a page name should get redirected to "Main Page".
