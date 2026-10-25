@@ -13,16 +13,17 @@
 #   the build system produces images in the format:
 #     ropewiki/webserver:latest
 #   however in development environments we might run into different formats:
-#     ghcr.io/ropewiki:github-master-latest
+#     ghcr.io/ropewiki/webserver:github-master-latest
 #   These envvars can overwrite the expected repo name & tag:
 #     DOCKER_IMAGE_REGISTRY
+#     DOCKER_IMAGE_SUFFIX (use -preview for GHCR PR images)
 #     DOCKER_IMAGE_TAG
 
 services:
 
   # The RopeWiki MySQL database; see instructions in README.md to build the image
   ropewiki_db:
-    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/database:${DOCKER_IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/database${DOCKER_IMAGE_SUFFIX:-}:${DOCKER_IMAGE_TAG:-latest}
     hostname: ropewiki_db
     init: true
     build:
@@ -36,7 +37,7 @@ services:
 
   # The main RopeWiki server running MediaWiki; see instructions in README.md to build the image
   ropewiki_webserver:
-    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/webserver:${DOCKER_IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/webserver${DOCKER_IMAGE_SUFFIX:-}:${DOCKER_IMAGE_TAG:-latest}
     hostname: ropewiki_webserver
     build:
       context: .
@@ -58,7 +59,7 @@ services:
 
   # The reverse proxy that directs traffic to the appropriate places; see instructions in README.md to build the image
   ropewiki_reverse_proxy:
-    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/reverse_proxy:${DOCKER_IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/reverse_proxy${DOCKER_IMAGE_SUFFIX:-}:${DOCKER_IMAGE_TAG:-latest}
     hostname: ropewiki_reverse_proxy
     build:
       context: .
@@ -82,7 +83,7 @@ services:
 
   # The RopeWiki backup manager; see instructions in README.md to build the image
   ropewiki_backup_manager:
-    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/backup_manager:${DOCKER_IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/backup_manager${DOCKER_IMAGE_SUFFIX:-}:${DOCKER_IMAGE_TAG:-latest}
     hostname: ropewiki_backup_manager
     init: true
     build:
@@ -101,7 +102,7 @@ services:
     restart: unless-stopped
 
   ropewiki_mailserver:
-    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/mailserver:${DOCKER_IMAGE_TAG:-latest}
+    image: ${DOCKER_IMAGE_REGISTRY:-ropewiki}/mailserver${DOCKER_IMAGE_SUFFIX:-}:${DOCKER_IMAGE_TAG:-latest}
     hostname: ropewiki_mailserver
     build:
       context: .

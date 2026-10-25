@@ -1,0 +1,59 @@
+# Called only by the default-branch workflow_run publisher.
+name: Copy Tested Images
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ fromJSON(inputs.plan).runUrl }}
+    concurrency:
+      group: images-${{ fromJSON(inputs.plan).kind }}-${{ fromJSON(inputs.plan).prNumber || 'master' }}
+      cancel-in-progress: false
+    env:
+      BUILD_PLAN: ${{ inputs.plan }}
+      PUBLISH_ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - name: Set isolated image and authentication directories
+        run: |
+          printf 'IMAGE_ARCHIVES=%s/tested-images\nDOCKER_CONFIG=%s/registry-auth\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Recheck build after approval
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { revalidatePublication } = require('./.github/scripts/image-policy.cjs');
+            if (JSON.parse(process.env.BUILD_PLAN).environment !== process.env.PUBLISH_ENVIRONMENT) {
+              throw new Error('Publishing environment does not match the approved plan');
+            }
+            await revalidatePublication({ github, context, plan: JSON.parse(process.env.BUILD_PLAN) });
+      - name: Install image copy tool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends skopeo
+      - name: Download and validate approved image artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/publish_images.py download
+      - name: Login to GHCR
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Copy images without running contributor code
+        run: python3 .github/scripts/publish_images.py publish
