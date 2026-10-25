@@ -1,0 +1,63 @@
+name: Publish Tested Images
+run-name: Publish build ${{ github.event.workflow_run.id }} attempt ${{ github.event.workflow_run.run_attempt }} (${{ github.event.workflow_run.head_sha }})
+
+on:
+  workflow_run:
+    workflows: [Build and Test Images]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  policy:
+    if: >-
+      github.repository == 'RopeWiki/app' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      vars.IMAGE_PUBLISHING_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      plan: ${{ steps.policy.outputs.plan }}
+      environment: ${{ steps.policy.outputs.environment }}
+      description: ${{ steps.policy.outputs.description }}
+    steps:
+      # workflow_run uses the default branch. Never check out the triggering PR.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify build and publishing policy
+        id: policy
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const { planPublication } = require('./.github/scripts/image-policy.cjs');
+            const plan = await planPublication({ github, context, core });
+            if (!plan) return;
+            core.setOutput('plan', JSON.stringify(plan));
+            core.setOutput('environment', plan.environment);
+            core.setOutput('description', plan.description);
+            await core.summary.addHeading(plan.description)
+              .addLink('Review the exact build before approving', plan.runUrl)
+              .addRaw(`\n\nSource head: \`${plan.sha}\`; artifact: \`${plan.artifactId}\`.\n\n`)
+              .addRaw(`Artifact digest: \`${plan.artifactDigest}\`.\n\n`)
+              .addRaw('External previews require approval of this build through the preview-external environment.\n')
+              .write();
+
+  publish:
+    needs: policy
+    if: needs.policy.outputs.plan != ''
+    name: ${{ needs.policy.outputs.description }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      packages: write
+    uses: ./.github/workflows/copy-tested-images.yml
+    with:
+      plan: ${{ needs.policy.outputs.plan }}
+      environment: ${{ needs.policy.outputs.environment }}
