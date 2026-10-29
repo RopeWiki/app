@@ -77,6 +77,7 @@
           ./nix/modules/ropewiki.nix
           ./nix/modules/backup.nix
           ./nix/modules/drainage.nix
+          ./nix/modules/tileserver.nix
         ];
         nixpkgs.overlays = [ overlay ];
       };

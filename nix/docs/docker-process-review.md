@@ -27,6 +27,7 @@ files, and deploys are `nixos-rebuild`. Where the answer is no, the step is drop
 
 | Old step | Becomes |
 |---|---|
+| `ropewiki_tileserver` container (PR #155), `tiles.` proxy server | `services.ropewiki.tileserver` ([tileserver.md](tileserver.md)) |
 | `ufw` rules, SSH to containers on 22001/22002, debug port 8080 | `networking.firewall` (`openFirewall`); the container SSH ports have no equivalent and are not needed |
 | Install Docker, git; clone the repo into `/rw` | None: the flake is the deployment |
 | `site_configs/*.json` (hostname, protocol, folders, robots) | A NixOS host configuration per site (`hostName`, `robots`, and the TLS settings of `services.nginx.virtualHosts.<hostName>`) |

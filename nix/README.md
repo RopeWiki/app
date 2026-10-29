@@ -62,6 +62,11 @@ not know about (`MediaWiki:Common*`) are reported in the journal and left alone.
 (`/luca/rwr?waterflow=winfo=`, which the Luca server used to answer) from NHDPlus; the first start
 downloads 7.8 GB to build its index. See `docs/drainage.md`.
 
+`services.ropewiki.tileserver.enable = true` runs `maptiler/tileserver-gl` as a container (podman)
+on `tiles.<hostName>`, serving the tiles and `config.json` in `<imagesDir>/tiles` (upstream
+RopeWiki/app#155); the data is not part of this repository and has to be copied there. See
+`docs/tileserver.md`.
+
 `services.ropewiki.imageProxy = "https://ropewiki.com"` (development) shows that site's uploaded
 files instead of this one's, which has none. It is off in `nix run .#vm` until validated. See `docs/image-proxy.md`.
 
@@ -77,6 +82,7 @@ files instead of this one's, which has none. It is off in `nix run .#vm` until v
 | `nix build .#checks.x86_64-linux.image-proxy` | VM test (two VMs): `imageProxy` links files and thumbnails to another site and fetches hard-coded `/images/` paths from it, read-only, with the name looked up at start or per request |
 | `nix build .#checks.x86_64-linux.drainage` | VM test: the drainage-area lookup behind nginx (`/luca/rwr?waterflow=winfo=`), loopback only, starts when its index appears |
 | `nix build .#checks.x86_64-linux.drainage-index` | VM test: downloads, extracts and indexes a made-up NHDPlus archive, rebuilds on demand |
+| `nix build .#checks.x86_64-linux.tileserver` | VM test: the tile server container (a stand-in image) with its mount and arguments, behind nginx on its own host name |
 | `nix build .#rw-drainage` | the drainage lookup program; building it runs its unit tests |
 | `nix build .#site-pages` | the JavaScript and CSS pages, one file per page title |
 | `nix run .#update-mediawiki-ext` | re-pin MediaWiki core and every git-cloned extension |
@@ -100,6 +106,7 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
   its tests and fixtures; `packages/site-pages-drainage.patch` and `site-pages-luca-host.patch` are the
   changes to commonjs it needs.
 - `modules/ropewiki.nix`: the NixOS module, a layer over `services.mediawiki`. `modules/drainage.nix`: the opt-in drainage service.
+  `modules/tileserver.nix`: the opt-in tile server container.
   `modules/backup.nix`: the opt-in backup service and
   upgrade gate (its scripts are plain `.sh` files in `modules/backup/`). `php/production.php`: what `mode = "production"` adds.
 - `vm/`, `tests/`: the VM definition, `dev-site.nix` (MediaWiki's installer on first start + self-signed cert for VMs

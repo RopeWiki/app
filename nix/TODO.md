@@ -44,6 +44,11 @@ Design notes live in [`docs/`](docs/); this is the checklist.
 - [ ] **Drainage, the rest**: build the index from the real NHDPlus download and compare it with
       production (comid 22554664 must round to 4 km²), send the two `site-pages-*.patch` changes to commonjs, and
       enable it on the real host. Alaska/Hawaii, if wanted.
+- [x] **Tile server** (`services.ropewiki.tileserver`, opt-in): upstream's `ropewiki_tileserver`
+      container and `tiles.` virtual host. [docs/tileserver.md](docs/tileserver.md)
+- [ ] **Tile server, the rest**: try it with the real image and the production tiles (the test uses
+      a stand-in), pin the image by digest instead of `latest`, add the tiles to the backups if they
+      are not reproducible, and decide who sets up TLS/Cloudflare for `tiles.` on the real host.
 - [ ] A job runner (`ropewiki-jobs.service`, `runJobs.php --wait`); nothing here configures one, so
       MediaWiki runs jobs inside web requests.
 - [ ] A mail relay (postfix with upstream SMTP credentials). The module hardcodes `localhost:25`.
