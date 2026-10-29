@@ -38,8 +38,8 @@ mkdir -p "$export_dir"
 todays=("$export_dir/ropewiki-${ts%%T*}T"*.sql.zst)
 if ((${#todays[@]} == 0)); then
   tmp=$(mktemp -p "$export_dir" .export.XXXXXX)
-  if runuser -u ropewiki -- mariadb-dump --socket=/run/mysqld/mysqld.sock \
-       --single-transaction --routines --events ropewiki | zstd -q -10 >"$tmp"; then
+  if runuser -u mediawiki -- mariadb-dump --socket=/run/mysqld/mysqld.sock \
+       --single-transaction --routines --events mediawiki | zstd -q -10 >"$tmp"; then
     mv "$tmp" "$export_dir/ropewiki-$ts.sql.zst"
     echo "export $export_dir/ropewiki-$ts.sql.zst"
   else

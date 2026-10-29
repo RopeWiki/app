@@ -25,7 +25,13 @@ Docker (`docker-compose.yaml`, `deploy_tool.py`) keeps working; nothing here cha
 ```
 
 That gives nginx + php-fpm 8.3, MariaDB (unix-socket auth, no passwords), Sphinx search and a
-database migration (`update.php`) on every start. Restore a backup into the `ropewiki` database.
+database migration (`update.php`) on every start. MediaWiki is run by nixpkgs' `services.mediawiki`
+module (`webserver = "none"`: its `/w/` URLs are not RopeWiki's, so the nginx virtual host is
+ours), which also names the user, group and database `mediawiki`, keeps state in
+`/var/lib/mediawiki` and calls the units `mediawiki-init` and `phpfpm-mediawiki`. Restore a backup
+into the `mediawiki` database (a dump from the Docker site says `USE ropewiki`; see `docs/backups.md`).
+The module's own `mediawiki-*` maintenance commands do not work with MediaWiki 1.39; use
+`ropewiki-maintenance` below.
 The scheme of the site's URLs follows the nginx virtual host (https when it has `forceSSL`,
 `addSSL` or `onlySSL`). `mode = "development"` prints PHP errors into the page like the Docker
 setup did; the default, `production`, hides errors and what is running. Maintenance scripts, core and extensions:
@@ -75,7 +81,8 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
 
 ## Layout
 
-- `packages/ropewiki.nix` assembles the tree the way `webserver/Dockerfile` does.
+- `packages/ropewiki.nix` assembles the tree the way `webserver/Dockerfile` does, laid out as nixpkgs'
+  `mediawiki` is (`share/mediawiki`) so `services.mediawiki` can run it.
 - `packages/mediawiki-pins.json`, `mediawiki-ext.nix`, `update-mediawiki-ext.sh`: the pinned
   MediaWiki version, tarball hash and extension revisions, and the script that updates them.
   **To change MediaWiki versions, edit `mediawiki.version` in the JSON and run the updater**; the
@@ -88,7 +95,7 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
 - `packages/rw-drainage.nix` + `packages/rw-drainage/`: the drainage lookup (Python, GDAL to build),
   its tests and fixtures; `packages/site-pages-drainage.patch` and `site-pages-luca-host.patch` are the
   changes to commonjs it needs.
-- `modules/ropewiki.nix`: the NixOS module. `modules/drainage.nix`: the opt-in drainage service.
+- `modules/ropewiki.nix`: the NixOS module, a layer over `services.mediawiki`. `modules/drainage.nix`: the opt-in drainage service.
   `modules/backup.nix`: the opt-in backup service and
   upgrade gate (its scripts are plain `.sh` files in `modules/backup/`). `php/production.php`: what `mode = "production"` adds.
 - `vm/`, `tests/`: the VM definition, `dev-site.nix` (MediaWiki's installer on first start + self-signed cert for VMs

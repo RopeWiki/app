@@ -13,7 +13,10 @@
     {
       imports = [ ../vm/dev-site.nix ];
       services.ropewiki.enable = true; # production mode, redirect to HTTPS, self-signed certificate
-      environment.systemPackages = [ pkgs.openssl ];
+      environment.systemPackages = [
+        pkgs.openssl
+        pkgs.imagemagick
+      ];
       virtualisation.memorySize = 2048;
     };
 
@@ -30,7 +33,7 @@
           return machine.succeed(f"curl --silent --insecure --output /dev/null --write-out '%{{http_code}}' 'https://localhost{path}'")
 
       machine.wait_for_unit("multi-user.target")
-      for unit in ["ropewiki-init", "phpfpm-ropewiki", "nginx", "ropewiki-searchd"]:
+      for unit in ["mediawiki-init", "phpfpm-mediawiki", "nginx", "ropewiki-searchd"]:
           machine.wait_for_unit(f"{unit}.service")
       machine.wait_for_open_port(443)
       # on ext4 the NOCOW flag on the MariaDB directory (a btrfs thing) must be harmless
@@ -46,9 +49,9 @@
           # because MySQL fulltext indexes need text columns; SMW makes its case-insensitive
           # columns utf8.
           db = "mariadb --batch --skip-column-names information_schema -e"
-          tables = machine.succeed(f"{db} \"SELECT table_name, table_collation FROM tables WHERE table_schema = 'ropewiki' AND table_collation <> 'binary' AND table_name <> 'searchindex'\"")
+          tables = machine.succeed(f"{db} \"SELECT table_name, table_collation FROM tables WHERE table_schema = 'mediawiki' AND table_collation <> 'binary' AND table_name <> 'searchindex'\"")
           assert tables.strip() == "", tables
-          columns = machine.succeed(f"{db} \"SELECT table_name, column_name, collation_name FROM columns WHERE table_schema = 'ropewiki' AND collation_name IS NOT NULL AND collation_name <> 'binary' AND table_name <> 'searchindex' ORDER BY 1, 2\"")
+          columns = machine.succeed(f"{db} \"SELECT table_name, column_name, collation_name FROM columns WHERE table_schema = 'mediawiki' AND collation_name IS NOT NULL AND collation_name <> 'binary' AND table_name <> 'searchindex' ORDER BY 1, 2\"")
           assert all(l.startswith("smw_") for l in columns.splitlines()), columns
 
       with subtest("the extensions the site depends on are loaded"):
@@ -81,7 +84,7 @@
           assert 'name="generator"' not in page, "generator meta tag present"
           hits = [" ".join(page[max(0, m.start() - 160):m.end() + 160].split()) for m in re.finditer("poweredby", page, re.I)]
           assert not hits, "powered-by present: " + " ||| ".join(hits)
-          ini = machine.succeed("systemctl cat phpfpm-ropewiki.service | grep -o -- ' -c [^ ]*' | cut -d' ' -f3").strip()
+          ini = machine.succeed("systemctl cat phpfpm-mediawiki.service | grep -o -- ' -c [^ ]*' | cut -d' ' -f3").strip()
           settings = machine.succeed(f"grep -E '^(display_errors|expose_php|log_errors)' {ini}")
           for want in [r"^display_errors\s*=\s*0", r"^expose_php\s*=\s*0", r"^log_errors\s*=\s*1"]:
               assert re.search(want, settings, re.M), f"{want} not in {settings!r}"
@@ -102,6 +105,30 @@
           machine.sleep(10)
           assert machine.succeed("systemctl show -p NRestarts --value ropewiki-searchd.service").strip() == "0"
           machine.succeed("systemctl start ropewiki-sphinx-reindex.service")
+
+      with subtest("uploaded files are stored in imagesDir and served from it"):
+          images = "${nodes.machine.services.ropewiki.imagesDir}"
+          # importImages stores a file the way an upload does: as the MediaWiki user, in the hashed
+          # folders under $wgUploadDirectory, with a File: page (no browser session needed).
+          machine.succeed("mkdir /tmp/imgs && convert -size 80x80 xc:red /tmp/imgs/Test.png && chmod -R a+rX /tmp/imgs")
+          machine.succeed("ropewiki-maintenance importImages.php --comment=test /tmp/imgs png")
+          info = json.loads(get("/api.php?action=query&titles=File:Test.png&prop=imageinfo&iiprop=url&iiurlwidth=40&format=json"))
+          image = next(iter(info["query"]["pages"].values()))["imageinfo"][0]
+          prefix = "https://localhost/images/"
+          assert image["url"].startswith(prefix) and image["thumburl"].startswith(prefix + "thumb/"), image
+          stored = f"{images}/{image['url'][len(prefix):]}"
+          assert machine.succeed(f"stat -c %U {stored}").strip() == "mediawiki", stored
+          # nginx runs as another user and the state directory is not world readable
+          machine.succeed(f"curl --fail --silent --insecure -o /tmp/served.png '{image['url']}' && cmp /tmp/served.png /tmp/imgs/Test.png")
+          # the thumbnail was rendered into imagesDir and is served from there
+          machine.succeed(f"curl --fail --silent --insecure -o /tmp/thumb.png '{image['thumburl']}'")
+          assert machine.succeed("identify -format %wx%h /tmp/thumb.png").strip() == "40x40"
+          machine.succeed(f"test -f {images}/thumb/{image['url'][len(prefix):]}/40px-Test.png")
+          assert status("/images/no/such/file.png") == "404"
+          # nothing uploaded is ever run as PHP
+          machine.succeed(f"echo '<?php echo 6*7;' > {images}/probe.php && chmod a+r {images}/probe.php")
+          assert get("/images/probe.php").startswith("<?php"), "an uploaded .php file was not served as plain text"
+          machine.succeed(f"rm {images}/probe.php")
 
       with subtest("the site JavaScript and CSS are published as MediaWiki: pages"):
           pages = "${nodes.machine.services.ropewiki.sitePages}"

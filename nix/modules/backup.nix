@@ -48,7 +48,7 @@ in
       example = [ "/srv/ropewiki" ];
       description = ''
         btrfs subvolumes to snapshot. A snapshot of one subvolume is atomic, so put the database
-        (`/var/lib/mysql`), the uploads and `/var/lib/ropewiki` on the same one, which is what the
+        (`/var/lib/mysql`), the uploads and `/var/lib/mediawiki` on the same one, which is what the
         default `/` does. Several subvolumes are snapshotted back to back, not atomically.
         Snapshots go to `<subvolume>/.snapshots/ropewiki-<UTC timestamp>`.
       '';

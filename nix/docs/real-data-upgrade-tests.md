@@ -32,7 +32,7 @@ Built from the backup pipeline above, not by hand:
 2. Import the fixture (database, uploads), start the site, run the verification suite once as a
    **baseline** on the old code.
 3. Switch to the **new** revision with `switch-to-configuration` (the real upgrade path, including
-   `ropewiki-init`/`update.php`, the maintenance page, the downgrade guard).
+   `mediawiki-init`/`update.php`, the maintenance page, the downgrade guard).
 4. Run the same suite again and compare. Pages that rendered before must still render, with the same
    text where it should not have changed.
 
@@ -54,7 +54,7 @@ Built from the backup pipeline above, not by hand:
 
 ## Log scanning (the test also fails on quiet errors)
 
-After the suite, collect and scan: `journalctl` for `ropewiki-init`, `phpfpm-ropewiki`, `nginx`,
+After the suite, collect and scan: `journalctl` for `mediawiki-init`, `phpfpm-mediawiki`, `nginx`,
 `mysql`/`mariadb`, `ropewiki-searchd`, and the files under `/var/log/nginx`, `/var/log/ropewiki-sphinx`
 and the MariaDB error log. Fail on PHP `Fatal`/`Warning`/`Deprecated`/`Notice`, exceptions, MariaDB
 errors and warnings (deadlocks, "table is marked as crashed"), nginx `[error]`/`[emerg]`, searchd

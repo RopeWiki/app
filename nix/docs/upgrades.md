@@ -81,7 +81,7 @@ restore on dev".
    snapshot as `pre-upgrade-<generation>` so retention does not expire the rollback point.
 2. *While migrating*, nginx answers `503` with a static maintenance page (`error_page` on the
    missing php-fpm socket). Today's init already runs before php-fpm starts; only the page is new.
-3. `ropewiki-init` runs `update.php --quick` (already in the module). For SMW 4.x this is the whole
+3. `mediawiki-init` runs `update.php --quick` (already in the module). For SMW 4.x this is the whole
    job: its own 4.2.0 release notes say "You need to run either update.php or setupStore.php. Apart from
    that, no other script needs to be run", and 4.0.0 says no rebuild is needed either.
 4. A smoke test runs (`Main_Page`, `api.php?action=query&meta=siteinfo`, one `#ask`, one search). If it
@@ -94,7 +94,7 @@ returns the *code*, but `update.php` has already changed the *schema*, which a g
 does not undo. So rolling back = switch to the old generation **and** restore the
 `pre-upgrade-<generation>` snapshot (seconds). To stop someone booting an old generation against a
 migrated database by accident, the module records the highest applied version in `stateDir`, and
-`ropewiki-init` refuses to run older code against it unless told to (a downgrade guard).
+`mediawiki-init` refuses to run older code against it unless told to (a downgrade guard).
 
 **5. Maintenance mode without redeploying.** MediaWiki has a built-in `$wgReadOnlyFile` (verified
 in 1.39 `MainConfigSchema.php`): when that file exists the wiki is read-only and shows the file's

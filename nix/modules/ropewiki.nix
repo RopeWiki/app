@@ -5,6 +5,13 @@
 #   database on every start. TLS, firewalling and everything else are ordinary NixOS settings
 #   (services.nginx.virtualHosts.<hostName>.enableACME, networking.firewall, ...); see
 #   nix/README.md. What is not covered yet is listed in nix/TODO.md.
+#
+# MediaWiki itself is run by nixpkgs' services.mediawiki (php-fpm pool, database and user,
+# generated settings, the mediawiki-init unit) with `webserver = "none"`: that module hardcodes
+# /w/ and /wiki/ URLs, RopeWiki's are at the root, so the nginx virtual host is ours. Its
+# `mediawiki-init` script is replaced and the `mediawiki-*` maintenance wrappers it installs do not
+# work, both because nixpkgs' module is written for a newer MediaWiki than the 1.39 this site
+# runs; see "After the MediaWiki upgrade" in nix/TODO.md.
 {
   config,
   lib,
@@ -23,10 +30,14 @@ let
 
   cfg = config.services.ropewiki;
 
-  user = "ropewiki";
-  stateDir = "/var/lib/ropewiki";
-  cacheDir = "/var/cache/ropewiki";
-  root = "${cfg.package}/share/ropewiki";
+  # services.mediawiki fixes the user, group and database name (with its local database) and the
+  # state and cache directories.
+  user = "mediawiki";
+  dbName = "mediawiki";
+  stateDir = "/var/lib/mediawiki";
+  cacheDir = "/var/cache/mediawiki";
+  # services.mediawiki's copy of the site tree, with the tool paths fixed up.
+  root = "${config.services.mediawiki.finalPackage}/share/mediawiki";
   dbSocket = "/run/mysqld/mysqld.sock";
 
   # hostName may carry a port ("localhost:8443"); nginx wants the bare name.
@@ -61,10 +72,10 @@ let
     coreutils
   ];
 
-  # The immutable site tree reads its configuration from two PHP files named in the environment:
-  # `siteSettings` before the repo's LocalSettings.php (what SiteSpecificSettings.php.template and
-  # system_start.sh produce in the Docker image) and `overrides` after it (the repo file hardcodes
-  # Docker paths such as /usr/bin/convert).
+  # The immutable site tree reads its configuration from PHP files named in the environment:
+  # the settings services.mediawiki generates (MEDIAWIKI_CONFIG, plus `siteSettings` below as its
+  # extraConfig) before the repo's LocalSettings.php, and `overrides` after it (the repo file
+  # hardcodes Docker paths such as /usr/bin/convert).
   phpFile =
     name: text:
     pkgs.writeTextFile {
@@ -72,24 +83,20 @@ let
       checkPhase = ''${cfg.phpPackage}/bin/php --syntax-check "$target"'';
     };
 
-  siteSettings = phpFile "ropewiki-site-settings.php" ''
-    <?php
-    $wgSitename      = "ropewiki";
+  # What system_start.sh and SiteSpecificSettings.php.template produced in the Docker image that
+  # services.mediawiki does not (name, URL, database and secret key it does).
+  siteSettings = ''
     $wgMetaNamespace = "Ropewiki";
-
-    $wgServer = "${if https then "https" else "http"}://${cfg.hostName}";
     $wgLogo = "$wgServer/Ropewiki.png";
     $semanticServer = "${cfg.hostName}";
 
-    $wgDBtype     = "mysql";
-    $wgDBserver   = "localhost:${dbSocket}";
-    $wgDBname     = "ropewiki";
-    $wgDBuser     = "${user}";
-    $wgDBpassword = "";
-
-    $wgSecretKey  = trim( file_get_contents( "${stateDir}/secret.key" ) );
     # Only used by the web updater, which is unreachable without shell access anyway.
     $wgUpgradeKey = substr( hash( 'sha256', "upgrade" . $wgSecretKey ), 0, 16 );
+
+    # The generated settings differ from MediaWiki's defaults here, and the repo's
+    # LocalSettings.php (which comes after) does not set them.
+    $wgPingback = false;
+    $wgAuthenticationTokenVersion = null;
   '';
 
   overrides = phpFile "ropewiki-overrides.php" ''
@@ -121,12 +128,15 @@ let
     ${cfg.extraSettings}
   '';
 
-  # Everything PHP needs to know, both for php-fpm and for maintenance scripts.
-  phpEnv = {
-    ROPEWIKI_SITE_SETTINGS = "${siteSettings}";
+  # What php-fpm adds to services.mediawiki's own environment (MEDIAWIKI_CONFIG).
+  poolEnv = {
     ROPEWIKI_OVERRIDES = "${overrides}";
     ROPEWIKI_IMAGES_DIR = cfg.imagesDir;
     PATH = lib.makeBinPath runtimePath;
+  };
+  # Everything PHP needs to know when it runs outside php-fpm: maintenance scripts, the units below.
+  phpEnv = poolEnv // {
+    inherit (config.services.phpfpm.pools.mediawiki.phpEnv) MEDIAWIKI_CONFIG;
   };
 
   # `ropewiki-maintenance update.php --quick`, run as the service user. Scripts of extensions
@@ -177,6 +187,7 @@ let
     sed -E \
       -e 's|\{\{WG_DB_SERVER\}\}|localhost|' \
       -e 's|\{\{WG_DB_USER\}\}|${user}|' \
+      -e 's|^(\s*sql_db\s*=\s*)ropewiki\s*$|\1${dbName}|' \
       -e 's|\{\{WG_DB_PASSWORD\}\}||' \
       -e 's|^\s*#\s*sql_sock\s*=.*|sql_sock = ${dbSocket}|' \
       -e 's|/var/log/sphinxsearch/searchd.pid|/run/ropewiki-sphinx/searchd.pid|' \
@@ -186,6 +197,7 @@ let
       ${cfg.package.sphinxConfTemplate} > $out
     # Fail loudly if the repo's template changes shape.
     grep -q '^\s*sql_sock\s*=' $out
+    grep -q '^\s*sql_db\s*=\s*${dbName}$' $out
     grep -q '${stateDir}/sphinx/wiki_main' $out
     grep -q '^\s*binlog_path\s*=\s*$' $out
   '';
@@ -310,18 +322,49 @@ in
   };
 
   config = mkIf cfg.enable {
-    users.users.${user} = {
-      group = user;
-      isSystemUser = true;
-      home = stateDir;
+    # --- MediaWiki ----------------------------------------------------------------------
+    services.mediawiki = {
+      enable = true;
+      package = cfg.package;
+      phpPackage = cfg.phpPackage;
+      name = "ropewiki";
+      url = "${if https then "https" else "http"}://${cfg.hostName}";
+      webserver = "none";
+      extraConfig = siteSettings;
+      # The repo's LocalSettings.php loads the skin it uses; the module's MonoBook and Timeless
+      # are not wanted.
+      skins = lib.mkForce { };
+      # Uploads: the module would `chown -R` the folder on every boot, which is minutes with 70 GB
+      # of files; imagesDir is created below and $wgUploadDirectory is set in the overrides.
+      uploadsDir = null;
+      # Only read by the module's own mediawiki-init script, which is replaced below. The first
+      # administrator comes from the installer, see nix/vm/dev-site.nix.
+      passwordFile = "/dev/null";
+      # php-fpm: mirrors webserver/fpm-pool.conf and the sed edits in webserver/Dockerfile /
+      # system_start.sh. (With webserver = "none" the module would hand the socket to mediawiki
+      # itself.)
+      poolConfig = {
+        "listen.owner" = config.services.nginx.user;
+        "listen.group" = config.services.nginx.group;
+        pm = "ondemand";
+        "pm.max_children" = 16;
+        "pm.process_idle_timeout" = "10s";
+        "pm.max_requests" = 200;
+        request_terminate_timeout = "30s";
+        # PHP's own error log lines go to the journal (phpfpm-mediawiki.service).
+        catch_workers_output = true;
+        decorate_workers_output = false;
+      };
     };
-    users.groups.${user} = { };
 
+    users.users.${user}.home = stateDir;
+    # nginx serves the uploaded files from imagesDir, inside the 0750 state directory.
+    users.users.${config.services.nginx.user}.extraGroups = [ user ];
+
+    # The state and cache directories are services.mediawiki's.
     systemd.tmpfiles.rules = [
-      "d '${stateDir}' 0750 ${user} ${user} - -"
       "d '${stateDir}/smw' 0750 ${user} ${user} - -"
       "d '${stateDir}/sphinx' 0750 ${user} ${user} - -"
-      "d '${cacheDir}' 0750 ${user} ${user} - -"
       # Not recursive: the uploads folder can be huge and is restored from backups.
       "d '${cfg.imagesDir}' 0755 ${user} ${user} - -"
       # On btrfs, copy-on-write makes database files slow (every page write allocates a new extent)
@@ -342,31 +385,19 @@ in
       after = [ "network-online.target" ];
     };
 
-    # --- database ---------------------------------------------------------------------
-    # Unix-socket authentication as the `ropewiki` OS user: no password anywhere.
-    services.mysql = {
-      enable = true;
-      package = mkDefault pkgs.mariadb;
-      ensureDatabases = [ "ropewiki" ];
-      ensureUsers = [
-        {
-          name = user;
-          ensurePermissions."ropewiki.*" = "ALL PRIVILEGES";
-        }
-      ];
-    };
+    # --- database -----------------------------------------------------------------------
+    # services.mediawiki (database.createLocally) creates the `mediawiki` database and user, with
+    # unix-socket authentication as the `mediawiki` OS user: no password anywhere.
 
     # --- php-fpm ------------------------------------------------------------------------
-    # Mirrors webserver/fpm-pool.conf and the sed edits in webserver/Dockerfile / system_start.sh.
+    # The pool is services.mediawiki's (poolConfig above).
     services.phpfpm.settings = {
       emergency_restart_threshold = mkDefault 10;
       emergency_restart_interval = mkDefault "1m";
       process_control_timeout = mkDefault "10s";
     };
-    services.phpfpm.pools.ropewiki = {
-      inherit user phpEnv;
-      group = user;
-      phpPackage = cfg.phpPackage;
+    services.phpfpm.pools.mediawiki = {
+      phpEnv = poolEnv;
       phpOptions = {
         upload_max_filesize = "10M";
         post_max_size = "10M";
@@ -384,22 +415,10 @@ in
         "session.use_strict_mode" = 1;
         "session.cookie_secure" = if https then 1 else 0;
       };
-      settings = {
-        "listen.owner" = config.services.nginx.user;
-        "listen.group" = config.services.nginx.group;
-        pm = "ondemand";
-        "pm.max_children" = 16;
-        "pm.process_idle_timeout" = "10s";
-        "pm.max_requests" = 200;
-        request_terminate_timeout = "30s";
-        # PHP's own error log lines go to the journal (phpfpm-ropewiki.service).
-        catch_workers_output = true;
-        decorate_workers_output = false;
-      };
     };
-    systemd.services.phpfpm-ropewiki = {
-      after = [ "ropewiki-init.service" ];
-      requires = [ "ropewiki-init.service" ];
+    systemd.services.phpfpm-mediawiki = {
+      after = [ "mediawiki-init.service" ];
+      requires = [ "mediawiki-init.service" ];
     };
 
     # --- nginx --------------------------------------------------------------------------
@@ -426,7 +445,7 @@ in
             if ($uri !~ "^/(${phpEntryPoints})\.php$") { return 404; }
             fastcgi_hide_header X-Powered-By;
             fastcgi_split_path_info ^(.+\.php)(/.+)$;
-            fastcgi_pass unix:${config.services.phpfpm.pools.ropewiki.socket};
+            fastcgi_pass unix:${config.services.phpfpm.pools.mediawiki.socket};
             fastcgi_index index.php;
             include ${config.services.nginx.package}/conf/fastcgi.conf;
           '';
@@ -469,22 +488,16 @@ in
     ];
 
     # --- schema migrations --------------------------------------------------------------
-    systemd.services.ropewiki-init = {
-      description = "Migrate the RopeWiki database";
-      wantedBy = [ "multi-user.target" ];
-      before = [ "phpfpm-ropewiki.service" ];
-      after = [ "mysql.service" ];
+    # services.mediawiki's unit, with its script replaced: the module's installs MediaWiki into an
+    # empty database through maintenance/run.php, which 1.39 does not have (nix/vm/dev-site.nix
+    # installs a development database itself, a real site restores a backup). What is left is
+    # the secret key and the migration.
+    systemd.services.mediawiki-init = {
       requires = [ "mysql.service" ];
       path = [ cfg.phpPackage ] ++ runtimePath;
       environment = removeAttrs phpEnv [ "PATH" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = user;
-        Group = user;
-        PrivateTmp = true;
-      };
-      script = ''
+      serviceConfig.RemainAfterExit = true;
+      script = lib.mkForce ''
         if ! test -e ${stateDir}/secret.key; then
           install -m 0600 /dev/null ${stateDir}/secret.key
           tr -dc A-Za-z0-9 </dev/urandom 2>/dev/null | head -c 64 > ${stateDir}/secret.key
@@ -502,8 +515,8 @@ in
     systemd.services.ropewiki-pages = mkIf (cfg.sitePages != null) {
       description = "Publish the site JavaScript and CSS as MediaWiki: pages";
       wantedBy = [ "multi-user.target" ];
-      after = [ "ropewiki-init.service" ];
-      requires = [ "ropewiki-init.service" ];
+      after = [ "mediawiki-init.service" ];
+      requires = [ "mediawiki-init.service" ];
       path = [
         cfg.phpPackage
         config.services.mysql.package
@@ -525,7 +538,7 @@ in
 
         # upload.py's orphan check: report, never delete.
         comm -23 \
-          <(mariadb --socket=${dbSocket} ropewiki -N -e "SELECT CONCAT('MediaWiki:', page_title) FROM page WHERE page_namespace = 8 AND page_title LIKE 'Common%'" | tr _ ' ' | sort) \
+          <(mariadb --socket=${dbSocket} ${dbName} -N -e "SELECT CONCAT('MediaWiki:', page_title) FROM page WHERE page_namespace = 8 AND page_title LIKE 'Common%'" | tr _ ' ' | sort) \
           <(ls ${cfg.sitePages} | tr _ ' ' | sort) \
           | sed 's/^/not in the build, left alone: /'
       '';
@@ -535,8 +548,8 @@ in
     systemd.services.ropewiki-searchd = mkIf cfg.search.enable {
       description = "Sphinx search daemon for RopeWiki";
       wantedBy = [ "multi-user.target" ];
-      after = [ "ropewiki-init.service" ];
-      requires = [ "ropewiki-init.service" ];
+      after = [ "mediawiki-init.service" ];
+      requires = [ "mediawiki-init.service" ];
       serviceConfig = sphinxUnit // {
         # system_start.sh builds the indexes once before starting searchd, and restarts it if it dies.
         ExecStartPre = pkgs.writeShellScript "ropewiki-sphinx-first-index" ''
@@ -552,8 +565,8 @@ in
     # webserver/html/ropewiki/extensions/SphinxSearch/sphinx.cron: every 30 minutes.
     systemd.services.ropewiki-sphinx-reindex = mkIf cfg.search.enable {
       description = "Rebuild RopeWiki Sphinx indexes";
-      after = [ "ropewiki-init.service" ];
-      requires = [ "ropewiki-init.service" ];
+      after = [ "mediawiki-init.service" ];
+      requires = [ "mediawiki-init.service" ];
       serviceConfig = sphinxUnit // {
         Type = "oneshot";
         ExecStart = "${sphinx}/bin/sphinxsearch-indexer --rotate --config ${sphinxConf} --all";

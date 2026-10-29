@@ -7,10 +7,12 @@
 #   + the repo's own overlay, webserver/html/ropewiki
 #   + the Dockerfile's patches
 #
-# The result is immutable and configuration free. Everything site specific
-# (hostname, database, secrets, tool paths) is injected at runtime by the
-# NixOS module through two PHP files named in environment variables, see the
-# LocalSettings.php / SiteSpecificSettings.php set up below.
+# The result is immutable and configuration free, and laid out like nixpkgs' `mediawiki`
+# (share/mediawiki) so that the upstream services.mediawiki module can run it. Everything site
+# specific (hostname, database, secrets, tool paths) is injected at runtime: the upstream module's
+# generated settings (MEDIAWIKI_CONFIG) before the repo's LocalSettings.php, and the NixOS module's
+# overrides (ROPEWIKI_OVERRIDES) after it, see the LocalSettings.php / SiteSpecificSettings.php
+# set up below.
 {
   lib,
   stdenvNoCC,
@@ -92,7 +94,7 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    root=$out/share/ropewiki
+    root=$out/share/mediawiki
     mkdir -p $root
     cp -r . $root
     chmod -R u+w $root
@@ -158,10 +160,10 @@ stdenvNoCC.mkDerivation {
     # --- Entry points ----------------------------------------------------------------
     # The repo's LocalSettings.php does `require_once SiteSpecificSettings.php` first and then
     # hardcodes a few Docker paths. Both files come from the NixOS module (see its comments):
-    # site values go in before, overrides are appended after.
+    # the settings services.mediawiki generates go in before, overrides are appended after.
     cat > SiteSpecificSettings.php <<'EOF'
     <?php
-    require getenv( 'ROPEWIKI_SITE_SETTINGS' );
+    require getenv( 'MEDIAWIKI_CONFIG' );
     EOF
     printf '\nrequire getenv( %s );\n' "'ROPEWIKI_OVERRIDES'" >> LocalSettings.php
 

@@ -58,3 +58,46 @@ Design notes live in [`docs/`](docs/); this is the checklist.
 - [ ] Try `services.nginx.virtualHosts.<host>.enableACME` against a real domain with the Let's
       Encrypt *staging* server (`security.acme.defaults.server`). Only self-signed HTTPS is
       exercised by a VM test, since a test VM can't reach a CA.
+
+## After the MediaWiki upgrade
+
+`services.ropewiki` runs on nixpkgs' `services.mediawiki`, but the site is on 1.39 (end of life)
+and that module is written for the release nixpkgs ships (1.46). It works with `webserver = "none"`
+and a few workarounds; these go away once the site moves to a current release.
+
+- [ ] **Use `pkgs.mediawiki` as the core** and attach extensions through
+      `services.mediawiki.extensions` (and `skins`) instead of copying them into our own tree. That
+      drops the core tarball and its hash from `mediawiki-pins.json`, the `*.REL1_39.patch`
+      files that no longer apply, and the `share/mediawiki` layout work in `packages/ropewiki.nix`.
+      Extensions installed with Composer (SMW, Maps, SRF) are not in nixpkgs and stay a derivation
+      of ours (`packages/composer-vendor.nix`); the others can stay pinned by `mediawiki-ext.nix`.
+      nixpkgs follows one release, so the extension pins move with it. Take nixpkgs' session-cache
+      patch (`keep-session-object-cache.diff`, update.php no longer logs everybody out) for free.
+- [ ] **Drop the `mediawiki-init` override** in `modules/ropewiki.nix` (it replaces the module's
+      script because that one runs `maintenance/run.php`, new in 1.40, and patches 1.46's
+      `CliInstaller`). Then: give `services.mediawiki.passwordFile` a real value (it is
+      `/dev/null` now), decide how the module's "install into an empty database" step and
+      `ropewiki-install` in `vm/dev-site.nix` fit together (probably one of them goes), and
+      re-check `update.php --skip-external-dependencies`, which the module passes and the override
+      does not.
+- [ ] **Replace `ropewiki-maintenance`** with the module's `mediawiki-maintenance` and
+      `mediawiki-update`, `-edit`, `-importDump`, ... (they are installed now but broken on 1.39).
+      Their configuration is `MEDIAWIKI_CONFIG` only, so first make that self-contained: today the
+      repo's `LocalSettings.php` is loaded from `SiteSpecificSettings.php` and the overrides come from
+      the `ROPEWIKI_OVERRIDES` environment variable, which only `ropewiki-maintenance` and the
+      units set. Put the overrides in `services.mediawiki.extraConfig` and require the settings
+      file from there, and `ropewiki-import` and the tests can call the new wrappers. Extension
+      scripts (`rebuildData.php`) go through `mediawiki-run`.
+- [ ] **Re-check what `services.mediawiki` generates** against the repo's `LocalSettings.php`
+      after the move: the module sets `$wgPingback`, `$wgAuthenticationTokenVersion` and others
+      that `siteSettings` pins to what the Docker site had (`$wgPingback = false`, token version
+      `null` so remember-me sessions survive the cutover), and loads MonoBook and Timeless unless
+      `skins` is forced empty as it is now. Read its generated file for new defaults at each nixpkgs bump.
+- [ ] **Keep `webserver = "none"`**: the module hardcodes `/w/` script and `/wiki/` article paths
+      (and, for nginx, its own locations), RopeWiki's URLs are at the root. Moving to the module's
+      virtual host would mean redirects for every page link on the web.
+- [ ] **Uploads**: the module's `uploadsDir` runs `chown -R` on every boot, which is minutes with
+      70 GB, so it is `null` and `imagesDir` is ours. Revisit if the module stops doing that.
+- [ ] Database rename for the cutover: the Docker site's database is `ropewiki`, `services.mediawiki`
+      insists on `mediawiki` (see `docs/backups.md`). Settle whether the restore rewrites the dump or
+      the production database keeps its name with `database.createLocally = false`.

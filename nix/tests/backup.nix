@@ -47,7 +47,7 @@
           refused(f"{gate} {action}", "Pre-switch check 'ropewiki-backup-fresh' failed")
 
       machine.wait_for_unit("multi-user.target")
-      machine.wait_for_unit("ropewiki-init.service")
+      machine.wait_for_unit("mediawiki-init.service")
       machine.succeed("mkfs.btrfs -q /dev/vdb && mkdir -p /srv/data && mount /dev/vdb /srv/data")
 
       # Nothing else may run a backup (or a catch-up run after the clock change) during the test.

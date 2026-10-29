@@ -38,7 +38,7 @@ files, and deploys are `nixos-rebuild`. Where the answer is no, the step is drop
 | `enable_tls`, `renew_certs`, `add_cert_cronjob` (certbot in the proxy container) | `services.nginx.virtualHosts.<hostName>.{enableACME,forceSSL}` with NixOS' `security.acme` (plain NixOS, no module code) |
 | `publish.sh`: tag and push five images, then create a git tag by hand | The flake revision and NixOS generations; tag releases in git only |
 | `.github/workflows/test-empty-site.yml` (build five images, restore empty schema, `curl`, push to ghcr) | `nix flake check` in CI, plus a binary cache so VM tests are not rebuilt every time |
-| `rw_helpers.sh` (`denter`, `dexec`, `dbquery`, `rwusers`, `findinpage`) | Their goals port to a small `ropewiki-sql` wrapper (`sudo -u ropewiki mariadb ropewiki`) plus the existing `ropewiki-maintenance`; `docker exec` plumbing is gone |
+| `rw_helpers.sh` (`denter`, `dexec`, `dbquery`, `rwusers`, `findinpage`) | Their goals port to a small `ropewiki-sql` wrapper (`sudo -u mediawiki mariadb mediawiki`) plus the existing `ropewiki-maintenance`; `docker exec` plumbing is gone |
 | "Exploring the system", docker logs, dangling volumes | `journalctl -u ...`, `/var/log/nginx`; no dangling volumes |
 
 # One-time cutover from Docker
@@ -46,7 +46,8 @@ files, and deploys are `nixos-rebuild`. Where the answer is no, the step is drop
 Not an ongoing process, but it needs a checklist, and parts of it can be rehearsed with the VM today:
 
 1. Provision the host: btrfs subvolume layout, NixOS config with `services.ropewiki`, DNS pointing at it (ACME needs it).
-2. Restore the latest SQL backup with `--one-database ropewiki`. **Verify first** that a real
+2. Restore the latest SQL backup with `--one-database ropewiki`, into a database called `mediawiki`
+   (see docs/backups.md for the rename). **Verify first** that a real
    MySQL 5.7 dump loads cleanly into MariaDB 11.4 (charset `utf8`, `varbinary` columns, `_binary`
    literals); if it does not, MySQL 8.4 (`mysql84` is in nixpkgs) is the fallback.
 3. `rsync` the images (18+ GB) into `imagesDir`; for a short freeze use `$wgReadOnlyFile` on the old

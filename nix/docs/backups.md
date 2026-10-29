@@ -46,6 +46,9 @@ Sources: `backup_manager/` (Dockerfile, `backup.cron`, `scripts/backup_mysql.sh`
   `CREATE DATABASE/USE` lines for every database. A plain `mysql ropewiki < dump` replays all of
   it. **To verify against a real backup**; it is harmless into the same MySQL 5.7 but wrong into
   MariaDB. The fix is `--one-database ropewiki` on restore (and dumping only that database).
+  The Nix module's database is called `mediawiki` (the name `services.mediawiki` gives it), so a dump
+  from the Docker site, which says ``USE `ropewiki` ``, has to be rewritten on the way in
+  (`sed 's/`ropewiki`/`mediawiki`/'` before `--one-database mediawiki`).
 
 ## Decisions so far
 
@@ -144,7 +147,7 @@ it), and check a few invariants: page and revision counts within a tolerance of 
 - *Roll back this machine to a snapshot:* stop the site, replace `/srv/ropewiki` with a writable
   snapshot of the chosen one, start. Seconds. This is also the rollback for a failed upgrade.
 - *New machine, or different database version:* create the empty database, load the SQL export with
-  `--one-database ropewiki`, restore the uploads, start (the module runs `update.php`).
+  `--one-database ropewiki` (the module's database is `mediawiki`, see above), restore the uploads, start (the module runs `update.php`).
 - *Lost disk:* create a volume from the provider's snapshot; the btrfs snapshots are inside it.
 
 **6. Developer data.** Today developers get full production dumps ("distributed to developers

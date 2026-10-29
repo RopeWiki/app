@@ -112,7 +112,7 @@ in
         assert image["url"].startswith("https://prod.example/images/"), image
         assert image["thumburl"].startswith("https://prod.example/images/thumb/"), image
         # and nothing was rendered here for it
-        machine.fail("find /var/lib/ropewiki/images/thumb -type f | grep .")
+        machine.fail("find /var/lib/mediawiki/images/thumb -type f | grep .")
 
     with subtest("/images/ for paths MediaWiki does not know are fetched from the other site"):
         assert get("/images/a/ab/Test.png") == "the file on the other site"
