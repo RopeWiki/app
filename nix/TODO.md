@@ -30,6 +30,11 @@ Design notes live in [`docs/`](docs/); this is the checklist.
 - [ ] **Real-data upgrade tests**: fixture from the sanitized export, old to new in a VM, Playwright
       suite, log scan. [docs/real-data-upgrade-tests.md](docs/real-data-upgrade-tests.md)
 - [ ] **Cutover from Docker** checklist. [docs/docker-process-review.md](docs/docker-process-review.md)
+- [x] **Site JavaScript and CSS** from the `commonjs`/`commoncss` flake inputs, published by
+      `ropewiki-pages.service`. Still to do: run the commonjs Playwright tests against the VM, and
+      compare the live `MediaWiki:Common*` pages with the repositories before the first switch
+      (anything edited on the live wiki and never committed is lost). The maintenance banner can no
+      longer be pasted into `Common.js`; use `$wgReadOnlyFile` (see above).
 - [ ] A job runner (`ropewiki-jobs.service`, `runJobs.php --wait`); nothing here configures one, so
       MediaWiki runs jobs inside web requests.
 - [ ] A mail relay (postfix with upstream SMTP credentials). The module hardcodes `localhost:25`.

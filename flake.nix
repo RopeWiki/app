@@ -3,14 +3,31 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+  # The wiki's JavaScript and CSS live in their own repositories and are published as
+  # MediaWiki: pages; `nix flake update commonjs commoncss` takes new versions.
+  inputs.commonjs = {
+    url = "github:RopeWiki/commonjs";
+    flake = false;
+  };
+  inputs.commoncss = {
+    url = "github:RopeWiki/commoncss";
+    flake = false;
+  };
+
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      commonjs,
+      commoncss,
+    }:
     let
       inherit (nixpkgs) lib;
 
       overlay = final: _prev: {
         # MediaWiki core and the extensions webserver/Dockerfile clones; see mediawiki-pins.json.
         mediawikiExtensions = final.callPackage ./nix/packages/mediawiki-ext.nix { };
+        ropewikiSitePages = final.callPackage ./nix/packages/site-pages.nix { inherit commonjs commoncss; };
         ropewiki = final.callPackage ./nix/packages/ropewiki.nix {
           repoRoot = ./.;
           codebaseVersion = self.rev or self.dirtyRev or "unknown";
@@ -77,6 +94,7 @@
           default = pkgs.ropewiki;
           inherit (pkgs) ropewiki;
           inherit (pkgs.ropewiki.passthru) composerVendor;
+          site-pages = pkgs.ropewikiSitePages;
           mediawiki-extensions = pkgs.mediawikiExtensions;
           update-mediawiki-ext = pkgs.mediawikiExtensions.updateScript;
         }

@@ -1,5 +1,37 @@
 {
   "nodes": {
+    "commoncss": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778874934,
+        "narHash": "sha256-hAvKMtmgqbV/LofrLs768RfF4co7JMowrrVSl9hii8s=",
+        "owner": "RopeWiki",
+        "repo": "commoncss",
+        "rev": "621c4968c900f015787ec89d8745f11678db35e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "RopeWiki",
+        "repo": "commoncss",
+        "type": "github"
+      }
+    },
+    "commonjs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780687977,
+        "narHash": "sha256-BnzxVyIqE2FldTRcZNJMxFJ3iXrsGGtArGYYjGkdcY0=",
+        "owner": "RopeWiki",
+        "repo": "commonjs",
+        "rev": "db1baca512f3f4b17b13f6fcecc06086c173bbdd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "RopeWiki",
+        "repo": "commonjs",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1793110635,
@@ -18,6 +50,8 @@
     },
     "root": {
       "inputs": {
+        "commoncss": "commoncss",
+        "commonjs": "commonjs",
         "nixpkgs": "nixpkgs"
       }
     }

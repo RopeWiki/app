@@ -226,6 +226,19 @@ in
       description = "Run Sphinx for site search (SphinxSearch extension).";
     };
 
+    sitePages = mkOption {
+      type = types.nullOr types.package;
+      default = pkgs.ropewikiSitePages;
+      defaultText = lib.literalExpression "pkgs.ropewikiSitePages";
+      description = ''
+        Directory of wiki pages, one file per page named by its title (`MediaWiki:Common.js`,
+        `MediaWiki:Common.css`, ...), that `ropewiki-pages.service` writes into the wiki on every
+        start. By default the site's JavaScript and CSS from the `commonjs` and `commoncss` flake
+        inputs. A page edited by hand is overwritten the next time the service runs. `null` leaves
+        the pages alone (an imported database keeps its own).
+      '';
+    };
+
     openFirewall = mkOption {
       type = types.bool;
       default = false;
@@ -389,6 +402,42 @@ in
         # Same as `maintenance/update.php --quick` in .github/workflows/test-empty-site.yml;
         # for SMW this also (re)creates its tables.
         php -d memory_limit=-1 ${root}/maintenance/update.php --quick
+      '';
+    };
+
+    # --- site JavaScript and CSS ---------------------------------------------------------
+    # What commonjs/upload.py and commoncss/upload.py do over the API, from the store instead. A
+    # page whose text is unchanged gets no new revision, so running this on every start is free.
+    # The unit changes whenever the pages do, so a `switch` that brings new ones runs it again.
+    systemd.services.ropewiki-pages = mkIf (cfg.sitePages != null) {
+      description = "Publish the site JavaScript and CSS as MediaWiki: pages";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "ropewiki-init.service" ];
+      requires = [ "ropewiki-init.service" ];
+      path = [
+        cfg.phpPackage
+        config.services.mysql.package
+      ]
+      ++ runtimePath;
+      environment = removeAttrs phpEnv [ "PATH" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = user;
+        Group = user;
+        PrivateTmp = true;
+      };
+      script = ''
+        for page in ${cfg.sitePages}/*; do
+          php -d memory_limit=-1 ${root}/maintenance/edit.php \
+            -u 'RopeWiki deploy' -s 'nix sync' --bot "$(basename "$page")" < "$page"
+        done
+
+        # upload.py's orphan check: report, never delete.
+        comm -23 \
+          <(mariadb --socket=${dbSocket} ropewiki -N -e "SELECT CONCAT('MediaWiki:', page_title) FROM page WHERE page_namespace = 8 AND page_title LIKE 'Common%'" | tr _ ' ' | sort) \
+          <(ls ${cfg.sitePages} | tr _ ' ' | sort) \
+          | sed 's/^/not in the build, left alone: /'
       '';
     };
 
