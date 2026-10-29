@@ -130,6 +130,22 @@
           assert get("/images/probe.php").startswith("<?php"), "an uploaded .php file was not served as plain text"
           machine.succeed(f"rm {images}/probe.php")
 
+      with subtest("ropewiki-help lists the tools, ropewiki-logs shows the logs"):
+          help_text = machine.succeed("ropewiki-help")
+          for name in ["ropewiki-help", "ropewiki-maintenance", "ropewiki-import", "ropewiki-logs", "nginx-access"]:
+              assert name in help_text, (name, help_text)
+          assert "ropewiki-backup" not in help_text, "backup is off, its commands should not be listed"
+          # every command it names exists
+          for name in re.findall(r"^  (ropewiki-[a-z-]+)", help_text, re.M):
+              machine.succeed(f"command -v {name}")
+          # every log it names shows something (the units are the ones this machine runs)
+          for name in re.findall(r"^  ([a-z-]+)$", help_text.split("Logs\n", 1)[1], re.M):
+              out = machine.succeed(f"ropewiki-logs {name} -n 5 --no-pager" if name != "nginx-access" else "ropewiki-logs nginx-access -n 5")
+              assert out.strip(), f"no {name} log"
+          assert "GET /Main_Page" in machine.succeed("ropewiki-logs nginx-access -n 200")
+          assert machine.succeed("ropewiki-logs --no-pager -n 3").strip()  # no name means all
+          assert "usage: ropewiki-logs" in machine.fail("ropewiki-logs nonsense 2>&1")  # prints usage, exits 1
+
       with subtest("the site JavaScript and CSS are published as MediaWiki: pages"):
           pages = "${nodes.machine.services.ropewiki.sitePages}"
           names = machine.succeed(f"ls {pages}").split("\n")[:-1]

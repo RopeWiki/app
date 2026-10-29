@@ -35,7 +35,11 @@ The module's own `mediawiki-*` maintenance commands do not work with MediaWiki 1
 The scheme of the site's URLs follows the nginx virtual host (https when it has `forceSSL`,
 `addSSL` or `onlySSL`). `mode = "development"` prints PHP errors into the page like the Docker
 setup did; the default, `production`, hides errors and what is running. Maintenance scripts, core and extensions:
-`ropewiki-maintenance update.php --quick`, `ropewiki-maintenance rebuildData.php`. To load pages
+`ropewiki-maintenance update.php --quick`, `ropewiki-maintenance rebuildData.php`. `ropewiki-help` lists
+every command this machine has (the backup commands appear when backups are on), and
+`ropewiki-logs [nginx|php|db|search|init|pages|nginx-access|all] [-f]` shows the web server, php-fpm,
+MariaDB, ... logs. Modules add their own entries to both with `services.ropewiki.help.commands` and
+`services.ropewiki.help.logs`. To load pages
 exported from the live site (Special:Export with "Include templates"): `ropewiki-import export.xml`
 (runs `importDump.php`, `rebuildData.php`, `runJobs.php`).
 

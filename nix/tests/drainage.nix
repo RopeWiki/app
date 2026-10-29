@@ -36,6 +36,7 @@
 
       machine.wait_for_unit("multi-user.target")
       machine.wait_for_unit("ropewiki-pages.service")
+      assert "rw-drainage.service" in machine.succeed("ropewiki-help")  # its log is listed
       machine.wait_for_open_port(443)
 
       with subtest("until the index exists nothing listens, nothing has failed, and the page just gets an error"):

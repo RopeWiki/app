@@ -66,6 +66,20 @@ in
       backup
       fresh
     ];
+    services.ropewiki.help = {
+      commands = {
+        "ropewiki-backup" = "Take a backup now (as root): snapshots and the day's SQL export.";
+        "ropewiki-backup-fresh [SECONDS]" =
+          "Fail unless a backup finished within SECONDS (default 3600); also gates nixos-rebuild.";
+      };
+      logs.backup = {
+        description = "Snapshots, SQL exports and the freshness monitor";
+        units = [
+          "ropewiki-backup.service"
+          "ropewiki-backup-monitor.service"
+        ];
+      };
+    };
 
     systemd.services.ropewiki-backup = {
       description = "RopeWiki backup: btrfs snapshots and daily SQL export";

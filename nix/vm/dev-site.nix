@@ -32,6 +32,13 @@ in
   # install.php refuses to run when a LocalSettings.php exists and would write its own, so it
   # looks for one at a path that is not there and writes the result to a directory that is thrown
   # away (the site's settings come from the module, see siteSettings in modules/ropewiki.nix).
+  services.ropewiki.help.logs.install = {
+    description = "Installing MediaWiki into a new database; the Admin login";
+    units = [
+      "ropewiki-install.service"
+      "ropewiki-dev-admin.service"
+    ];
+  };
   systemd.services.ropewiki-install = {
     description = "Install MediaWiki into a new RopeWiki database";
     wantedBy = [ "multi-user.target" ];

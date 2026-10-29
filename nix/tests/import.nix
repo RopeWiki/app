@@ -76,7 +76,9 @@
 
     with subtest("a real page, exported from the live site with its templates, renders"):
         machine.copy_from_host("${./fixtures/lytle-creek.xml}", "/tmp/lytle-creek.xml")
-        machine.succeed("ropewiki-import /tmp/lytle-creek.xml")
+        out = machine.succeed("ropewiki-import /tmp/lytle-creek.xml 2>&1")
+        # the page's Lua modules run while the import rebuilds its data; the tools they call must exist
+        assert "command not found" not in out, out
         page = get("/Lytle_Creek_(Middle_Fork)")
         # what the page links to that does not exist, grouped by namespace (the export only has
         # templates and modules: properties, categories, forms and files are not in it)

@@ -48,6 +48,11 @@
 
       machine.wait_for_unit("multi-user.target")
       machine.wait_for_unit("mediawiki-init.service")
+
+      with subtest("ropewiki-help lists the backup commands and log"):
+          text = machine.succeed("ropewiki-help")
+          assert "ropewiki-backup-fresh [SECONDS]" in text and "ropewiki-backup.service" in text, text
+          machine.succeed("ropewiki-logs backup -n 1 --no-pager")
       machine.succeed("mkfs.btrfs -q /dev/vdb && mkdir -p /srv/data && mount /dev/vdb /srv/data")
 
       # Nothing else may run a backup (or a catch-up run after the clock change) during the test.

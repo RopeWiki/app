@@ -62,7 +62,8 @@ let
   # installer in mw-config/, LocalSettings.php, ...) answers 404.
   phpEntryPoints = "index|load|api|rest|thumb|thumb_handler|opensearch_desc|img_auth|kml_to_gpx";
 
-  # Programs MediaWiki and its extensions run: thumbnails, PDFs, KML to GPX, diffs.
+  # Programs MediaWiki and its extensions run: thumbnails, PDFs, KML to GPX, diffs, and Scribunto's
+  # `getconf CLK_TCK` (it falls back to 100 without, but every Lua call prints "command not found").
   runtimePath = with pkgs; [
     imagemagick
     ghostscript
@@ -70,6 +71,7 @@ let
     gpsbabel
     diffutils
     coreutils
+    getconf
   ];
 
   # The immutable site tree reads its configuration from PHP files named in the environment:
@@ -177,6 +179,88 @@ let
     ${maintenance}/bin/ropewiki-maintenance rebuildData.php
     ${maintenance}/bin/ropewiki-maintenance runJobs.php
   '';
+
+  # --- ropewiki-help and ropewiki-logs ------------------------------------------------------
+  # The lists come from services.ropewiki.help, which the other modules (backup, drainage, ...) add
+  # their own commands and logs to, so the help always matches what is installed.
+
+  commandEntries = lib.concatStringsSep "\n\n" (
+    lib.mapAttrsToList (usage: text: "  ${usage}\n      ${text}") cfg.help.commands
+  );
+
+  logEntries = lib.concatStringsSep "\n\n" (
+    lib.mapAttrsToList (
+      name: log: "  ${name}\n      ${log.description} (${lib.concatStringsSep ", " log.units})"
+    ) cfg.help.logs
+  );
+
+  logsUsage = ''
+    usage: ropewiki-logs [NAME] [OPTIONS]
+
+    Shows the last 200 lines of a log; OPTIONS go to journalctl (-f to follow, --since -1h,
+    -n 1000, -p err, ...), or to tail for nginx-access. NAME defaults to all.
+    Needs root or the systemd-journal group.
+  '';
+  logsList = ''
+    ${logEntries}
+
+      nginx-access
+          Every request nginx served (/var/log/nginx/access.log; OPTIONS go to tail)
+
+      all
+          Every log above except nginx-access
+  '';
+  logsText = pkgs.writeText "ropewiki-logs.txt" ''
+    ${logsUsage}
+    ${logsList}
+  '';
+
+  helpText = pkgs.writeText "ropewiki-help.txt" ''
+    RopeWiki on ${cfg.hostName}: MediaWiki ${cfg.package.mwVersion} with Semantic MediaWiki on NixOS.
+
+    Commands
+
+    ${commandEntries}
+
+    Note: the mediawiki-* commands (from services.mediawiki) do not work with MediaWiki 1.39;
+    use ropewiki-maintenance.
+
+    Logs
+
+    ${logsUsage}
+    ${logsList}
+  '';
+
+  helpCommand = pkgs.writeShellScriptBin "ropewiki-help" ''
+    exec ${pkgs.coreutils}/bin/cat ${helpText}
+  '';
+
+  logsCommand =
+    let
+      unitArgs = units: lib.concatMapStringsSep " " (u: "-u ${lib.escapeShellArg u}") units;
+      cases = lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (name: log: "${name}) units=(${unitArgs log.units}) ;;") cfg.help.logs
+      );
+      allUnits = lib.concatMap (log: log.units) (lib.attrValues cfg.help.logs);
+    in
+    pkgs.writeShellScriptBin "ropewiki-logs" ''
+      name=all
+      case "''${1:-}" in
+        -h|--help|help) exec ${pkgs.coreutils}/bin/cat ${logsText} ;;
+        ""|-*) ;;
+        *) name=$1; shift ;;
+      esac
+      case "$name" in
+        nginx-access) exec ${pkgs.coreutils}/bin/tail -n 200 "$@" /var/log/nginx/access.log ;;
+        all) units=(${unitArgs allUnits}) ;;
+        ${cases}
+        *)
+          echo "ropewiki-logs: no log called $name" >&2
+          ${pkgs.coreutils}/bin/cat ${logsText} >&2
+          exit 1 ;;
+      esac
+      exec ${config.systemd.package}/bin/journalctl "''${units[@]}" -n 200 "$@"
+    '';
 
   # --- Sphinx ----------------------------------------------------------------------------
 
@@ -306,6 +390,38 @@ in
         browser check in front of everything, /images/ included); MediaWiki's own links, which the
         browser fetches itself, work regardless. See nix/docs/image-proxy.md.
       '';
+    };
+
+    help = {
+      commands = mkOption {
+        type = types.attrsOf types.str;
+        default = { };
+        example = {
+          "ropewiki-backup" = "Take a backup now";
+        };
+        description = ''
+          What `ropewiki-help` lists under Commands: the usage line and one sentence. The module and
+          the other `services.ropewiki` modules add their own; add yours here.
+        '';
+      };
+      logs = mkOption {
+        type = types.attrsOf (
+          types.submodule {
+            options = {
+              description = mkOption {
+                type = types.str;
+                description = "What is in this log.";
+              };
+              units = mkOption {
+                type = types.listOf types.str;
+                description = "The systemd units whose journal `ropewiki-logs NAME` shows.";
+              };
+            };
+          }
+        );
+        default = { };
+        description = "The logs `ropewiki-logs` can show, by name. `ropewiki-help` lists them.";
+      };
     };
 
     openFirewall = mkOption {
@@ -580,9 +696,55 @@ in
       };
     };
 
+    services.ropewiki.help = {
+      commands = {
+        "ropewiki-help" = "This list.";
+        "ropewiki-maintenance SCRIPT [ARGS...]" =
+          "Run a MediaWiki or extension maintenance script (update.php, edit.php, ...) as the mediawiki user.";
+        "ropewiki-import EXPORT.xml [MORE.xml...]" =
+          "Load Special:Export files, then rebuild Semantic MediaWiki's data and run the jobs.";
+        "ropewiki-logs [NAME] [OPTIONS]" = "Show the nginx, php-fpm, MariaDB, ... logs, see below.";
+      };
+      logs = {
+        nginx = {
+          description = "Web server: errors and start-up";
+          units = [ "nginx.service" ];
+        };
+        php = {
+          description = "php-fpm: MediaWiki's PHP errors and warnings";
+          units = [ "phpfpm-mediawiki.service" ];
+        };
+        db = {
+          description = "MariaDB";
+          units = [ "mysql.service" ];
+        };
+        init = {
+          description = "The database migration that runs at every start";
+          units = [ "mediawiki-init.service" ];
+        };
+      }
+      // lib.optionalAttrs cfg.search.enable {
+        search = {
+          description = "Sphinx search daemon and its reindex job";
+          units = [
+            "ropewiki-searchd.service"
+            "ropewiki-sphinx-reindex.service"
+          ];
+        };
+      }
+      // lib.optionalAttrs (cfg.sitePages != null) {
+        pages = {
+          description = "Publishing the site JavaScript and CSS as MediaWiki: pages";
+          units = [ "ropewiki-pages.service" ];
+        };
+      };
+    };
+
     environment.systemPackages = [
       maintenance
       importer
+      helpCommand
+      logsCommand
     ];
   };
 }

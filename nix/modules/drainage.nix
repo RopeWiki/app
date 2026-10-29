@@ -98,6 +98,11 @@ in
       }
     ];
 
+    services.ropewiki.help.logs.drainage = {
+      description = "The drainage-area lookup and the build of its index";
+      units = [ "rw-drainage.service" ] ++ lib.optional build "rw-drainage-index.service";
+    };
+
     users.users.${user} = {
       group = user;
       isSystemUser = true;
