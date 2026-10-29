@@ -52,8 +52,10 @@ $wgEnotifWatchlist     = true;
 # MySQL specific settings
 $wgDBprefix         = "";
 
-# MySQL table options to use during installation or update
-$wgDBTableOptions   = "ENGINE=InnoDB, DEFAULT CHARSET=utf8";
+# MySQL table options to use during installation or update. binary is what MediaWiki's installer
+# uses and what Semantic MediaWiki follows; utf8 (utf8mb3) cannot store 4-byte characters such as
+# emoji. Only tables created from now on are affected; SMW still makes a few columns utf8 itself.
+$wgDBTableOptions   = "ENGINE=InnoDB, DEFAULT CHARSET=binary";
 
 # Experimental charset support for MySQL 5.0.
 $wgDBmysql5 = false;

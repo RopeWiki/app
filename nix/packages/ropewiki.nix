@@ -36,10 +36,7 @@ let
   # editing nix/ or docs does not rebuild the site.
   repoSrc = lib.fileset.toSource {
     root = repoRoot;
-    fileset = lib.fileset.unions [
-      (repoRoot + "/webserver")
-      (repoRoot + "/database/empty_schema.sql")
-    ];
+    fileset = repoRoot + "/webserver";
   };
   overlay = "${repoSrc}/webserver/html/ropewiki";
 
@@ -195,7 +192,6 @@ stdenvNoCC.mkDerivation {
       ;
     # Files the NixOS module consumes straight from the repository.
     sphinxConfTemplate = "${overlay}/extensions/SphinxSearch/sphinx.conf";
-    emptySchema = "${repoSrc}/database/empty_schema.sql";
     robotsDir = "${repoSrc}/webserver/robots";
   };
 

@@ -52,7 +52,19 @@
         host.port = 8443;
         guest.port = 443;
       }
+      # Not 22: QEMU runs as the user, who can't bind a privileged port.
+      #   ssh -p 2222 root@localhost   (password: root)
+      {
+        from = "host";
+        host.port = 2222;
+        guest.port = 22;
+      }
     ];
+  };
+  # Only the `nix run .#vm` variant takes passwords: the image and the tests keep sshd's defaults.
+  virtualisation.vmVariant.services.openssh.settings = {
+    PermitRootLogin = "yes";
+    PasswordAuthentication = true;
   };
 
   # `nix build .#image` (system.build.images.qemu): a qcow2 disk for any QEMU/KVM host.

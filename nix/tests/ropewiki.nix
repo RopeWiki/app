@@ -3,7 +3,7 @@
 #   nix build .#checks.x86_64-linux.ropewiki
 #   nix run   .#checks.x86_64-linux.ropewiki.driverInteractive     # for a Python shell
 #
-# The Nix counterpart of .github/workflows/test-empty-site.yml (an empty site renders), plus
+# The Nix counterpart of .github/workflows/test-empty-site.yml (a new site renders), plus
 # HTTPS and the production-mode hardening. Every file in this directory becomes a check.
 {
   name = "ropewiki";
@@ -36,9 +36,20 @@
       # on ext4 the NOCOW flag on the MariaDB directory (a btrfs thing) must be harmless
       assert machine.succeed("systemctl --failed --no-legend").strip() == "", machine.succeed("systemctl --failed")
 
-      with subtest("front page renders from the empty schema"):
+      with subtest("front page renders on a database MediaWiki installed itself"):
           html = get("/Main_Page")
-          assert "This is a blank copy of ropewiki" in html, html[:2000]
+          assert "MediaWiki has been installed" in html, html[:2000]
+
+      with subtest("tables are binary; utf8 only where MediaWiki or SMW ask for it"):
+          # 4-byte characters (emoji) do not fit utf8mb3, so binary is the default (see
+          # $wgDBTableOptions in LocalSettings.php). MediaWiki's searchindex is MyISAM utf8
+          # because MySQL fulltext indexes need text columns; SMW makes its case-insensitive
+          # columns utf8.
+          db = "mariadb --batch --skip-column-names information_schema -e"
+          tables = machine.succeed(f"{db} \"SELECT table_name, table_collation FROM tables WHERE table_schema = 'ropewiki' AND table_collation <> 'binary' AND table_name <> 'searchindex'\"")
+          assert tables.strip() == "", tables
+          columns = machine.succeed(f"{db} \"SELECT table_name, column_name, collation_name FROM columns WHERE table_schema = 'ropewiki' AND collation_name IS NOT NULL AND collation_name <> 'binary' AND table_name <> 'searchindex' ORDER BY 1, 2\"")
+          assert all(l.startswith("smw_") for l in columns.splitlines()), columns
 
       with subtest("the extensions the site depends on are loaded"):
           info = json.loads(get("/api.php?action=query&meta=siteinfo&siprop=extensions&format=json"))

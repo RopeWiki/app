@@ -1,0 +1,55 @@
+--- a/commonjs/lib/ui/ui.js
++++ b/commonjs/lib/ui/ui.js
+@@ -477,6 +477,7 @@
+                 s = str.indexOf(':', s);
+                 if (s < 0) return "";
+                 var e = str.indexOf(' ', s);
++                if (e < 0) e = str.length; // the number ends the text: substring(s, -1) would return the wrong part
+                 return str.substring(s + 1, e);
+             }
+ 
+@@ -487,13 +488,12 @@
+                     var w = "";
+                     if (data && data.list && data.list.length > 0) {
+                         var str = data.list[0];
+-                        var num = parseInt(extractVal(str, 'Drain'));
++                        // The service that replaced RWServer sends the area itself (km2, to a tenth);
++                        // RWServer only sent it inside the text, as in " O1 L4 Drainage:4km2 ".
++                        var num = typeof data.drainage_km2 === 'number' ? data.drainage_km2 : parseFloat(extractVal(str, 'Drain'));
+                         if (!isNaN(num)) {
+-                            if (metric)
+-                                w = Math.round(num) + "km<sup>2</sup>";
+-                            else
+-                                w = Math.round(num * 0.386) + "mi<sup>2</sup>";
+-                            w = '<span class="umi2 notranslate">~' + w + '</span>';
++                            // udrain keeps the exact km2 for convertUnitElements (see localization.js)
++                            w = '<span class="udrain notranslate" data-km2="' + num + '">' + drainStr(num) + '</span>';
+                             if (num > 100)
+                                 w += '<hr class="cicons" id="cd5" title="May massively flood during heavy rains and remain flooded for many days afterwards">';
+                             else if (num > 50)
+--- a/commonjs/lib/localization.js
++++ b/commonjs/lib/localization.js
+@@ -53,6 +53,11 @@
+     texts = element.getElementsByClassName('umi2');
+     for (i = 0; i < texts.length; i++)
+         texts[i].innerHTML = uconv(texts[i].innerHTML, mi2Str);
++
++    // The exact area is kept in km2, so that switching units back and forth does not compound rounding.
++    texts = element.getElementsByClassName('udrain');
++    for (i = 0; i < texts.length; i++)
++        texts[i].innerHTML = drainStr(Number(texts[i].getAttribute('data-km2')));
+ }
+ 
+ function adjustHtmlStringForMetric(txt) {
+@@ -163,6 +168,11 @@
+ }
+ 
+ // See uconv below
++// Upstream drainage area of a canyon, always to the tenth: "~3.6km2" or "~1.4mi2".
++function drainStr(km2) {
++    return "~" + (metric ? km2.toFixed(1) + "km" : (km2 * mi2tokm2).toFixed(1) + "mi") + "<sup>2</sup>";
++}
++
+ function mi2Str(miles2, space) { //square miles
+     if (typeof miles2 == "undefined" || miles2 === null) return ""; //empty 
+ 

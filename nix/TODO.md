@@ -4,9 +4,9 @@ Design notes live in [`docs/`](docs/); this is the checklist.
 
 ## Decisions to make / things to find out
 
-- [ ] **What really uses the Luca server?** Count `/luca` hits in the production proxy log, check
-      the `{{RWServerUrl}}` template and `PDFScript`. Then replace PDF export and the waterflow
-      lookup with new projects. [docs/luca-server.md](docs/luca-server.md)
+- [ ] **What else uses the Luca server?** The drainage badge is replaced (below). Count `/luca`
+      hits in the production proxy log, check the `{{RWServerUrl}}` template and `PDFScript`, then
+      replace PDF export with a new project. [docs/luca-server.md](docs/luca-server.md)
 - [ ] **Cloud provider.** The repo doesn't say where the main site runs (only that the Luca server
       is on AWS, and that a "cloud backup" key pulls backups). Once known: build that provider's
       VM image (`nix build .#image` is a generic qcow2; `system.build.images` has `amazon`,
@@ -35,6 +35,15 @@ Design notes live in [`docs/`](docs/); this is the checklist.
       compare the live `MediaWiki:Common*` pages with the repositories before the first switch
       (anything edited on the live wiki and never committed is lost). The maintenance banner can no
       longer be pasted into `Common.js`; use `$wgReadOnlyFile` (see above).
+- [ ] **Real pages in the import test**: `tests/fixtures/lytle-creek.xml` is one real page with its
+      templates and modules. Export what it still lacks (the 55 `Has_*` and other `Property:` pages
+      it sets, `Form:Canyon`, its categories, the region pages) and add it, so SMW types and queries
+      are tested too. Then check the licence of the content before the fixture is published.
+- [x] **Drainage-area badge** (`services.ropewiki.drainage`, opt-in) replaces the Luca server's
+      `waterflow=winfo=` request with NHDPlus V2.1. [docs/drainage.md](docs/drainage.md)
+- [ ] **Drainage, the rest**: build the index from the real NHDPlus download and compare it with
+      production (comid 22554664 must round to 4 km²), send the two `site-pages-*.patch` changes to commonjs, and
+      enable it on the real host. Alaska/Hawaii, if wanted.
 - [ ] A job runner (`ropewiki-jobs.service`, `runJobs.php --wait`); nothing here configures one, so
       MediaWiki runs jobs inside web requests.
 - [ ] A mail relay (postfix with upstream SMTP credentials). The module hardcodes `localhost:25`.

@@ -28,8 +28,10 @@ That gives nginx + php-fpm 8.3, MariaDB (unix-socket auth, no passwords), Sphinx
 database migration (`update.php`) on every start. Restore a backup into the `ropewiki` database.
 The scheme of the site's URLs follows the nginx virtual host (https when it has `forceSSL`,
 `addSSL` or `onlySSL`). `mode = "development"` prints PHP errors into the page like the Docker
-setup did; the default, `production`, hides errors and what is running. Maintenance scripts:
-`ropewiki-maintenance update.php --quick`.
+setup did; the default, `production`, hides errors and what is running. Maintenance scripts, core and extensions:
+`ropewiki-maintenance update.php --quick`, `ropewiki-maintenance rebuildData.php`. To load pages
+exported from the live site (Special:Export with "Include templates"): `ropewiki-import export.xml`
+(runs `importDump.php`, `rebuildData.php`, `runJobs.php`).
 
 On a real host with btrfs, `services.ropewiki.backup.enable = true` adds hourly snapshots of
 `services.ropewiki.backup.subvolumes` (default `[ "/" ]`), a daily SQL export, and a check that
@@ -46,14 +48,22 @@ a switch to a new version publishes it. Take new versions with
 not know about (`MediaWiki:Common*`) are reported in the journal and left alone.
 `services.ropewiki.sitePages = null` turns this off.
 
+`services.ropewiki.drainage.enable = true` serves the "~N mi²" drainage area on canyon pages
+(`/luca/rwr?waterflow=winfo=`, which the Luca server used to answer) from NHDPlus; the first start
+downloads 7.8 GB to build its index. See `docs/drainage.md`.
+
 | Command | What it does |
 |---|---|
 | `nix build .#ropewiki` | the site tree: MediaWiki 1.39 + extensions + this repo's overlay and patches |
-| `nix run .#vm` | boots a VM running the site: https://localhost:8443 (self-signed), http://localhost:8080 |
+| `nix run .#vm` | boots a VM running the site: https://localhost:8443 (self-signed), http://localhost:8080; wiki login `Admin` / `admin` (sysop, bureaucrat; the VM drops MediaWiki's password policy), console login `root` / `root` |
 | `nix build .#image` | the same machine as a bootable qcow2 disk image |
 | `nix build .#checks.x86_64-linux.ropewiki` | VM test: empty site renders, extensions load, HTTPS, production hardening, Sphinx stays up, the JavaScript and CSS pages are published |
+| `nix build .#checks.x86_64-linux.import` | VM test: `ropewiki-import` loads Special:Export files; a made-up fixture and a real page (Lytle Creek) render with their templates and properties |
 | `nix build .#checks.x86_64-linux.backup` | VM test on a real btrfs disk: snapshots, retention, export, upgrade gate |
 | `nix build .#checks.x86_64-linux.nocow` | VM test: on btrfs, MariaDB's data directory and files are NOCOW |
+| `nix build .#checks.x86_64-linux.drainage` | VM test: the drainage-area lookup behind nginx (`/luca/rwr?waterflow=winfo=`), loopback only, starts when its index appears |
+| `nix build .#checks.x86_64-linux.drainage-index` | VM test: downloads, extracts and indexes a made-up NHDPlus archive, rebuilds on demand |
+| `nix build .#rw-drainage` | the drainage lookup program; building it runs its unit tests |
 | `nix build .#site-pages` | the JavaScript and CSS pages, one file per page title |
 | `nix run .#update-mediawiki-ext` | re-pin MediaWiki core and every git-cloned extension |
 
@@ -71,9 +81,13 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
   the `outputHash`.
 - `packages/site-pages.nix`: builds the `MediaWiki:` JavaScript and CSS pages from the `commonjs`
   and `commoncss` flake inputs.
-- `modules/ropewiki.nix`: the NixOS module. `modules/backup.nix`: the opt-in backup service and
+- `packages/rw-drainage.nix` + `packages/rw-drainage/`: the drainage lookup (Python, GDAL to build),
+  its tests and fixtures; `packages/site-pages-drainage.patch` and `site-pages-luca-host.patch` are the
+  changes to commonjs it needs.
+- `modules/ropewiki.nix`: the NixOS module. `modules/drainage.nix`: the opt-in drainage service.
+  `modules/backup.nix`: the opt-in backup service and
   upgrade gate (its scripts are plain `.sh` files in `modules/backup/`). `php/production.php`: what `mode = "production"` adds.
-- `vm/`, `tests/`: the VM definition, `dev-site.nix` (empty schema + self-signed cert for VMs
+- `vm/`, `tests/`: the VM definition, `dev-site.nix` (MediaWiki's installer on first start + self-signed cert for VMs
   and tests; deliberately not part of the module) and the VM tests.
 - `docs/`: design notes (backups, upgrades, real-data upgrade tests, the old Docker process, the
   Luca server). `TODO.md` is the checklist.

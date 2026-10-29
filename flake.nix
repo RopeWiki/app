@@ -28,6 +28,7 @@
         # MediaWiki core and the extensions webserver/Dockerfile clones; see mediawiki-pins.json.
         mediawikiExtensions = final.callPackage ./nix/packages/mediawiki-ext.nix { };
         ropewikiSitePages = final.callPackage ./nix/packages/site-pages.nix { inherit commonjs commoncss; };
+        rwDrainage = final.callPackage ./nix/packages/rw-drainage.nix { };
         ropewiki = final.callPackage ./nix/packages/ropewiki.nix {
           repoRoot = ./.;
           codebaseVersion = self.rev or self.dirtyRev or "unknown";
@@ -75,6 +76,7 @@
         imports = [
           ./nix/modules/ropewiki.nix
           ./nix/modules/backup.nix
+          ./nix/modules/drainage.nix
         ];
         nixpkgs.overlays = [ overlay ];
       };
@@ -95,6 +97,7 @@
           inherit (pkgs) ropewiki;
           inherit (pkgs.ropewiki.passthru) composerVendor;
           site-pages = pkgs.ropewikiSitePages;
+          rw-drainage = pkgs.rwDrainage;
           mediawiki-extensions = pkgs.mediawikiExtensions;
           update-mediawiki-ext = pkgs.mediawikiExtensions.updateScript;
         }
@@ -125,7 +128,10 @@
 
       checks = forAllSystems (
         pkgs:
-        x86Only pkgs (
+        {
+          rw-drainage = pkgs.rwDrainage; # its unit tests run in the build
+        }
+        // x86Only pkgs (
           lib.mapAttrs' (
             name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (mkTest pkgs ./nix/tests/${name})
           ) testFiles

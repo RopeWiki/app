@@ -112,20 +112,43 @@ let
     PATH = lib.makeBinPath runtimePath;
   };
 
-  # `ropewiki-maintenance update.php --quick`, run as the service user.
+  # `ropewiki-maintenance update.php --quick`, run as the service user. Scripts of extensions
+  # (rebuildData.php, ...) are found by name too.
   maintenance = pkgs.writeShellScriptBin "ropewiki-maintenance" ''
     if [ $# -lt 1 ]; then
-      echo "usage: ropewiki-maintenance <script.php> [args...]   (scripts in ${root}/maintenance)" >&2
+      echo "usage: ropewiki-maintenance <script.php> [args...]   (core and extension maintenance scripts)" >&2
       exit 1
     fi
     script=$1; shift
+    for dir in ${root}/maintenance ${root}/extensions/*/maintenance; do
+      if [ -e "$dir/$script" ]; then path=$dir/$script; break; fi
+    done
+    if [ -z "''${path:-}" ]; then
+      echo "ropewiki-maintenance: no maintenance script called $script" >&2
+      exit 1
+    fi
     become=()
     if [ "$(id -un)" != ${user} ]; then
       become=(/run/wrappers/bin/sudo -u ${user} --)
     fi
     exec "''${become[@]}" ${pkgs.coreutils}/bin/env \
       ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: "${k}=${lib.escapeShellArg v}") phpEnv)} \
-      ${cfg.phpPackage}/bin/php -d memory_limit=-1 ${root}/maintenance/"$script" "$@"
+      ${cfg.phpPackage}/bin/php -d memory_limit=-1 "$path" "$@"
+  '';
+
+  # `ropewiki-import export.xml...`: load Special:Export / dumpBackup.php files, then bring
+  # Semantic MediaWiki's tables and the job queue up to date (what a page edit would have done).
+  importer = pkgs.writeShellScriptBin "ropewiki-import" ''
+    set -e
+    if [ $# -lt 1 ]; then
+      echo "usage: ropewiki-import export.xml [more.xml ...]" >&2
+      exit 1
+    fi
+    for file in "$@"; do
+      ${maintenance}/bin/ropewiki-maintenance importDump.php < "$file"
+    done
+    ${maintenance}/bin/ropewiki-maintenance rebuildData.php
+    ${maintenance}/bin/ropewiki-maintenance runJobs.php
   '';
 
   # --- Sphinx ----------------------------------------------------------------------------
@@ -477,6 +500,9 @@ in
       };
     };
 
-    environment.systemPackages = [ maintenance ];
+    environment.systemPackages = [
+      maintenance
+      importer
+    ];
   };
 }

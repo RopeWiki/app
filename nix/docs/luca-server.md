@@ -16,23 +16,24 @@ server in turn fetches `ropewiki.com/PDFList` and `PDFScript` and drives `phanto
 render PDFs, and its command-line modes (`-setpics`, `-uploadbeta*`, waterflow site updates) log in
 to the wiki with bot credentials; those are batch jobs, not the daemon.
 
-## Is it still used? Probably two features
+## What the site still uses it for
 
-The site's JS calls it for only:
+Two features, found by reading the site's JavaScript (`commonjs`):
 - **PDF export** (`pdfx=`, `lib/pdf.js`), and
-- the **waterflow drainage-area lookup** (`waterflow=winfo=`, `lib/ui/ui.js`).
+- the **drainage-area badge** ("~N mi²" in the infobox; `waterflow=winfo=`, `lib/ui/ui.js`). This
+  one still works in production (checked 2026-10-29) and is replaced; see [drainage.md](drainage.md).
 
 GPX export moved into this repo's `kml_to_gpx.php`, and the picture lookup is commented out.
 What the repositories can't show: wiki content in the database (the `{{RWServerUrl}}` template, the
-`PDFScript`/`PDFList` pages, `MediaWiki:Common.js`). **To settle it, count `/luca` hits in the
-production reverse-proxy access log.**
+`PDFScript`/`PDFList` pages, `MediaWiki:Common.js`). **To settle PDF export, count `/luca` hits in
+the production reverse-proxy access log.**
 
 ## Decision
 
-The Nix flake does **not** run it. The most likely outcome is to **re-implement the PDF and
-waterflow tooling as new, independent projects** (headless Chromium for PDFs instead of the
-long-dead PhantomJS; a small service over GDAL/spatialite for waterflow) rather than keep an MFC
-program alive.
+The Nix flake does **not** run it. The most likely outcome is to **re-implement the two features
+as new, independent projects** rather than keep an MFC program alive: the drainage lookup is done
+(`services.ropewiki.drainage`, [drainage.md](drainage.md), a small Python service over NHDPlus);
+PDF export is still to do (headless Chromium instead of the long-dead PhantomJS).
 
 A stop-gap was built and tested (a `services.ropewiki.rwserver` module that ran a prebuilt
 `rwr.exe` under Wine behind nginx `location /luca/ { fastcgi_pass 127.0.0.1:9001; }`, with a

@@ -8,18 +8,33 @@
 {
   lib,
   runCommand,
+  applyPatches,
   buildNpmPackage,
   commonjs,
   commoncss,
 }:
 
 let
+  # Local changes to commonjs, until they are merged there.
+  #   site-pages-drainage.patch: the drainage-area badge shows tenths and takes the number from
+  #   `drainage_km2`, which the service that replaced the Luca server's waterflow lookup sends
+  #   (nix/docs/drainage.md). It still understands RWServer's reply.
+  #   site-pages-luca-host.patch: /luca is always reached through the page's own host.
+  commonjsSrc = applyPatches {
+    name = "source"; # the unpacker (sourceRoot below) looks for this name
+    src = commonjs;
+    patches = [
+      ./site-pages-drainage.patch
+      ./site-pages-luca-host.patch
+    ];
+  };
+
   # commonjs/build.js and waterflowjs/build.js both need uglify-js, which only commonjs lists in
   # its package.json (waterflowjs has a lockfile but no package.json), so one npm install serves both.
   js = buildNpmPackage {
     pname = "ropewiki-site-js";
     version = "0";
-    src = commonjs;
+    src = commonjsSrc;
     sourceRoot = "source/commonjs";
     npmDepsHash = "sha256-h7zZz2uYnRvyqXZ89kEXtt+mgTplUDFa1bYo8SODUpU=";
     # @playwright/test is a dev dependency (for the repository's tests); never download browsers.
