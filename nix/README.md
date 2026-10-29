@@ -52,6 +52,9 @@ not know about (`MediaWiki:Common*`) are reported in the journal and left alone.
 (`/luca/rwr?waterflow=winfo=`, which the Luca server used to answer) from NHDPlus; the first start
 downloads 7.8 GB to build its index. See `docs/drainage.md`.
 
+`services.ropewiki.imageProxy = "https://ropewiki.com"` (development) shows that site's uploaded
+files instead of this one's, which has none. It is off in `nix run .#vm` until validated. See `docs/image-proxy.md`.
+
 | Command | What it does |
 |---|---|
 | `nix build .#ropewiki` | the site tree: MediaWiki 1.39 + extensions + this repo's overlay and patches |
@@ -61,6 +64,7 @@ downloads 7.8 GB to build its index. See `docs/drainage.md`.
 | `nix build .#checks.x86_64-linux.import` | VM test: `ropewiki-import` loads Special:Export files; a made-up fixture and a real page (Lytle Creek) render with their templates and properties |
 | `nix build .#checks.x86_64-linux.backup` | VM test on a real btrfs disk: snapshots, retention, export, upgrade gate |
 | `nix build .#checks.x86_64-linux.nocow` | VM test: on btrfs, MariaDB's data directory and files are NOCOW |
+| `nix build .#checks.x86_64-linux.image-proxy` | VM test (two VMs): `imageProxy` links files and thumbnails to another site and fetches hard-coded `/images/` paths from it, read-only, with the name looked up at start or per request |
 | `nix build .#checks.x86_64-linux.drainage` | VM test: the drainage-area lookup behind nginx (`/luca/rwr?waterflow=winfo=`), loopback only, starts when its index appears |
 | `nix build .#checks.x86_64-linux.drainage-index` | VM test: downloads, extracts and indexes a made-up NHDPlus archive, rebuilds on demand |
 | `nix build .#rw-drainage` | the drainage lookup program; building it runs its unit tests |

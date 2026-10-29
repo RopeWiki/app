@@ -67,6 +67,13 @@
     PasswordAuthentication = true;
   };
 
+  # Image proxy mode (nix/docs/image-proxy.md) is deliberately off here until it is validated: an
+  # imported page only shows the live site's images if the database also knows those files, and
+  # the test imports have none. To try it, add to this block:
+  #   services.ropewiki.imageProxy = "https://ropewiki.com";
+  #   services.nginx.resolver = { addresses = [ "10.0.2.3" ]; ipv6 = false; };
+  # (10.0.2.3 is QEMU's DNS forwarder; with it nginx starts without a network.)
+
   # `nix build .#image` (system.build.images.qemu): a qcow2 disk for any QEMU/KVM host.
   virtualisation.diskSize = 8 * 1024;
 }

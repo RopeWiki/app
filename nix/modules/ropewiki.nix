@@ -36,6 +36,16 @@ let
 
   production = cfg.mode == "production";
 
+  # Image proxy mode (https://github.com/RopeWiki/app/wiki/Image-Proxy-Mode): the live site's 70 GB
+  # of uploads, read through instead of copied.
+  proxyUrl = lib.removeSuffix "/" cfg.imageProxy;
+  # With a resolver configured (services.nginx.resolver.addresses), nginx looks the host up when a
+  # file is requested; without one, when it starts (and then it does not start without DNS).
+  proxyAtRequest = config.services.nginx.resolver.addresses != [ ];
+  proxyHost = builtins.head (
+    lib.splitString "/" (lib.removePrefix "https://" (lib.removePrefix "http://" proxyUrl))
+  );
+
   # The only PHP files that may be executed from the web: MediaWiki's own entry points and the
   # one script this repository adds. Everything else (extension and maintenance files, the
   # installer in mw-config/, LocalSettings.php, ...) answers 404.
@@ -96,6 +106,13 @@ let
     # Mail goes to an MTA on this machine (the Docker setup used a postfix relay container).
     $wgSMTP = [ 'host' => "localhost", 'port' => 25, 'auth' => false ];
 
+    ${lib.optionalString (cfg.imageProxy != null) ''
+      # Image proxy mode: URLs of uploaded files and thumbnails point at the other site, and
+      # thumbnails are not generated here (there are no files to read them from).
+      $wgUploadPath = "${proxyUrl}/images";
+      $wgThumbPath = "${proxyUrl}/images/thumb";
+      $wgGenerateThumbnailOnParse = false;
+    ''}
     ${lib.optionalString (!cfg.search.enable) ''
       $wgSearchType = null;
       $wgEnableSphinxPrefixSearch = false;
@@ -262,6 +279,23 @@ in
       '';
     };
 
+    imageProxy = mkOption {
+      type = types.nullOr (types.strMatching "https?://[^/]+/?");
+      default = null;
+      example = "https://ropewiki.com";
+      description = ''
+        Development only: show the uploaded files of another site instead of this one's (which has
+        none). MediaWiki then links files and thumbnails to `<imageProxy>/images`, and nginx
+        answers requests for `/images/...` that MediaWiki does not know about (paths written into
+        page text) by fetching them from there. Read-only: uploads still work but the files are
+        not shown. By default the host name is resolved when nginx starts, so nginx does not start
+        without DNS; set `services.nginx.resolver.addresses` to resolve it when a file is
+        requested instead. The other site may refuse a server-side request (ropewiki.com puts Cloudflare's
+        browser check in front of everything, /images/ included); MediaWiki's own links, which the
+        browser fetches itself, work regardless. See nix/docs/image-proxy.md.
+      '';
+    };
+
     openFirewall = mkOption {
       type = types.bool;
       default = false;
@@ -297,6 +331,16 @@ in
       # to a block after a snapshot is copied once. Other filesystems ignore the flag.
       "h '${config.services.mysql.dataDir}' - - - - +C"
     ];
+
+    warnings =
+      lib.optional (cfg.imageProxy != null && production)
+        "services.ropewiki.imageProxy is a development mode; with mode = \"production\" every visitor's file requests go to ${proxyUrl}.";
+
+    # Without a resolver, nginx resolves the proxied host name when it starts.
+    systemd.services.nginx = mkIf (cfg.imageProxy != null && !proxyAtRequest) {
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+    };
 
     # --- database ---------------------------------------------------------------------
     # Unix-socket authentication as the `ropewiki` OS user: no password anywhere.
@@ -391,7 +435,30 @@ in
             "404";
           "~ ^/(composer\\.(json|lock)|.*/(extension|skin)\\.json)$".return = "404";
           # ^~ so that nothing uploaded can ever reach the .php location above.
-          "^~ /images/".alias = "${cfg.imagesDir}/";
+          "^~ /images/" =
+            if cfg.imageProxy == null then
+              { alias = "${cfg.imagesDir}/"; }
+            else
+              {
+                # A variable makes nginx resolve the name per request (with the resolver), and
+                # sends the request's own URI, which is /images/... on the other site too.
+                proxyPass = if proxyAtRequest then "$image_upstream" else "${proxyUrl}/images/";
+                extraConfig = ''
+                  ${lib.optionalString proxyAtRequest "set $image_upstream ${proxyUrl};"}
+                  limit_except GET HEAD { deny all; }
+                  proxy_set_header Host ${proxyHost};
+                  # This site's login cookies are none of the other site's business.
+                  proxy_set_header Cookie "";
+                  ${lib.optionalString (lib.hasPrefix "https://" proxyUrl) ''
+                    # Handle proxying https requests to a different hostname properly, and check
+                    # that it is that host's certificate.
+                    proxy_ssl_server_name on;
+                    proxy_ssl_name ${proxyHost};
+                    proxy_ssl_verify on;
+                    proxy_ssl_trusted_certificate ${config.security.pki.caBundle};
+                  ''}
+                '';
+              };
           "= /robots.txt".alias = "${cfg.package.robotsDir}/robots_${cfg.robots}.txt";
         };
       };
