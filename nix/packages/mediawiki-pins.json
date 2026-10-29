@@ -1,0 +1,72 @@
+{
+  "mediawiki": {
+    "version": "1.39.17",
+    "hash": "sha256-LFhT0DTQw+dRYOgQQSUib6uWTX7TdzL4PnIEeB+rB7k="
+  },
+  "extensions": {
+    "Arrays": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-Arrays.git",
+      "rev": "db98019fe6049d5fcff7d7c6f62e02023dbf5eb6",
+      "hash": "sha256-n1OMayOJ8F+LJJEQgwfBxGyz2XFWIjQX3XTPEGY6FVg="
+    },
+    "CheckUser": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-CheckUser.git",
+      "rev": "11fbd4a0e78c32dbe83307b9a23bc3215c17c667",
+      "hash": "sha256-qxsDviTMNEDJyAwFMoD0tOWtrTHJD1pM+8FKi/6uwvM="
+    },
+    "EmbedVideo": {
+      "url": "https://github.com/StarCitizenWiki/mediawiki-extensions-EmbedVideo.git",
+      "rev": "c018dad4c3397d495f9b4bae2506fb14459162fe",
+      "hash": "sha256-g9APdCg20X0XuusWOSb0EcYPq3UOGuUO7Uuw4szcdcE="
+    },
+    "HeaderFooter": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-HeaderFooter.git",
+      "rev": "7cc96c9059d262ea7f9548eba34f07aaa3bf1c24",
+      "hash": "sha256-aKqWNAE6URT0FuVBZ45VnT+x4iaCNhj6e5fe1XmN9I4="
+    },
+    "MagicNoCache": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-MagicNoCache.git",
+      "rev": "1d7f122f6f91a47a1bda4c08507b615682e84cd2",
+      "hash": "sha256-UTf8KdPotd68vx+njWFebhvYLm5BOBd42cZk9RgTH3I="
+    },
+    "MyVariables": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-MyVariables.git",
+      "rev": "aa0e5c2cbb7ea39c75553c93b3bba07d0ab857f1",
+      "hash": "sha256-UYxsCEQ0k8HFO6CQV2sqp0WdDNUKci5GVl/nz1t7QTk="
+    },
+    "PageForms": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-PageForms.git",
+      "rev": "d564963afaa96175936257a079ab36b5705f01c4",
+      "hash": "sha256-QQmlgOs0/dXgnGckhiQpnPZPmjXBh80M3EYgasGmDAY="
+    },
+    "SemanticRating": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-SemanticRating.git",
+      "ref": "HEAD",
+      "note": "webserver/Dockerfile follows the default branch (\"These just use master branch\").",
+      "rev": "5015e37ab23d196ee230dbae4b1b32ac38431251",
+      "hash": "sha256-YTbsvPwpu1kOkTsutl5z0kNDizEL+ofgH+1loymu7FU="
+    },
+    "SphinxSearch": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-SphinxSearch.git",
+      "rev": "53bb78376edb34928d740457a5cf4d31f61f6736",
+      "hash": "sha256-ue5ZW3+Ez5MjQ/Fak6AqC6BXAoN/bZOImSjZYM7KUIY="
+    },
+    "UrlGetParameters": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-UrlGetParameters.git",
+      "rev": "9e54cf9874029f24f6fed210ed117650ccf3292f",
+      "hash": "sha256-MHtd1fGWhUzcRCTt/Y3cyOueYvtdP1B3FtrMb7klc38="
+    },
+    "UserMerge": {
+      "url": "https://gerrit.wikimedia.org/r/mediawiki/extensions/UserMerge",
+      "rev": "9e7ead30805edebf054d34106c8166304ba26fdb",
+      "hash": "sha256-BIluDBxZ8OCl0n0hUorq1iXtsiYGFUtgIAz57w7uRqE="
+    },
+    "Variables": {
+      "url": "https://github.com/wikimedia/mediawiki-extensions-Variables.git",
+      "ref": "HEAD",
+      "note": "REL1_39 still registers the InternalParseBeforeSanitize hook (deprecated in MW 1.35), which prints a PHP deprecation on every page. HEAD declares MediaWiki >= 1.29 and is what webserver/Dockerfile uses.",
+      "rev": "5af47b48793ddeb21af116c71edc3dd41b9d0584",
+      "hash": "sha256-f4mqhDLyRaR21WXiXXb9Y6dPAvw0lYGJTENDqb/BCdM="
+    }
+  }
+}

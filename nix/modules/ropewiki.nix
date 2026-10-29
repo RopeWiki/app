@@ -1,0 +1,433 @@
+# services.ropewiki: the RopeWiki backend on one NixOS machine.
+#
+# Replaces the webserver and database containers of docker-compose.yaml:
+#   nginx + php-fpm, MariaDB over a unix socket, Sphinx search, and a oneshot that migrates the
+#   database on every start. TLS, firewalling and everything else are ordinary NixOS settings
+#   (services.nginx.virtualHosts.<hostName>.enableACME, networking.firewall, ...); see
+#   nix/README.md. What is not covered yet is listed in nix/TODO.md.
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkOption
+    mkDefault
+    types
+    ;
+
+  cfg = config.services.ropewiki;
+
+  user = "ropewiki";
+  stateDir = "/var/lib/ropewiki";
+  cacheDir = "/var/cache/ropewiki";
+  root = "${cfg.package}/share/ropewiki";
+  dbSocket = "/run/mysqld/mysqld.sock";
+
+  # hostName may carry a port ("localhost:8443"); nginx wants the bare name.
+  serverName = builtins.head (lib.splitString ":" cfg.hostName);
+  vhost = config.services.nginx.virtualHosts.${serverName};
+  https = vhost.forceSSL || vhost.addSSL || vhost.onlySSL;
+
+  production = cfg.mode == "production";
+
+  # The only PHP files that may be executed from the web: MediaWiki's own entry points and the
+  # one script this repository adds. Everything else (extension and maintenance files, the
+  # installer in mw-config/, LocalSettings.php, ...) answers 404.
+  phpEntryPoints = "index|load|api|rest|thumb|thumb_handler|opensearch_desc|img_auth|kml_to_gpx";
+
+  # Programs MediaWiki and its extensions run: thumbnails, PDFs, KML to GPX, diffs.
+  runtimePath = with pkgs; [
+    imagemagick
+    ghostscript
+    poppler-utils
+    gpsbabel
+    diffutils
+    coreutils
+  ];
+
+  # The immutable site tree reads its configuration from two PHP files named in the environment:
+  # `siteSettings` before the repo's LocalSettings.php (what SiteSpecificSettings.php.template and
+  # system_start.sh produce in the Docker image) and `overrides` after it (the repo file hardcodes
+  # Docker paths such as /usr/bin/convert).
+  phpFile =
+    name: text:
+    pkgs.writeTextFile {
+      inherit name text;
+      checkPhase = ''${cfg.phpPackage}/bin/php --syntax-check "$target"'';
+    };
+
+  siteSettings = phpFile "ropewiki-site-settings.php" ''
+    <?php
+    $wgSitename      = "ropewiki";
+    $wgMetaNamespace = "Ropewiki";
+
+    $wgServer = "${if https then "https" else "http"}://${cfg.hostName}";
+    $wgLogo = "$wgServer/Ropewiki.png";
+    $semanticServer = "${cfg.hostName}";
+
+    $wgDBtype     = "mysql";
+    $wgDBserver   = "localhost:${dbSocket}";
+    $wgDBname     = "ropewiki";
+    $wgDBuser     = "${user}";
+    $wgDBpassword = "";
+
+    $wgSecretKey  = trim( file_get_contents( "${stateDir}/secret.key" ) );
+    # Only used by the web updater, which is unreachable without shell access anyway.
+    $wgUpgradeKey = substr( hash( 'sha256', "upgrade" . $wgSecretKey ), 0, 16 );
+  '';
+
+  overrides = phpFile "ropewiki-overrides.php" ''
+    <?php
+    $wgUploadDirectory = "${cfg.imagesDir}";
+    $wgCacheDirectory  = "${cacheDir}";
+    # SMW writes .smw.json (setup state) next to its code by default; the store is read-only.
+    $smwgConfigFileDir = "${stateDir}/smw";
+
+    $wgImageMagickConvertCommand = "${pkgs.imagemagick}/bin/convert";
+    $wgDiff3 = "${pkgs.diffutils}/bin/diff3";
+    $wgScribuntoEngineConf['luastandalone']['luaPath'] = "${pkgs.lua5_1}/bin/lua";
+
+    # Mail goes to an MTA on this machine (the Docker setup used a postfix relay container).
+    $wgSMTP = [ 'host' => "localhost", 'port' => 25, 'auth' => false ];
+
+    ${lib.optionalString (!cfg.search.enable) ''
+      $wgSearchType = null;
+      $wgEnableSphinxPrefixSearch = false;
+    ''}
+    ${lib.optionalString production "require \"${../php/production.php}\";"}
+    ${cfg.extraSettings}
+  '';
+
+  # Everything PHP needs to know, both for php-fpm and for maintenance scripts.
+  phpEnv = {
+    ROPEWIKI_SITE_SETTINGS = "${siteSettings}";
+    ROPEWIKI_OVERRIDES = "${overrides}";
+    ROPEWIKI_IMAGES_DIR = cfg.imagesDir;
+    PATH = lib.makeBinPath runtimePath;
+  };
+
+  # `ropewiki-maintenance update.php --quick`, run as the service user.
+  maintenance = pkgs.writeShellScriptBin "ropewiki-maintenance" ''
+    if [ $# -lt 1 ]; then
+      echo "usage: ropewiki-maintenance <script.php> [args...]   (scripts in ${root}/maintenance)" >&2
+      exit 1
+    fi
+    script=$1; shift
+    become=()
+    if [ "$(id -un)" != ${user} ]; then
+      become=(/run/wrappers/bin/sudo -u ${user} --)
+    fi
+    exec "''${become[@]}" ${pkgs.coreutils}/bin/env \
+      ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: "${k}=${lib.escapeShellArg v}") phpEnv)} \
+      ${cfg.phpPackage}/bin/php -d memory_limit=-1 ${root}/maintenance/"$script" "$@"
+  '';
+
+  # --- Sphinx ----------------------------------------------------------------------------
+
+  sphinx = pkgs.sphinxsearch;
+
+  # The repo's sphinx.conf with what system_start.sh substituted at start-up done at build time.
+  sphinxConf = pkgs.runCommand "ropewiki-sphinx.conf" { } ''
+    sed -E \
+      -e 's|\{\{WG_DB_SERVER\}\}|localhost|' \
+      -e 's|\{\{WG_DB_USER\}\}|${user}|' \
+      -e 's|\{\{WG_DB_PASSWORD\}\}||' \
+      -e 's|^\s*#\s*sql_sock\s*=.*|sql_sock = ${dbSocket}|' \
+      -e 's|/var/log/sphinxsearch/searchd.pid|/run/ropewiki-sphinx/searchd.pid|' \
+      -e 's|^(\s*pid_file\s*=.*)$|\1\n\n\t# Binary logs are only for RT indexes, and the default path is inside the read-only\n\t# Nix store (searchd dies with "failed to open .../var/data/binlog.lock"). Empty disables.\n\tbinlog_path =|' \
+      -e 's|/var/log/sphinxsearch|/var/log/ropewiki-sphinx|' \
+      -e 's|/var/data/sphinx|${stateDir}/sphinx|' \
+      ${cfg.package.sphinxConfTemplate} > $out
+    # Fail loudly if the repo's template changes shape.
+    grep -q '^\s*sql_sock\s*=' $out
+    grep -q '${stateDir}/sphinx/wiki_main' $out
+    grep -q '^\s*binlog_path\s*=\s*$' $out
+  '';
+
+  sphinxUnit = {
+    User = user;
+    Group = user;
+    RuntimeDirectory = "ropewiki-sphinx";
+    RuntimeDirectoryPreserve = true;
+    LogsDirectory = "ropewiki-sphinx";
+  };
+in
+{
+  options.services.ropewiki = {
+    enable = mkEnableOption "the RopeWiki site (MediaWiki + Semantic MediaWiki)";
+
+    package = mkOption {
+      type = types.package;
+      default = pkgs.ropewiki;
+      defaultText = lib.literalExpression "pkgs.ropewiki";
+      description = "The assembled site tree, see nix/packages/ropewiki.nix.";
+    };
+
+    phpPackage = mkOption {
+      type = types.package;
+      default = pkgs.php83.buildEnv {
+        extensions = { all, enabled }: enabled ++ [ all.apcu ];
+        extraConfig = "memory_limit = 256M";
+      };
+      defaultText = lib.literalExpression "pkgs.php83.buildEnv { ... apcu }";
+      description = "PHP used by php-fpm and maintenance scripts (APCu is MediaWiki's main cache).";
+    };
+
+    mode = mkOption {
+      type = types.enum [
+        "production"
+        "development"
+      ];
+      default = "production";
+      description = ''
+        `production` hides errors from visitors (errors go to the journal) and hides what is
+        running: no `X-Powered-By`, generator tag or "Powered by" icons, `Special:Version` only for
+        logged-in users, no exception details, no release notes or `composer.json` served.
+        `development` keeps the verbose behaviour of the Docker setup: errors and deprecations are
+        printed into the page.
+      '';
+    };
+
+    hostName = mkOption {
+      type = types.str;
+      default = "localhost";
+      example = "ropewiki.com";
+      description = ''
+        Public host name, with `:port` if it is not the default for the scheme (`WG_HOSTNAME`).
+        The scheme is https when `services.nginx.virtualHosts.<hostName>` has `forceSSL`,
+        `addSSL` or `onlySSL` set.
+      '';
+    };
+
+    robots = mkOption {
+      type = types.enum [
+        "dev"
+        "prod"
+      ];
+      default = "dev";
+      description = "Which webserver/robots/robots_*.txt to serve (`RW_ROBOTS`).";
+    };
+
+    imagesDir = mkOption {
+      type = types.path;
+      default = "${stateDir}/images";
+      description = "Uploaded files (the `IMAGES_FOLDER` volume), served as /images.";
+    };
+
+    search.enable = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Run Sphinx for site search (SphinxSearch extension).";
+    };
+
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Open TCP ports 80 and 443.";
+    };
+
+    extraSettings = mkOption {
+      type = types.lines;
+      default = "";
+      description = "PHP appended after everything else (a late `LocalSettings.php`).";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    users.users.${user} = {
+      group = user;
+      isSystemUser = true;
+      home = stateDir;
+    };
+    users.groups.${user} = { };
+
+    systemd.tmpfiles.rules = [
+      "d '${stateDir}' 0750 ${user} ${user} - -"
+      "d '${stateDir}/smw' 0750 ${user} ${user} - -"
+      "d '${stateDir}/sphinx' 0750 ${user} ${user} - -"
+      "d '${cacheDir}' 0750 ${user} ${user} - -"
+      # Not recursive: the uploads folder can be huge and is restored from backups.
+      "d '${cfg.imagesDir}' 0755 ${user} ${user} - -"
+      # On btrfs, copy-on-write makes database files slow (every page write allocates a new extent)
+      # and InnoDB checksums its own pages anyway, so MariaDB's data directory is NOCOW. The flag
+      # applies to files created after it is set, so a database that already exists keeps its COW
+      # files (nix/docs/backups.md says how to convert them). Snapshots still work: the first write
+      # to a block after a snapshot is copied once. Other filesystems ignore the flag.
+      "h '${config.services.mysql.dataDir}' - - - - +C"
+    ];
+
+    # --- database ---------------------------------------------------------------------
+    # Unix-socket authentication as the `ropewiki` OS user: no password anywhere.
+    services.mysql = {
+      enable = true;
+      package = mkDefault pkgs.mariadb;
+      ensureDatabases = [ "ropewiki" ];
+      ensureUsers = [
+        {
+          name = user;
+          ensurePermissions."ropewiki.*" = "ALL PRIVILEGES";
+        }
+      ];
+    };
+
+    # --- php-fpm ------------------------------------------------------------------------
+    # Mirrors webserver/fpm-pool.conf and the sed edits in webserver/Dockerfile / system_start.sh.
+    services.phpfpm.settings = {
+      emergency_restart_threshold = mkDefault 10;
+      emergency_restart_interval = mkDefault "1m";
+      process_control_timeout = mkDefault "10s";
+    };
+    services.phpfpm.pools.ropewiki = {
+      inherit user phpEnv;
+      group = user;
+      phpPackage = cfg.phpPackage;
+      phpOptions = {
+        upload_max_filesize = "10M";
+        post_max_size = "10M";
+        "opcache.enable" = 1;
+        "opcache.memory_consumption" = 128;
+        "opcache.interned_strings_buffer" = 8;
+        "opcache.max_accelerated_files" = 10000;
+        log_errors = 1;
+        html_errors = 0;
+        display_errors = if production then 0 else 1;
+      }
+      // lib.optionalAttrs production {
+        expose_php = 0;
+        "session.cookie_httponly" = 1;
+        "session.use_strict_mode" = 1;
+        "session.cookie_secure" = if https then 1 else 0;
+      };
+      settings = {
+        "listen.owner" = config.services.nginx.user;
+        "listen.group" = config.services.nginx.group;
+        pm = "ondemand";
+        "pm.max_children" = 16;
+        "pm.process_idle_timeout" = "10s";
+        "pm.max_requests" = 200;
+        request_terminate_timeout = "30s";
+        # PHP's own error log lines go to the journal (phpfpm-ropewiki.service).
+        catch_workers_output = true;
+        decorate_workers_output = false;
+      };
+    };
+    systemd.services.phpfpm-ropewiki = {
+      after = [ "ropewiki-init.service" ];
+      requires = [ "ropewiki-init.service" ];
+    };
+
+    # --- nginx --------------------------------------------------------------------------
+    # Mirrors webserver/nginx/sites-enabled/ropewiki.com. TLS is the host's business:
+    # set enableACME/forceSSL/... on services.nginx.virtualHosts.<hostName>.
+    services.nginx = {
+      enable = true;
+      recommendedGzipSettings = mkDefault true;
+      recommendedOptimisation = mkDefault true;
+      virtualHosts.${serverName} = {
+        default = true;
+        root = root;
+        extraConfig = ''
+          index index.php index.html index.htm;
+          # 1M over the PHP limit so PHP/MediaWiki can answer with a friendly error.
+          client_max_body_size 11M;
+        '';
+        locations = {
+          "/".tryFiles = "$uri $uri/ @rewrite";
+          "@rewrite".extraConfig = ''
+            rewrite ^/(.*)$ /index.php?title=$1&$args;
+          '';
+          "~ \\.php$".extraConfig = ''
+            if ($uri !~ "^/(${phpEntryPoints})\.php$") { return 404; }
+            fastcgi_hide_header X-Powered-By;
+            fastcgi_split_path_info ^(.+\.php)(/.+)$;
+            fastcgi_pass unix:${config.services.phpfpm.pools.ropewiki.socket};
+            fastcgi_index index.php;
+            include ${config.services.nginx.package}/conf/fastcgi.conf;
+          '';
+          # Code that has no business being fetched over HTTP, and files that name versions.
+          "~ ^/(maintenance|includes|languages|tests|docs|vendor|cache|serialized|mw-config)(/|$)".return =
+            "404";
+          "~ ^/(composer\\.(json|lock)|.*/(extension|skin)\\.json)$".return = "404";
+          # ^~ so that nothing uploaded can ever reach the .php location above.
+          "^~ /images/".alias = "${cfg.imagesDir}/";
+          "= /robots.txt".alias = "${cfg.package.robotsDir}/robots_${cfg.robots}.txt";
+        };
+      };
+    };
+    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [
+      80
+      443
+    ];
+
+    # --- schema migrations --------------------------------------------------------------
+    systemd.services.ropewiki-init = {
+      description = "Migrate the RopeWiki database";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "phpfpm-ropewiki.service" ];
+      after = [ "mysql.service" ];
+      requires = [ "mysql.service" ];
+      path = [ cfg.phpPackage ] ++ runtimePath;
+      environment = removeAttrs phpEnv [ "PATH" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = user;
+        Group = user;
+        PrivateTmp = true;
+      };
+      script = ''
+        if ! test -e ${stateDir}/secret.key; then
+          install -m 0600 /dev/null ${stateDir}/secret.key
+          tr -dc A-Za-z0-9 </dev/urandom 2>/dev/null | head -c 64 > ${stateDir}/secret.key
+        fi
+        # Same as `maintenance/update.php --quick` in .github/workflows/test-empty-site.yml;
+        # for SMW this also (re)creates its tables.
+        php -d memory_limit=-1 ${root}/maintenance/update.php --quick
+      '';
+    };
+
+    # --- Sphinx search ---------------------------------------------------------------------
+    systemd.services.ropewiki-searchd = mkIf cfg.search.enable {
+      description = "Sphinx search daemon for RopeWiki";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "ropewiki-init.service" ];
+      requires = [ "ropewiki-init.service" ];
+      serviceConfig = sphinxUnit // {
+        # system_start.sh builds the indexes once before starting searchd, and restarts it if it dies.
+        ExecStartPre = pkgs.writeShellScript "ropewiki-sphinx-first-index" ''
+          if ! test -e ${stateDir}/sphinx/wiki_main.spi; then
+            ${sphinx}/bin/sphinxsearch-indexer --config ${sphinxConf} --all
+          fi
+        '';
+        ExecStart = "${sphinx}/bin/sphinxsearch-searchd --nodetach --config ${sphinxConf}";
+        Restart = "always";
+        RestartSec = 2;
+      };
+    };
+    # webserver/html/ropewiki/extensions/SphinxSearch/sphinx.cron: every 30 minutes.
+    systemd.services.ropewiki-sphinx-reindex = mkIf cfg.search.enable {
+      description = "Rebuild RopeWiki Sphinx indexes";
+      after = [ "ropewiki-init.service" ];
+      requires = [ "ropewiki-init.service" ];
+      serviceConfig = sphinxUnit // {
+        Type = "oneshot";
+        ExecStart = "${sphinx}/bin/sphinxsearch-indexer --rotate --config ${sphinxConf} --all";
+      };
+    };
+    systemd.timers.ropewiki-sphinx-reindex = mkIf cfg.search.enable {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*:0/30";
+        Persistent = true;
+      };
+    };
+
+    environment.systemPackages = [ maintenance ];
+  };
+}

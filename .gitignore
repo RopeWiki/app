@@ -6,3 +6,4 @@ docker_compose_command.bat
 enable_tls.sh
 enable_tls.bat
 mount
+.memsearch
