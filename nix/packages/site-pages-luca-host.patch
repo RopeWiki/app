@@ -1,0 +1,45 @@
+--- a/commonjs/lib/constants.js
++++ b/commonjs/lib/constants.js
+@@ -26,38 +26,10 @@
+ 
+     var local = getLocalUrl();
+     
+-    switch (local.baseurl) {
+-    // prod
+-    case 'ropewiki.com':
+-    case 'www.ropewiki.com':
+-    default:
+-        SITE_HOSTNAME = local.baseurl;
+-        LUCA_HOSTNAME = LUCA_HOSTNAME_PROD;
+-        break;
+-    // dev
+-    case 'localhost:8080':
+-    case '192.168.1.40:8080':
+-        SITE_HOSTNAME = local.baseurl;
+-        LUCA_HOSTNAME = "3.87.207.135/luca"; //direct ip to prod Luca server to bypass CORS
+-        //LUCA_HOSTNAME = "192.168.1.40"; //local debugging
+-        break;
+-    //proddev (defunct)
+-    case 'dev.ropewiki.com':
+-    case 'dev.rope.wiki': 
+-        SITE_HOSTNAME = local.baseurl;
+-        LUCA_HOSTNAME = "dev.ropewiki.com/luca";
+-        break;
+-    // coops
+-    case 'ropewiki.attack-kitten.com':
+-    case 'ropewiki2.attack-kitten.com':
+-    case 'ropewiki3.attack-kitten.com':
+-    case 'ropewiki.ak':
+-    case 'ropewiki2.ak':
+-    case 'ropewiki3.ak':
+-        SITE_HOSTNAME = local.baseurl;
+-        LUCA_HOSTNAME = "ropewiki.com/luca";
+-        break;
+-    }
++    // Every site, whatever its name, reaches the Luca server's paths (/luca/...) through itself:
++    // the same host, so no cross-origin request. The web server has to route /luca.
++    SITE_HOSTNAME = local.baseurl;
++    LUCA_HOSTNAME = local.baseurl + "/luca";
+ 
+     switch (local.protocol) {
+     case 'http':
