@@ -83,19 +83,16 @@
         # what the page links to that does not exist, grouped by namespace (the export only has
         # templates and modules: properties, categories, forms and files are not in it)
         missing = sorted(set(re.findall(r'class="new"[^>]*title="([^"]*?) \(page does not exist\)"', page)))
-        print("MISSING:", json.dumps(missing, indent=1))
         errors = re.findall(r'(Lua error[^<]*|Script error[^<]*|Template loop[^<]*|Expression error[^<]*|Parser function[^<]*)', page)
-        print("ERRORS:", json.dumps(errors, indent=1))
         assert "Introduction" in page and "Lytle Creek Road" in page, "the page text is missing"
         facts = json.loads(get("/api.php?action=browsebysubject&subject=Lytle_Creek_(Middle_Fork)&format=json"))
         props = sorted(p["property"] for p in facts["query"]["data"])
-        print("PROPERTIES:", props)  # the Property: pages to export next
         for name in ["Has_coordinates", "Located_in_region", "Has_info_rating"]:
             assert name in props, f"{name} not stored: {props}"
         assert not [t for t in missing if t.startswith(("Template:", "Module:"))], missing
         assert not errors, errors
 
-    with subtest("nothing is reported missing, and importing again is harmless"):
+    with subtest("importing again is harmless and no unit has failed"):
         machine.succeed("ropewiki-import /tmp/canyon.xml")
         assert machine.succeed("systemctl --failed --no-legend").strip() == ""
   '';

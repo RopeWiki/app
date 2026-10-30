@@ -55,11 +55,7 @@ services.nginx.resolver = { addresses = [ "10.0.2.3" ]; ipv6 = false; };
 
 ## Tests
 
-`nix build .#checks.x86_64-linux.image-proxy` starts a second VM as the "other site", with two
-virtual hosts and different certificates, so a request without the right TLS name or `Host` fails
-(removing `proxy_ssl_server_name` makes the test fail). It checks the URLs MediaWiki produces for a
-file and its thumbnail, that hard-coded paths are fetched, that the other site sees its own host
-name and no cookies, that 404 passes through, and that `POST` and `PUT` are refused. It then switches the machine to a
-configuration with a resolver (a small DNS server on the other VM; the hosts-file entry is removed)
-and checks that nginx restarts while the name cannot be resolved, answers 502, and recovers when DNS
-returns. Forcing the old behaviour makes that step fail.
+`checks.<system>.image-proxy` runs a second VM as the "other site" with different certificates, so
+a request without the right TLS name or `Host` fails. It covers the URLs MediaWiki produces, the
+hard-coded paths, that no cookies are forwarded, read-only methods, and nginx starting without DNS
+and recovering when it returns.

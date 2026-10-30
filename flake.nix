@@ -147,7 +147,7 @@
       );
 
       devShells = forAllSystems (pkgs: {
-        # Tools for maintaining the Nix packaging (e.g. regenerating composer.lock).
+        # Tools for working on the Nix packaging by hand (`nix run .#update-composer` brings its own).
         default = pkgs.mkShell {
           packages = with pkgs; [
             php83

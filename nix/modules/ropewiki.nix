@@ -483,11 +483,7 @@ in
       "d '${stateDir}/sphinx' 0750 ${user} ${user} - -"
       # Not recursive: the uploads folder can be huge and is restored from backups.
       "d '${cfg.imagesDir}' 0755 ${user} ${user} - -"
-      # On btrfs, copy-on-write makes database files slow (every page write allocates a new extent)
-      # and InnoDB checksums its own pages anyway, so MariaDB's data directory is NOCOW. The flag
-      # applies to files created after it is set, so a database that already exists keeps its COW
-      # files (nix/docs/backups.md says how to convert them). Snapshots still work: the first write
-      # to a block after a snapshot is copied once. Other filesystems ignore the flag.
+      # Databases should always be NOCOW (on btrfs; other filesystems ignore the flag).
       "h '${config.services.mysql.dataDir}' - - - - +C"
     ];
 

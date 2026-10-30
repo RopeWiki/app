@@ -26,68 +26,52 @@ Docker (`docker-compose.yaml`, `deploy_tool.py`) keeps working; nothing here cha
 
 That gives nginx + php-fpm 8.3, MariaDB (unix-socket auth, no passwords), Sphinx search and a
 database migration (`update.php`) on every start. MediaWiki is run by nixpkgs' `services.mediawiki`
-module (`webserver = "none"`: its `/w/` URLs are not RopeWiki's, so the nginx virtual host is
-ours), which also names the user, group and database `mediawiki`, keeps state in
-`/var/lib/mediawiki` and calls the units `mediawiki-init` and `phpfpm-mediawiki`. Restore a backup
-into the `mediawiki` database (a dump from the Docker site says `USE ropewiki`; see `docs/backups.md`).
-The module's own `mediawiki-*` maintenance commands do not work with MediaWiki 1.39; use
-`ropewiki-maintenance` below.
-The scheme of the site's URLs follows the nginx virtual host (https when it has `forceSSL`,
-`addSSL` or `onlySSL`). `mode = "development"` prints PHP errors into the page like the Docker
-setup did; the default, `production`, hides errors and what is running. Maintenance scripts, core and extensions:
-`ropewiki-maintenance update.php --quick`, `ropewiki-maintenance rebuildData.php`. `ropewiki-help` lists
-every command this machine has (the backup commands appear when backups are on), and
-`ropewiki-logs [nginx|php|db|search|init|pages|nginx-access|all] [-f]` shows the web server, php-fpm,
-MariaDB, ... logs. Modules add their own entries to both with `services.ropewiki.help.commands` and
-`services.ropewiki.help.logs`. To load pages
-exported from the live site (Special:Export with "Include templates"): `ropewiki-import export.xml`
-(runs `importDump.php`, `rebuildData.php`, `runJobs.php`).
+module (`webserver = "none"`: its `/w/` URLs are not RopeWiki's, so the nginx virtual host is ours),
+which also names the user, group and database `mediawiki`, keeps state in `/var/lib/mediawiki` and
+calls the units `mediawiki-init` and `phpfpm-mediawiki`. Restore a backup into the `mediawiki`
+database (a dump from the Docker site says `USE ropewiki`; see `docs/backups.md`). The module's own
+`mediawiki-*` maintenance commands do not work with MediaWiki 1.39; use `ropewiki-maintenance`.
 
-On a real host with btrfs, `services.ropewiki.backup.enable = true` adds hourly snapshots of
-`services.ropewiki.backup.subvolumes` (default `[ "/" ]`), a daily SQL export, and a check that
-refuses a `nixos-rebuild switch` (or `test`/`boot`) unless a backup finished within the last hour. It is off by
-default and the development VM does not use it; see `docs/backups.md`.
-
-The site's JavaScript and CSS are wiki pages (`MediaWiki:Common.js`, `Common.css` and its
-`Common-NN-*.css` modules, `Waterflow.js`), built from the
-[commonjs](https://github.com/RopeWiki/commonjs) and [commoncss](https://github.com/RopeWiki/commoncss)
-repositories, which are flake inputs. `ropewiki-pages.service` writes them into the wiki on every
-start (what those repositories' `upload.py` scripts do over the API), so a fresh site is styled and
-a switch to a new version publishes it. Take new versions with
-`nix flake update commonjs commoncss`. Pages edited by hand are overwritten; pages the build does
-not know about (`MediaWiki:Common*`) are reported in the journal and left alone.
-`services.ropewiki.sitePages = null` turns this off.
-
-`services.ropewiki.drainage.enable = true` serves the "~N mi²" drainage area on canyon pages
-(`/luca/rwr?waterflow=winfo=`, which the Luca server used to answer) from NHDPlus; the first start
-downloads 7.8 GB to build its index. See `docs/drainage.md`.
-
-`services.ropewiki.tileserver.enable = true` runs `maptiler/tileserver-gl` as a container (podman)
-on `tiles.<hostName>`, serving the tiles and `config.json` in `<imagesDir>/tiles` (upstream
-RopeWiki/app#155); the data is not part of this repository and has to be copied there. See
-`docs/tileserver.md`.
-
-`services.ropewiki.imageProxy = "https://ropewiki.com"` (development) shows that site's uploaded
-files instead of this one's, which has none. It is off in `nix run .#vm` until validated. See `docs/image-proxy.md`.
+- **Mode.** `mode = "development"` prints PHP errors into the page like the Docker setup did; the
+  default, `production`, hides errors and what is running. The site's URL scheme follows the nginx
+  virtual host (https with `forceSSL`, `addSSL` or `onlySSL`).
+- **Commands.** `ropewiki-maintenance update.php --quick` runs a maintenance script (core or
+  extension); `ropewiki-import export.xml` loads pages exported from the live site (Special:Export
+  with "Include templates"); `ropewiki-help` lists every command this machine has; `ropewiki-logs
+  [nginx|php|db|search|init|pages|nginx-access|all] [-f]` shows the logs. Modules add their own
+  entries with `services.ropewiki.help.commands` and `services.ropewiki.help.logs`.
+- **Backups** (`services.ropewiki.backup.enable`, btrfs hosts): hourly snapshots of
+  `backup.subvolumes` (default `[ "/" ]`), a daily SQL export, and a check that refuses a
+  `nixos-rebuild switch` (or `test`/`boot`) unless a backup finished within the last hour. Off by
+  default and not used by the development VM; see `docs/backups.md`.
+- **Site JavaScript and CSS** are wiki pages (`MediaWiki:Common.js`, `Common.css` and its modules,
+  `Waterflow.js`) built from the [commonjs](https://github.com/RopeWiki/commonjs) and
+  [commoncss](https://github.com/RopeWiki/commoncss) flake inputs. `ropewiki-pages.service` writes
+  them into the wiki on every start (what those repositories' `upload.py` scripts do), so a fresh
+  site is styled and a switch publishes new versions. Take new ones with
+  `nix flake update commonjs commoncss`. Hand edits are overwritten; pages the build does not know
+  about (`MediaWiki:Common*`) are reported in the journal and left alone.
+  `services.ropewiki.sitePages = null` turns this off.
+- **Drainage** (`services.ropewiki.drainage.enable`): the "~N mi²" badge on canyon pages
+  (`/luca/rwr?waterflow=winfo=`, which the Luca server used to answer), from NHDPlus. The first
+  start downloads 7.8 GB to build its index. See `docs/drainage.md`.
+- **Tile server** (`services.ropewiki.tileserver.enable`): `maptiler/tileserver-gl` as a podman
+  container on `tiles.<hostName>`, serving `<imagesDir>/tiles` (upstream RopeWiki/app#155). The tile
+  data is not in this repository. See `docs/tileserver.md`.
+- **Image proxy** (`services.ropewiki.imageProxy = "https://ropewiki.com"`, development): shows that
+  site's uploaded files instead of this one's. Off in `nix run .#vm` until validated. See
+  `docs/image-proxy.md`.
 
 | Command | What it does |
 |---|---|
 | `nix build .#ropewiki` | the site tree: MediaWiki 1.39 + extensions + this repo's overlay and patches |
-| `nix run .#vm` | boots a VM running the site: https://localhost:8443 (self-signed), http://localhost:8080; wiki login `Admin` / `admin` (sysop, bureaucrat; the VM drops MediaWiki's password policy), console login `root` / `root` |
+| `nix run .#vm` | a VM running the site: https://localhost:8443 (self-signed), http://localhost:8080; wiki login `Admin` / `admin` (sysop, bureaucrat; the VM drops MediaWiki's password policy), console login `root` / `root` |
 | `nix build .#image` | the same machine as a bootable qcow2 disk image |
-| `nix build .#checks.x86_64-linux.ropewiki` | VM test: empty site renders, extensions load, HTTPS, production hardening, Sphinx stays up, the JavaScript and CSS pages are published |
-| `nix build .#checks.x86_64-linux.import` | VM test: `ropewiki-import` loads Special:Export files; a made-up fixture and a real page (Lytle Creek) render with their templates and properties |
-| `nix build .#checks.x86_64-linux.backup` | VM test on a real btrfs disk: snapshots, retention, export, upgrade gate |
-| `nix build .#checks.x86_64-linux.nocow` | VM test: on btrfs, MariaDB's data directory and files are NOCOW |
-| `nix build .#checks.x86_64-linux.image-proxy` | VM test (two VMs): `imageProxy` links files and thumbnails to another site and fetches hard-coded `/images/` paths from it, read-only, with the name looked up at start or per request |
-| `nix build .#checks.x86_64-linux.drainage` | VM test: the drainage-area lookup behind nginx (`/luca/rwr?waterflow=winfo=`), loopback only, starts when its index appears |
-| `nix build .#checks.x86_64-linux.drainage-index` | VM test: downloads, extracts and indexes a made-up NHDPlus archive, rebuilds on demand |
-| `nix build .#checks.x86_64-linux.tileserver` | VM test: the tile server container (a stand-in image) with its mount and arguments, behind nginx on its own host name |
+| `nix flake check` | every VM test: one check per file in `tests/`, each with a header saying what it covers (run one with `nix build .#checks.x86_64-linux.<name>`) |
 | `nix build .#rw-drainage` | the drainage lookup program; building it runs its unit tests |
 | `nix build .#site-pages` | the JavaScript and CSS pages, one file per page title |
 | `nix run .#update-mediawiki-ext` | re-pin MediaWiki core and every git-cloned extension |
-
-Every file in `tests/` is a NixOS VM test and becomes a check automatically.
+| `nix run .#update-composer` | regenerate `composer.json`, re-lock it and refresh the vendor hash |
 
 ## Layout
 
@@ -114,6 +98,7 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
 - `vm/`, `tests/`: the VM definition, `dev-site.nix` (MediaWiki's installer on first start + self-signed cert for VMs
   and tests; deliberately not part of the module) and the VM tests.
 - `docs/`: design notes (backups, upgrades, real-data upgrade tests, the old Docker process, the
-  Luca server). `TODO.md` is the checklist.
+  Luca server and its drainage replacement, the tile server, image proxy mode, the SMW upgrade
+  runbook). `TODO.md` is the checklist.
 
 Flakes only see git-tracked files, so `git add` new files before building.

@@ -16,37 +16,27 @@ Design notes live in [`docs/`](docs/); this is the checklist.
 
 ## Not yet in the NixOS module
 
-- [x] **Backups, first part** (`services.ropewiki.backup`, opt-in): hourly btrfs snapshots (24 h),
-      daily SQL export + first-of-day snapshots (30 days), freshness monitor.
-      [docs/backups.md](docs/backups.md)
-- [ ] **Backups, the rest**: provider volume snapshots off-machine (and a vault the host can't
+- [ ] **Backups**: provider volume snapshots off-machine (and a vault the host can't
       delete from), restore helper and weekly restore drill, export from a clone of the snapshot,
       sanitized export, failure notifications.
-- [x] **Upgrade gate**: `system.preSwitchChecks` requires a backup less than an hour old, and an
-      automatic upgrade starts a backup first.
-- [ ] **Upgrades, the rest**: use `system.autoUpgrade.flake` on a real host (follow a `production`
+- [ ] **Upgrades**: use `system.autoUpgrade.flake` on a real host (follow a `production`
       branch/tag), maintenance page, downgrade guard, `$wgReadOnlyFile`.
       [docs/upgrades.md](docs/upgrades.md)
 - [ ] **Real-data upgrade tests**: fixture from the sanitized export, old to new in a VM, Playwright
       suite, log scan. [docs/real-data-upgrade-tests.md](docs/real-data-upgrade-tests.md)
 - [ ] **Cutover from Docker** checklist. [docs/docker-process-review.md](docs/docker-process-review.md)
-- [x] **Site JavaScript and CSS** from the `commonjs`/`commoncss` flake inputs, published by
-      `ropewiki-pages.service`. Still to do: run the commonjs Playwright tests against the VM, and
-      compare the live `MediaWiki:Common*` pages with the repositories before the first switch
-      (anything edited on the live wiki and never committed is lost). The maintenance banner can no
-      longer be pasted into `Common.js`; use `$wgReadOnlyFile` (see above).
+- [ ] **Site JavaScript and CSS** (published by `ropewiki-pages.service`): run the commonjs
+      Playwright tests against the VM, and compare the live `MediaWiki:Common*` pages with the
+      repositories before the first switch (anything edited on the live wiki and never committed is
+      lost). The maintenance banner can no longer be pasted into `Common.js`; use `$wgReadOnlyFile`.
 - [ ] **Real pages in the import test**: `tests/fixtures/lytle-creek.xml` is one real page with its
       templates and modules. Export what it still lacks (the 55 `Has_*` and other `Property:` pages
       it sets, `Form:Canyon`, its categories, the region pages) and add it, so SMW types and queries
       are tested too. Then check the licence of the content before the fixture is published.
-- [x] **Drainage-area badge** (`services.ropewiki.drainage`, opt-in) replaces the Luca server's
-      `waterflow=winfo=` request with NHDPlus V2.1. [docs/drainage.md](docs/drainage.md)
-- [ ] **Drainage, the rest**: build the index from the real NHDPlus download and compare it with
+- [ ] **Drainage**: build the index from the real NHDPlus download and compare it with
       production (comid 22554664 must round to 4 km²), send the two `site-pages-*.patch` changes to commonjs, and
       enable it on the real host. Alaska/Hawaii, if wanted.
-- [x] **Tile server** (`services.ropewiki.tileserver`, opt-in): upstream's `ropewiki_tileserver`
-      container and `tiles.` virtual host. [docs/tileserver.md](docs/tileserver.md)
-- [ ] **Tile server, the rest**: try it with the real image and the production tiles (the test uses
+- [ ] **Tile server**: try it with the real image and the production tiles (the test uses
       a stand-in), pin the image by digest instead of `latest`, add the tiles to the backups if they
       are not reproducible, and decide who sets up TLS/Cloudflare for `tiles.` on the real host.
 - [ ] A job runner (`ropewiki-jobs.service`, `runJobs.php --wait`); nothing here configures one, so
@@ -58,8 +48,7 @@ Design notes live in [`docs/`](docs/); this is the checklist.
       query log) as documented defaults or an example.
 - [ ] Secrets in the real host configuration (agenix/sops-nix). The module needs none for a local
       database; SMTP credentials will.
-- [ ] Hardening still open: HSTS, `codebase_version.html` (shows the git commit and log to
-      everyone), and the version in the API's `siteinfo`.
+- [ ] Hardening still open: HSTS, and the version in the API's `siteinfo`.
 - [ ] Try `services.nginx.virtualHosts.<host>.enableACME` against a real domain with the Let's
       Encrypt *staging* server (`security.acme.defaults.server`). Only self-signed HTTPS is
       exercised by a VM test, since a test VM can't reach a CA.

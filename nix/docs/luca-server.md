@@ -1,6 +1,6 @@
 # The Luca server (RWServer)
 
-Part of the Nix migration; see [TODO](../TODO.md) for the checklist.
+See [TODO](../TODO.md) for the checklist.
 
 ## What it is and who talks to it
 

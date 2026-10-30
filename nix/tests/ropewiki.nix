@@ -36,7 +36,6 @@
       for unit in ["mediawiki-init", "phpfpm-mediawiki", "nginx", "ropewiki-searchd"]:
           machine.wait_for_unit(f"{unit}.service")
       machine.wait_for_open_port(443)
-      # on ext4 the NOCOW flag on the MariaDB directory (a btrfs thing) must be harmless
       assert machine.succeed("systemctl --failed --no-legend").strip() == "", machine.succeed("systemctl --failed")
 
       with subtest("front page renders on a database MediaWiki installed itself"):
