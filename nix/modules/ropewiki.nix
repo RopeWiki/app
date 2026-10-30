@@ -4,14 +4,14 @@
 #   nginx + php-fpm, MariaDB over a unix socket, Sphinx search, and a oneshot that migrates the
 #   database on every start. TLS, firewalling and everything else are ordinary NixOS settings
 #   (services.nginx.virtualHosts.<hostName>.enableACME, networking.firewall, ...); see
-#   nix/README.md. What is not covered yet is listed in nix/TODO.md.
+#   nix/README.md.
 #
 # MediaWiki itself is run by nixpkgs' services.mediawiki (php-fpm pool, database and user,
 # generated settings, the mediawiki-init unit) with `webserver = "none"`: that module hardcodes
 # /w/ and /wiki/ URLs, RopeWiki's are at the root, so the nginx virtual host is ours. Its
 # `mediawiki-init` script is replaced and the `mediawiki-*` maintenance wrappers it installs do not
 # work, both because nixpkgs' module is written for a newer MediaWiki than the 1.39 this site
-# runs; see "After the MediaWiki upgrade" in nix/TODO.md.
+# runs; moving to a current release removes the need for both.
 {
   config,
   lib,

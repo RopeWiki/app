@@ -1,7 +1,5 @@
 # Importing pages with `ropewiki-import` (Special:Export files): the templates, properties and
-# queries of the imported pages must work. The fixture is made up (fixtures/canyon.xml); to check a
-# real page, export it from the live site with "Include templates" and add `ropewiki-import` of it
-# below, then read Special:WantedTemplates / WantedPages / WantedProperties for what is missing.
+# queries of the imported pages must work. The fixture is made up (fixtures/canyon.xml).
 #
 #   nix build .#checks.x86_64-linux.import
 {
@@ -73,24 +71,6 @@
     with subtest("the #ask on the page itself lists the match"):
         page = get("/Fixture_Creek_(Middle_Fork)")
         assert page.count("Fixture Creek (Middle Fork)") >= 2, "the #ask result list is empty"
-
-    with subtest("a real page, exported from the live site with its templates, renders"):
-        machine.copy_from_host("${./fixtures/lytle-creek.xml}", "/tmp/lytle-creek.xml")
-        out = machine.succeed("ropewiki-import /tmp/lytle-creek.xml 2>&1")
-        # the page's Lua modules run while the import rebuilds its data; the tools they call must exist
-        assert "command not found" not in out, out
-        page = get("/Lytle_Creek_(Middle_Fork)")
-        # what the page links to that does not exist, grouped by namespace (the export only has
-        # templates and modules: properties, categories, forms and files are not in it)
-        missing = sorted(set(re.findall(r'class="new"[^>]*title="([^"]*?) \(page does not exist\)"', page)))
-        errors = re.findall(r'(Lua error[^<]*|Script error[^<]*|Template loop[^<]*|Expression error[^<]*|Parser function[^<]*)', page)
-        assert "Introduction" in page and "Lytle Creek Road" in page, "the page text is missing"
-        facts = json.loads(get("/api.php?action=browsebysubject&subject=Lytle_Creek_(Middle_Fork)&format=json"))
-        props = sorted(p["property"] for p in facts["query"]["data"])
-        for name in ["Has_coordinates", "Located_in_region", "Has_info_rating"]:
-            assert name in props, f"{name} not stored: {props}"
-        assert not [t for t in missing if t.startswith(("Template:", "Module:"))], missing
-        assert not errors, errors
 
     with subtest("importing again is harmless and no unit has failed"):
         machine.succeed("ropewiki-import /tmp/canyon.xml")

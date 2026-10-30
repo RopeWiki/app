@@ -16,7 +16,16 @@
       environment.systemPackages = [
         pkgs.openssl
         pkgs.imagemagick
+        pkgs.e2fsprogs # lsattr
       ];
+      # The database lives on btrfs, as on a real host, so that its NOCOW flag can be checked.
+      virtualisation.fileSystems."/srv/db" = {
+        device = "/dev/vdb";
+        fsType = "btrfs";
+        autoFormat = true;
+      };
+      services.mysql.dataDir = "/srv/db/mysql";
+      virtualisation.emptyDiskImages = [ 1024 ];
       virtualisation.memorySize = 2048;
     };
 
@@ -41,6 +50,17 @@
       with subtest("front page renders on a database MediaWiki installed itself"):
           html = get("/Main_Page")
           assert "MediaWiki has been installed" in html, html[:2000]
+
+      with subtest("MariaDB's data directory and the files in it are NOCOW; other files are not"):
+          db = "${nodes.machine.services.mysql.dataDir}"
+          assert machine.succeed(f"stat -f -c %T {db}").strip() == "btrfs"
+          def nocow(path):
+              return "C" in machine.succeed(f"lsattr -d {path}").split()[0]
+          # the flag was set before MariaDB first started, so the files it created have it too
+          for path in [db, f"{db}/ibdata1", f"{db}/mediawiki/page.ibd"]:
+              assert nocow(path), f"{path} is COW"
+          machine.succeed("touch /srv/db/plain")
+          assert not nocow("/srv/db/plain")
 
       with subtest("tables are binary; utf8 only where MediaWiki or SMW ask for it"):
           # 4-byte characters (emoji) do not fit utf8mb3, so binary is the default (see

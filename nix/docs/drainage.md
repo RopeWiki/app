@@ -1,8 +1,11 @@
 # Drainage area (the Luca server's waterflow lookup)
 
-See [TODO](../TODO.md). Replaces one of the two things the [Luca server](luca-server.md) still did
-for the site. Code: `packages/rw-drainage.nix` and `packages/rw-drainage/`, module
-`modules/drainage.nix`, tests `tests/drainage*.nix`.
+Replaces one of the two things the Luca server still did for the site. The Luca server (RWServer,
+`ropewiki-RWServer`) is a Windows C++ FastCGI program on a separate AWS host; the site's JavaScript
+calls it at `<site>/luca/rwr?...`, and `reverse_proxy/services.conf` forwards `/luca` to it. This flake
+does not run it. The other thing it did, PDF export (`pdfx=`), is not replaced. Code:
+`packages/rw-drainage.nix` and `packages/rw-drainage/`, module `modules/drainage.nix`, tests
+`tests/drainage*.nix`.
 
 ## What the feature is
 
@@ -99,6 +102,4 @@ then `rw-drainage lookup --index nhdplus.gpkg 34.2533 -117.5769`.
 - **The badge in a browser.** The display code (tenths, unit toggling, the Luca host) was checked
   once with Node against the patched sources; there is no permanent test for it.
 
-Open: Alaska, Hawaii, Puerto Rico and Canada have no badge; and whether to precompute the value into
-a Semantic MediaWiki property (it depends only on the page's coordinates) and drop the service, which
-touches the templates and needs a bot run.
+Alaska, Hawaii, Puerto Rico and Canada have no badge.

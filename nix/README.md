@@ -91,14 +91,13 @@ database (a dump from the Docker site says `USE ropewiki`; see `docs/backups.md`
 - `packages/rw-drainage.nix` + `packages/rw-drainage/`: the drainage lookup (Python, GDAL to build),
   its tests and fixtures; `packages/site-pages-drainage.patch` and `site-pages-luca-host.patch` are the
   changes to commonjs it needs.
-- `modules/ropewiki.nix`: the NixOS module, a layer over `services.mediawiki`. `modules/drainage.nix`: the opt-in drainage service.
-  `modules/tileserver.nix`: the opt-in tile server container.
-  `modules/backup.nix`: the opt-in backup service and
-  upgrade gate (its scripts are plain `.sh` files in `modules/backup/`). `php/production.php`: what `mode = "production"` adds.
+- `modules/ropewiki.nix`: the NixOS module, a layer over `services.mediawiki`. `modules/drainage.nix`:
+  the opt-in drainage service. `modules/tileserver.nix`: the opt-in tile server container.
+  `modules/backup.nix`: the opt-in backup service and upgrade gate (its scripts are plain `.sh`
+  files in `modules/backup/`). `php/production.php`: what `mode = "production"` adds.
 - `vm/`, `tests/`: the VM definition, `dev-site.nix` (MediaWiki's installer on first start + self-signed cert for VMs
   and tests; deliberately not part of the module) and the VM tests.
-- `docs/`: design notes (backups, upgrades, real-data upgrade tests, the old Docker process, the
-  Luca server and its drainage replacement, the tile server, image proxy mode, the SMW upgrade
-  runbook). `TODO.md` is the checklist.
+- `docs/`: notes on what is built: backups and the upgrade gate (`backups.md`, `upgrades.md`), the
+  drainage lookup, the tile server and image proxy mode.
 
 Flakes only see git-tracked files, so `git add` new files before building.

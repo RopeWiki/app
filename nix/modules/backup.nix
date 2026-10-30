@@ -1,8 +1,8 @@
 # services.ropewiki.backup: hourly btrfs snapshots + a daily SQL export, and the gate that keeps
 # NixOS from switching to a new system unless a backup has just succeeded.
 #
-# For real hosts only: it is off by default and the development VM does not use it. Design and
-# reasoning: nix/docs/backups.md and nix/docs/upgrades.md.
+# For real hosts only: it is off by default and the development VM does not use it. See
+# nix/docs/backups.md and nix/docs/upgrades.md.
 #
 # The snapshots are kept on the same disk; getting them off the machine is the cloud provider's
 # volume snapshots' job. btrbk was considered and not used: its retention can't be tested without

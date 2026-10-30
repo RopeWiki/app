@@ -38,8 +38,8 @@ Two things happen, as on the wiki page:
 
 ## In `nix run .#vm`
 
-Off, until it has been validated against a real database. It was on once and the Lytle Creek page
-showed no proxied images. The likely reason: MediaWiki only links a file when its database has a
+Off, until it has been validated against a real database. It was on once and a page imported from
+Special:Export showed no proxied images. The likely reason: MediaWiki only links a file when its database has a
 row for it (the `image` table and the `File:` page). Pages imported from Special:Export carry the
 wikitext but not those rows, so there are no URLs to rewrite; only a database export, or importing
 the `File:` pages with their file records, can supply them. The ones written into page text as
