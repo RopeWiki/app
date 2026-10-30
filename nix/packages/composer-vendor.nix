@@ -12,15 +12,31 @@
 #
 # To change versions:
 #   cd nix/composer/core && nix develop ../../.. -c composer update --no-install --ignore-platform-reqs --no-dev
-# then set `outputHash` to lib.fakeHash and rebuild to learn the new hash.
+# then refresh `outputHash` with `nix run .#update-composer-vendor`
+# (the `passthru.updater` of this package).
 {
   lib,
   stdenvNoCC,
   php83,
   php83Packages,
   cacert,
+  writeShellApplication,
+  git,
+  gnused,
+  nix,
 }:
 
+let
+  updater = writeShellApplication {
+    name = "update-composer-vendor";
+    runtimeInputs = [
+      git
+      gnused
+      nix
+    ];
+    text = builtins.readFile ./update-composer-vendor.sh;
+  };
+in
 stdenvNoCC.mkDerivation {
   pname = "ropewiki-composer-vendor";
   version = "1.39.17";
@@ -70,6 +86,8 @@ stdenvNoCC.mkDerivation {
   postInstall = ''
     find $out -name ".git" -type d -prune -exec rm -rf {} +
   '';
+
+  passthru = { inherit updater; };
 
   outputHashMode = "recursive";
   outputHashAlgo = "sha256";

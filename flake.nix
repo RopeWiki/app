@@ -101,6 +101,7 @@
           rw-drainage = pkgs.rwDrainage;
           mediawiki-extensions = pkgs.mediawikiExtensions;
           update-mediawiki-ext = pkgs.mediawikiExtensions.updateScript;
+          update-composer-vendor = pkgs.ropewiki.passthru.composerVendor.updater;
         }
         // x86Only pkgs {
           vm = build.vm; # `nix run .#vm`: https://localhost:8443 (self-signed)
@@ -116,6 +117,12 @@
             type = "app";
             program = lib.getExe pkgs.mediawikiExtensions.updateScript;
             meta.description = "Re-pin MediaWiki core and the git-cloned extensions";
+          };
+          # Refresh the Composer vendor hash after editing nix/composer/core/composer.lock
+          update-composer-vendor = {
+            type = "app";
+            program = lib.getExe pkgs.ropewiki.passthru.composerVendor.updater;
+            meta.description = "Recompute outputHash in nix/packages/composer-vendor.nix";
           };
         }
         // x86Only pkgs {
