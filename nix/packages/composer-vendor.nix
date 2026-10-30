@@ -10,10 +10,11 @@
 # This is a fixed-output derivation (Composer needs the network and plugins),
 # pinned by nix/composer/core/composer.lock.
 #
-# To change versions:
-#   cd nix/composer/core && nix develop ../../.. -c composer update --no-install --ignore-platform-reqs --no-dev
-# then refresh `outputHash` with `nix run .#update-composer-vendor`
-# (the `passthru.updater` of this package).
+# composer.json is generated (update-composer-json.sh): MediaWiki's own for the pinned version
+# plus our packages and settings. Change the packages there, not in the file.
+#
+# To change versions, run `nix run .#update-composer` (passthru.updateAll). It regenerates
+# composer.json, re-locks it (composer.lock) and refreshes `outputHash`.
 {
   lib,
   stdenvNoCC,
@@ -23,6 +24,8 @@
   writeShellApplication,
   git,
   gnused,
+  jq,
+  curl,
   nix,
 }:
 
@@ -35,6 +38,33 @@ let
       nix
     ];
     text = builtins.readFile ./update-composer-vendor.sh;
+  };
+
+  # Recreates composer/core/composer.json from MediaWiki's own plus our additions.
+  jsonUpdater = writeShellApplication {
+    name = "update-composer-json";
+    runtimeInputs = [
+      git
+      jq
+      curl
+      cacert
+      php83
+      php83Packages.composer
+    ];
+    text = builtins.readFile ./update-composer-json.sh;
+  };
+
+  # All of the above in order: composer.json, then composer.lock, then outputHash.
+  updateAll = writeShellApplication {
+    name = "update-composer";
+    runtimeInputs = [
+      git
+      php83
+      php83Packages.composer
+      jsonUpdater
+      updater
+    ];
+    text = builtins.readFile ./update-composer.sh;
   };
 in
 stdenvNoCC.mkDerivation {
@@ -87,9 +117,9 @@ stdenvNoCC.mkDerivation {
     find $out -name ".git" -type d -prune -exec rm -rf {} +
   '';
 
-  passthru = { inherit updater; };
+  passthru = { inherit updater jsonUpdater updateAll; };
 
   outputHashMode = "recursive";
   outputHashAlgo = "sha256";
-  outputHash = "sha256-SVeiMESfBFX+YcAVgG9BIKDrUlyUBJQ5eWnW8OsTurk=";
+  outputHash = "sha256-gc8XBfcYUuUUCJel9CFzqAcmb+sTbBRmnoAgNr3tRcQ=";
 }

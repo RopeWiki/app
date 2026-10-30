@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Recompute `outputHash` in nix/packages/composer-vendor.nix after composer.json/composer.lock
-# changed. Run as `nix run .#update-composer-vendor` (see composer-vendor.nix).
+# changed. The last step of `nix run .#update-composer` (see update-composer.sh).
 # The file is only written once the build reported the real hash.
 root=${ROPEWIKI_ROOT:-$(git rev-parse --show-toplevel)}
 file=$root/nix/packages/composer-vendor.nix

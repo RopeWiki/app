@@ -98,8 +98,10 @@ Every file in `tests/` is a NixOS VM test and becomes a check automatically.
   **To change MediaWiki versions, edit `mediawiki.version` in the JSON and run the updater**; the
   per-release `*.REL1_39.patch` files still need checking by hand.
 - `packages/composer-vendor.nix` + `composer/core/composer.lock`: SMW, Maps, SRF (what the
-  Dockerfile's `composer require` installs). Regenerate the lock with `nix develop`, then fix
-  the `outputHash`.
+  Dockerfile's `composer require` installs). `composer/core/composer.json` is generated
+  (MediaWiki's own file plus our `composer require`s and settings). **After changing the packages
+  or the MediaWiki or PHP version in `mediawiki-pins.json`, run `nix run .#update-composer`**: it
+  regenerates `composer.json`, re-locks it and fixes the `outputHash`.
 - `packages/site-pages.nix`: builds the `MediaWiki:` JavaScript and CSS pages from the `commonjs`
   and `commoncss` flake inputs.
 - `packages/rw-drainage.nix` + `packages/rw-drainage/`: the drainage lookup (Python, GDAL to build),

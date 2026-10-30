@@ -1,6 +1,7 @@
 {
   "mediawiki": {
     "version": "1.39.17",
+    "php": "8.3.0",
     "hash": "sha256-LFhT0DTQw+dRYOgQQSUib6uWTX7TdzL4PnIEeB+rB7k="
   },
   "extensions": {
