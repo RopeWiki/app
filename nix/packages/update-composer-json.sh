@@ -22,6 +22,12 @@ curl --fail --silent --show-error --location "$url" --output composer.json
 
 composer() { command composer --no-plugins --no-interaction --quiet "$@"; }
 
+# Nothing here runs MediaWiki's tests or linters (the vendor build is --no-dev), but composer.lock
+# lists the dev packages anyway: dropping them takes it from ~10K to ~6K lines. They did pin
+# seld/jsonlint (Semantic MediaWiki requires ^1.7), which now floats to the newest 1.x.
+jq --tab 'del(."require-dev")' composer.json > composer.json.new
+mv composer.json.new composer.json
+
 # Resolve against the PHP the site runs (mediawiki.php in the pins), whatever PHP runs this script.
 composer config platform.php "$(jq -r .mediawiki.php "$pins")"
 composer config --json platform-check false
