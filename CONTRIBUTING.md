@@ -6,7 +6,7 @@ Welcome to the RopeWiki app repository and thank you for your interest in contri
 
 1. Any change to the master branch in this repository must be handled through a [Pull Request (PR)](https://docs.github.com/en/get-started/quickstart/contributing-to-projects).
 
-1. No PR may be merged to the master branch except in one of the two situations below:
+1. No PR may be merged to the master branch except in one of the two situations below.  The required `review-gate` status automates this rule.  See the [review gate guide](.github/review-gate.md) for more information.
     1. Approved PR, where all the following are true:
         1. The PR is approved by a committer with write access to repository (see Reviews below for approval criteria) as their most recent review.
         1. No committer with write access has requested changes as their most recent review.

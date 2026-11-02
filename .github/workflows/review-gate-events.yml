@@ -1,0 +1,18 @@
+name: Review Gate Events
+
+# Review events use read-only tokens on fork PRs. This workflow only wakes the
+# trusted workflow_run evaluator; it supplies no code, decisions, or artifacts.
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+
+permissions: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: 'true'
