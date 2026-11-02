@@ -39,4 +39,4 @@ Importantly, this repo does not contain:
 - **Site Data** — The content of the site lives in a database and is distributed to developers separately. Note that something you may find confusing is that much of the site's code lives as pages inside MediaWiki itself. Logic powered by Semantic MediaWiki is heavily used via site templates, and JS/CSS is stored in special MediaWiki pages.
 - **Images & Uploads** — Images and any other uploaded content (e.g. KML or PDF files) are located elsewhere too.
 - **Javascript & CSS** — As already mentioned, these are actually part of the MediaWiki system itself, however we do keep their sources in GitHub: [js](https://github.com/RopeWiki/commonjs), [css](https://github.com/RopeWiki/commoncss).
-- **Sensitive Content** — Passwords and the like are provided at runtime (usually via env vars) and not stored here.
+- **Sensitive Content** — Deployment credentials are read from a local, gitignored `site_configs/secrets/<SITE_NAME>.json` file. Copy [example.json.template](site_configs/secrets/example.json.template) to the matching deployment name and fill in its values.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import IntEnum
 import glob
@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -48,8 +49,7 @@ class SiteConfig(object):
   backup_manager_service = 'ropewiki_backup_manager'
   mailserver_service = 'ropewiki_mailserver'
 
-  _db_password: str
-  _root_db_password: str
+  secrets: Dict[str, str] = field(repr=False)
 
   @property
   def db_container(self) -> str:
@@ -65,31 +65,11 @@ class SiteConfig(object):
 
   @property
   def db_password(self) -> str:
-    if not self._db_password:
-      return 'thispasswordonlyworksuntildbisrestored'
-    return self._db_password
+    return self.secrets['WG_DB_PASSWORD']
 
   @property
   def root_db_password(self) -> str:
-    if not self._root_db_password:
-      return 'thispasswordonlyworksuntildbisrestored'
-    return self._root_db_password
-
-  @property
-  def db_password_is_set(self) -> bool:
-    return True if self._db_password else False
-
-  @property
-  def root_db_password_is_set(self) -> bool:
-    return True if self._root_db_password else False
-
-  def assert_db_password_is_set(self):
-    if not self.db_password_is_set:
-      sys.exit('The WG_DB_PASSWORD environment variable must be set')
-
-  def assert_root_db_password_is_set(self):
-    if not self.root_db_password_is_set:
-      sys.exit('The RW_ROOT_DB_PASSWORD environment variable must be set')
+    return self.secrets['RW_ROOT_DB_PASSWORD']
 
 
 deploy_commands: Dict[str, Callable[[SiteConfig, List[str]], None]] = {}
@@ -107,7 +87,7 @@ def make_argparse() -> argparse.ArgumentParser:
   parser.add_argument(
     'site_config_name',
     metavar='SITE_CONFIG_NAME',
-    help='Site configuration name corresponding to SITE_CONFIG_NAME.json located in the site_configs folder')
+    help='Site configuration name matching SITE_CONFIG_NAME.json in site_configs and site_configs/secrets')
   parser.add_argument(
     'command',
     metavar='COMMAND',
@@ -147,14 +127,36 @@ def get_args() -> UserArgs:
   elif args.quiet:
     _log_level = LogLevel.WARNING
 
-  config_name = args.site_config_name
+  return UserArgs(site_config=load_site_config(args.site_config_name), command=args.command, options=args.options)
+
+def load_site_config(config_name: str) -> SiteConfig:
   config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site_configs', config_name + '.json')
   with open(config_path, 'r') as f:
     config = json.load(f)
+  secrets_path = os.path.join(os.path.dirname(config_path), 'secrets', config_name + '.json')
+  try:
+    with open(secrets_path, 'r', encoding='utf-8-sig') as f:
+      secrets = json.load(f)
+  except FileNotFoundError:
+    sys.exit(f'Missing secrets file: {secrets_path}. Copy site_configs/secrets/example.json.template '
+             f'to this path and fill in the deployment credentials.')
+  except json.JSONDecodeError as error:
+    sys.exit(f'Invalid JSON in {secrets_path} at line {error.lineno}, column {error.colno}.')
+  except UnicodeError:
+    sys.exit(f'Secrets file {secrets_path} must use UTF-8 encoding.')
+  except OSError:
+    sys.exit(f'Could not read secrets file: {secrets_path}. Check its permissions.')
+  if not isinstance(secrets, dict):
+    sys.exit(f'Secrets file {secrets_path} must contain a JSON object.')
+  required_keys = {'WG_DB_PASSWORD', 'RW_ROOT_DB_PASSWORD', 'RW_SMTP_USERNAME', 'RW_SMTP_PASSWORD'}
+  optional_keys = {'RW_SMTP_HOST', 'RW_SMTP_PORT'}
+  for key in sorted(required_keys | (secrets.keys() & optional_keys)):
+    value = secrets.get(key)
+    if not isinstance(value, str) or not value.strip() or any(c in value for c in '\r\n\0'):
+      sys.exit(f'{key} in {secrets_path} must be a non-empty, single-line string.')
   config['name'] = config_name
-  config['_db_password'] = os.environ.get('WG_DB_PASSWORD', '')
-  config['_root_db_password'] = os.environ.get('RW_ROOT_DB_PASSWORD', '')
-  return UserArgs(site_config=SiteConfig(**config), command=args.command, options=args.options)
+  config['secrets'] = secrets
+  return SiteConfig(**config)
 
 def log(msg: str, level: LogLevel = LogLevel.INFO):
   """Log a message at the specified level.
@@ -222,29 +224,31 @@ def get_codebase_version() -> str:
   return _codebase_version
 
 def make_docker_compose_script(cmd: str, site_config: SiteConfig) -> Tuple[str, str]:
-  make_var_cmd = 'set ' if platform.system() == 'Windows' else 'export '
   docker_compose_command = 'docker compose -p {name} {cmd}'.format(name=site_config.name, cmd=cmd)
-  variable_declarations = '\n'.join([
-    '{cmd}RW_ROOT_DB_PASSWORD={root_db_password}',
-    '{cmd}MYSQL_ROOT_PASSWORD={root_db_password}',
-    '{cmd}WG_DB_PASSWORD={db_password}',
-    '{cmd}WG_HOSTNAME={hostname}',
-    '{cmd}WG_PROTOCOL={protocol}',
-    '{cmd}SQL_BACKUP_FOLDER={sql_backup_folder}',
-    '{cmd}IMAGES_FOLDER={images_folder}',
-    '{cmd}PROXY_CONFIG_FOLDER={proxy_config_folder}',
-    '{cmd}CODEBASE_VERSION="{codebase_version}"',
-    '{cmd}RW_ROBOTS="{robots}"']).format(
-    cmd=make_var_cmd,
-    root_db_password=site_config.root_db_password,
-    db_password=site_config.db_password,
-    hostname=site_config.hostname,
-    protocol=site_config.protocol,
-    sql_backup_folder=site_config.sql_backup_folder,
-    images_folder=site_config.images_folder,
-    proxy_config_folder=site_config.proxy_config_folder,
-    codebase_version=get_codebase_version(),
-    robots=site_config.robots)
+  variables = {
+    **site_config.secrets,
+    'RW_SMTP_HOST': site_config.secrets.get('RW_SMTP_HOST', 'smtp.gmail.com'),
+    'RW_SMTP_PORT': site_config.secrets.get('RW_SMTP_PORT', '587'),
+    'MYSQL_ROOT_PASSWORD': site_config.root_db_password,
+    'WG_HOSTNAME': site_config.hostname,
+    'WG_PROTOCOL': site_config.protocol,
+    'SQL_BACKUP_FOLDER': site_config.sql_backup_folder,
+    'IMAGES_FOLDER': site_config.images_folder,
+    'PROXY_CONFIG_FOLDER': site_config.proxy_config_folder,
+    'CODEBASE_VERSION': get_codebase_version(),
+    'RW_ROBOTS': site_config.robots,
+  }
+  if platform.system() == 'Windows':
+    # Disable delayed expansion and escape batch-file metacharacters in values.
+    declarations = ['@echo off', 'setlocal DisableDelayedExpansion']
+    for key, value in variables.items():
+      escaped = value.replace('^', '^^').replace('%', '%%')
+      for char in '&|<>()"':
+        escaped = escaped.replace(char, '^' + char)
+      declarations.append(f'set {key}={escaped}')
+  else:
+    declarations = [f'export {key}={shlex.quote(value)}' for key, value in variables.items()]
+  variable_declarations = '\n'.join(declarations)
   return variable_declarations, docker_compose_command
 
 def run_docker_compose(cmd: str, site_config: SiteConfig, capture_result=False) -> str:
@@ -435,8 +439,6 @@ def restore_empty_db(site_config: SiteConfig, options: List[str]):
 
 @deploy_command
 def start_site(site_config: SiteConfig, options: List[str]):
-  site_config.assert_root_db_password_is_set()
-  site_config.assert_db_password_is_set()
   os.makedirs(site_config.proxy_config_folder, exist_ok=True)
   run_docker_compose('up -d', site_config)
 
@@ -501,12 +503,6 @@ def dc(site_config: SiteConfig, options: List[str]):
     'ps', 'pull', 'push', 'restart', 'rm', 'run', 'scale', 'start', 'stop', 'top', 'unpause', 'up', 'version'}
   if not options:
     raise ValueError('Usage: deploy_tool.py dc {{{}}}'.format('|'.join(dc_commands)))
-  if not site_config.db_password_is_set and not site_config.root_db_password_is_set:
-    log('RW_ROOT_DB_PASSWORD and WG_DB_PASSWORD environment variables are not set', LogLevel.WARNING)
-  elif not site_config.db_password_is_set:
-    log('WG_DB_PASSWORD environment variable is not set', LogLevel.WARNING)
-  elif not site_config.root_db_password_is_set:
-    log('RW_ROOT_DB_PASSWORD environment variable is not set', LogLevel.WARNING)
   run_docker_compose(' '.join(options), site_config)
 
 def main():

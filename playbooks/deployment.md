@@ -37,6 +37,15 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
     1. Create a folder that will hold persistent mount data (perhaps `/rw/mount`) and define folders relative to that
        folder
 1. SITE_NAME is the name of the .json file without extension (e.g., example.json implies a SITE_NAME of `example`)
+1. Copy [site_configs/secrets/example.json.template](../site_configs/secrets/example.json.template) to
+   `site_configs/secrets/<SITE_NAME>.json` (e.g., `prod.json` or `dev.json`) and fill in the deployment credentials:
+
+    - `WG_DB_PASSWORD`: password for the `ropewiki` database user
+    - `RW_ROOT_DB_PASSWORD`: password for the `root` database user
+    - `RW_SMTP_USERNAME`: username for the SMTP relay
+    - `RW_SMTP_PASSWORD`: password for the SMTP relay
+    - (optional) `RW_SMTP_HOST` and `RW_SMTP_PORT`: SMTP relay settings, defaulting to `smtp.gmail.com` and `587`
+      (use strings for both values)
 
 ## Transfer site data
 
@@ -44,20 +53,10 @@ the `PATH` (`python3 --version` to verify). Ignore all `apt` commands and instea
     1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_sql_backup_legacy`
 1. Get `images` folder
     1. If transferring from an old server, run `python3 deploy_tool.py <SITE_NAME> get_images_legacy`
-1. Create a shortcut to declare passwords: create `~/rw_passwords.sh` (or another location) with content like:
-```shell
-#!/bin/bash
-# These are the mandatory environment variables needed to start a copy of the site
-export WG_DB_PASSWORD=<The password for the `ropewiki` DB user>
-export RW_ROOT_DB_PASSWORD=<The password for the `root` DB user>
-export RW_SMTP_USERNAME=<The username for logging into the smtp relay>
-export RW_SMTP_PASSWORD=<The password for logging into the smtp relay>
-```
 
 ## Deploy site
 
 1. Build the necessary images: `python3 deploy_tool.py <SITE_NAME> dc build`
-1. Make password variables accessible in the terminal: `source ~/rw_passwords.sh`
 1. Create an empty database using `python3 deploy_tool.py <SITE_NAME> create_db`
 1. Restore content into database using `python3 deploy_tool.py <SITE_NAME> restore_db`
     1. Or, for a development deployment, create a minimal database using `python3 deploy_tool.py <SITE_NAME> restore_empty_db`
