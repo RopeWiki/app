@@ -13,6 +13,9 @@ _tl;dr - everything needed to make the site load lives here. What you actually s
     * [Maintenance](https://github.com/RopeWiki/app/wiki/Maintenance)
     * [Troubleshooting](https://github.com/RopeWiki/app/wiki/Troubleshooting)
 
+* [General documentation](./docs)
+    * [Building images](./docs/building-images.md)
+
 Additional documentation may be found in the [GitHub wiki](https://github.com/RopeWiki/app/wiki/).
 
 ## What lives here
