@@ -1,0 +1,48 @@
+name: Review Gate
+
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft, closed, labeled, unlabeled, assigned, unassigned, review_requested, review_request_removed, locked, unlocked, milestoned, demilestoned, auto_merge_enabled, auto_merge_disabled]
+  issue_comment:
+    types: [created, edited, deleted]
+  workflow_run:
+    workflows: [Review Gate Events]
+    types: [completed]
+  schedule:
+    - cron: '0 4 * * *'
+      timezone: America/Los_Angeles
+  workflow_dispatch:
+
+permissions: {}
+
+# Every run reads all current PRs. A newer queued run can safely replace an older
+# queued run, but must not cancel a run halfway through updating statuses.
+concurrency:
+  group: review-gate
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    if: >-
+      github.repository == 'RopeWiki/app' &&
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      checks: write
+      statuses: write
+    steps:
+      # Always use trusted master code, including for manual runs and fork PRs.
+      # Never check out PR code or download artifacts from the event workflow.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: master
+          persist-credentials: false
+      - name: Evaluate contribution policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/review_gate.py
