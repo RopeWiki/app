@@ -7,3 +7,4 @@ enable_tls.sh
 enable_tls.bat
 mount
 __pycache__/
+.idea/
