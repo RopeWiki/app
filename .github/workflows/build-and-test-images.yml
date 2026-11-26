@@ -38,12 +38,6 @@ jobs:
       run:
         working-directory: ${{ github.workspace }}
 
-    env:
-      WG_DB_PASSWORD: "NotReal"
-      RW_ROOT_DB_PASSWORD: "NotReal"
-      RW_SMTP_USERNAME: "NotReal"
-      RW_SMTP_PASSWORD: "NotReal"
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -57,20 +51,20 @@ jobs:
         run: mkdir -p /home/runner/work/app/mount/{sqlbackup,images,proxy_config}
 
       - name: Build containers
-        run: ./deploy_tool.py github dc -- build --no-cache --pull
+        run: ./deploy_tool.py empty_site dc -- build --no-cache --pull
 
       - name: Create mysql database
-        run: ./deploy_tool.py github create_db
+        run: ./deploy_tool.py empty_site create_db
 
       - name: Restore empty mediawiki schema
-        run: echo y | ./deploy_tool.py github restore_empty_db
+        run: echo y | ./deploy_tool.py empty_site restore_empty_db
 
       - name: Start the containers
-        run: ./deploy_tool.py github start_site
+        run: ./deploy_tool.py empty_site start_site
 
       # The empty mediawiki schema file isn't always up-to-date, so run a schema upgrade just in case.
       - name: Run maintenance update
-        run: ./deploy_tool.py github dc exec ropewiki_webserver "/rw/maintenance/update.php --quick"
+        run: ./deploy_tool.py empty_site dc exec ropewiki_webserver "/rw/maintenance/update.php --quick"
 
       - name: Verify site is accessible
         run: |
